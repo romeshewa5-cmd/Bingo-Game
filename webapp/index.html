@@ -6,7 +6,7 @@
 <title>Bingo Bot</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  /* Winner Modal Popup Styling */
+/* Winner Modal Popup Styling */
 .winner-popup-container {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -38,7 +38,7 @@
 .winner-popup-container.active .winner-card-body {
   transform: scale(1);
 }
-  .win-row {
+.win-row {
   display: flex;
   gap: 4px;
 }
@@ -62,6 +62,7 @@
 .win-cell.free {
   color: var(--teal);
 }
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh}
 :root{--gold:#f0b429;--teal:#1bc8a0;--card:#162032;--card2:#1e2d44;--red:#e53e3e;--orange:#f6813a;--blue:#3182ce;--purple:#805ad5}
@@ -94,11 +95,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .crow{display:flex;gap:4px;margin-bottom:4px}
 .cc{flex:1;background:var(--card);border-radius:6px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
 .cc.free{background:#0d3b2e;color:var(--teal)}
+
 .card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px}
 .cn{background:var(--card2);border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#888;cursor:pointer;border:1px solid transparent;transition:all .1s}
 .cn.sel{background:var(--teal);color:#000;border-color:#0d8c6a}
+.cn.sel2{background:var(--gold);color:#000;border-color:#b58514}
 .cn:active{transform:scale(.88)}
 .start-btn{display:block;width:calc(100% - 24px);margin:12px 12px 90px;background:var(--orange);color:#fff;font-size:16px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer}
+
 .gstats{display:flex;padding:8px 10px;gap:5px;overflow-x:auto;border-bottom:1px solid var(--card2)}
 .gs{background:var(--card2);border-radius:8px;padding:4px 10px;text-align:center;white-space:nowrap;flex-shrink:0}
 .gsv{font-size:14px;font-weight:700;color:var(--teal)}.gsl{font-size:9px;color:#666}
@@ -107,21 +111,228 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ccbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:2;display:flex;align-items:center;justify-content:space-between}
 .circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
 .ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
-.bcard{margin:6px 12px;background:var(--card2);border-radius:12px;padding:10px}
-.bhead{display:flex;gap:4px;margin-bottom:4px}
-.brow{display:flex;gap:4px;margin-bottom:4px}
-.bcell{flex:1;aspect-ratio:1;background:var(--card);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#bbb;border:1px solid var(--card2);cursor:pointer;transition:all .12s;user-select:none}
-.bcell.mk{background:#0d3b2e;color:var(--teal);border-color:var(--teal)}
-.bcell.free{background:#0d3b2e;color:var(--teal)}
-.bcell:active{transform:scale(.88)}
-.bingo-btn{display:block;width:calc(100% - 24px);margin:0 12px 8px;background:var(--orange);color:#fff;font-size:16px;font-weight:700;padding:13px;border-radius:12px;border:none;cursor:pointer}
-.gactions{display:flex;gap:8px;padding:0 12px 90px}
-.lbtn{flex:1;background:var(--red);color:#fff;font-size:13px;font-weight:700;padding:12px;border-radius:10px;border:none;cursor:pointer}
-.rbtn{flex:1;background:var(--blue);color:#fff;font-size:13px;font-weight:700;padding:12px;border-radius:10px;border:none;cursor:pointer}
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--teal);color:#000;font-size:13px;font-weight:700;padding:10px 20px;border-radius:20px;display:none;z-index:999;white-space:nowrap;max-width:90%;text-align:center}
-.toast.show{display:block;animation:fio 2.8s ease forwards}
-@keyframes fio{0%,100%{opacity:0}15%,80%{opacity:1}}
-.slbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;padding:0 16px 8px}
+
+/* Custom Layout additions */
+.game-container {
+  display: flex;
+  gap: 16px;
+  padding: 0 12px;
+  flex-direction: row;
+  align-items: flex-start;
+}
+.left-panel {
+  flex: 1.1;
+  background: var(--card2);
+  border-radius: 12px;
+  padding: 12px;
+}
+.right-panel {
+  flex: 1.9;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.board-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  background: var(--card);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.board-letter {
+  font-size: 18px;
+  font-weight: 900;
+  width: 20px;
+  text-align: center;
+}
+.board-numbers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.board-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #25334a;
+  color: #556885;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+.board-num.called {
+  background: var(--teal);
+  color: #000;
+  box-shadow: 0 0 6px var(--teal);
+}
+.auto-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #3e3e4f;
+  transition: .3s;
+  border-radius: 22px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px; width: 16px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+input:checked + .slider { background-color: var(--teal); }
+input:checked + .slider:before { transform: translateX(22px); }
+
+.cards-wrapper {
+  display: flex;
+  gap: 10px;
+}
+.card-unit {
+  flex: 1;
+  background: var(--card2);
+  padding: 10px;
+  border-radius: 12px;
+}
+.bhead-mini {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.brow {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.bcell {
+  flex: 1;
+  aspect-ratio: 1;
+  background: var(--card);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #bbb;
+  border: 1px solid var(--card2);
+  cursor: pointer;
+  transition: all .12s;
+  user-select: none;
+}
+.bcell.mk {
+  background: #0d3b2e;
+  color: var(--teal);
+  border-color: var(--teal);
+}
+.bcell.free {
+  background: #0d3b2e;
+  color: var(--teal);
+}
+.bcell:active { transform: scale(.88) }
+
+.bingo-btn {
+  display: block;
+  width: 100%;
+  background: var(--orange);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+.gactions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.lbtn {
+  flex: 1;
+  background: var(--red);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+.rbtn {
+  flex: 1;
+  background: var(--blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.toast {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--teal);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 20px;
+  display: none;
+  z-index: 999;
+  white-space:nowrap;
+  max-width: 90%;
+  text-align: center;
+}
+.toast.show {
+  display: block;
+  animation: fio 2.8s ease forwards;
+}
+@keyframes fio {
+  0%,100% { opacity: 0 }
+  15%,80% { opacity: 1 }
+}
+.slbl {
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0 16px 8px;
+}
+
+@media (max-width: 768px) {
+  .game-container {
+    flex-direction: column-reverse;
+  }
+  .left-panel, .right-panel {
+    width: 100%;
+  }
+}
 </style>
 </head>
 <body>
@@ -163,17 +374,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="screen" id="sc-cards">
   <div class="nav">
     <div class="nav-back" onclick="goTo('lobby')">← Back</div>
-    <div class="nav-title">Select Card</div>
+    <div class="nav-title">Select Cards</div>
     <div></div>
   </div>
   <div class="stats-bar">
     <div class="chip">Wallet: <b id="cpw">--</b> ETB</div>
-    <div class="chip">Stake: <b id="cps">--</b> ETB</div>
-    <div class="chip">Active: <b>1</b></div>
+    <div class="chip">Stake (2x): <b id="cps">--</b> ETB</div>
+    <div class="chip">Active Cards: <b>2</b></div>
     <div class="chip">Bonus: <b>0</b></div>
   </div>
   <div class="cartela-wrap">
-    <div style="font-size:11px;color:#666;margin-bottom:8px">Card Preview — tap a number below to select</div>
+    <div style="font-size:11px;color:#666;margin-bottom:8px">Card Preview — tap numbers below to assign Cartela #1 (Green) and #2 (Gold)</div>
     <div class="ch">
       <div class="col-h cB">B</div><div class="col-h cI">I</div>
       <div class="col-h cN">N</div><div class="col-h cG">G</div>
@@ -182,7 +393,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="cart-rows"></div>
     <div style="text-align:center;font-size:11px;color:#666;margin-top:4px" id="cart-lbl">Cartela #117</div>
   </div>
-  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 120 cards — tap to preview</div>
+  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 120 cards — select up to two cards</div>
   <div class="card-grid" id="cgrid"></div>
   <button class="start-btn" onclick="confirmJoin()">✅ Start Game</button>
 </div>
@@ -194,6 +405,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="nav-title">Fast Bingo</div>
     <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
   </div>
+  
   <div class="gstats">
     <div class="gs"><div class="gsv" id="gg">0</div><div class="gsl">Games</div></div>
     <div class="gs"><div class="gsv" id="gd">304</div><div class="gsl">Derash</div></div>
@@ -202,36 +414,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="gs"><div class="gsv" id="gcl">0</div><div class="gsl">Call</div></div>
     <div class="gs"><div class="gsv">300</div><div class="gsl">Bonus</div></div>
   </div>
-<div class="callarea">
-  <div class="cdbox">
-    <!-- Changed from Countdown to Status -->
-    <div style="font-size:10px;color:#666">Status</div>
-    <div style="font-size:30px;font-weight:800;color:var(--teal);line-height:1.1" id="gcd">LIVE</div>
-  </div>
-  <div class="ccbox">
-    <div>
-      <div style="font-size:10px;color:#666">Current Call</div>
-      <div style="font-size:12px;color:#888;margin-top:4px" id="ghist">Waiting…</div>
+
+  <div class="game-container">
+    <!-- Left Column: Master Caller Board & Auto Trigger -->
+    <div class="left-panel">
+      <div class="auto-control">
+        <span style="font-weight:bold; font-size:12px; color:#fff;">⚡ Auto-Mark Mode</span>
+        <label class="switch">
+          <input type="checkbox" id="auto-toggle" onchange="toggleAutoMode()">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:10px; font-weight:bold; text-align:center;">Called Numbers History</div>
+      <div id="master-board"></div>
     </div>
-    <div class="circle" id="gcir" style="background:#333">--</div>
+
+    <!-- Right Column: Playing Cartelas & Caller Circle -->
+    <div class="right-panel">
+      <div class="callarea" style="margin:0; padding:0;">
+        <div class="cdbox" style="padding: 10px;">
+          <div style="font-size:10px;color:#666">Status</div>
+          <div style="font-size:24px;font-weight:800;color:var(--teal);line-height:1.2" id="gcd">LIVE</div>
+        </div>
+        <div class="ccbox" style="padding: 10px;">
+          <div>
+            <div style="font-size:10px;color:#666">Current Call</div>
+            <div style="font-size:11px;color:#888;margin-top:2px" id="ghist">Waiting…</div>
+          </div>
+          <div class="circle" id="gcir" style="background:#333; width:44px; height:44px; font-size:20px;">--</div>
+        </div>
+      </div>
+
+      <div class="cards-wrapper">
+        <!-- Cartela #1 Unit -->
+        <div class="card-unit">
+          <div class="bhead-mini">
+            <div class="col-h cB" style="font-size:11px">B</div><div class="col-h cI" style="font-size:11px">I</div>
+            <div class="col-h cN" style="font-size:11px">N</div><div class="col-h cG" style="font-size:11px">G</div>
+            <div class="col-h cO" style="font-size:11px">O</div>
+          </div>
+          <div id="brows1"></div>
+          <div style="text-align:center;font-size:10px;color:#888;margin-top:4px" id="gclbl1">Cartela #1</div>
+        </div>
+
+        <!-- Cartela #2 Unit -->
+        <div class="card-unit">
+          <div class="bhead-mini">
+            <div class="col-h cB" style="font-size:11px">B</div><div class="col-h cI" style="font-size:11px">I</div>
+            <div class="col-h cN" style="font-size:11px">N</div><div class="col-h cG" style="font-size:11px">G</div>
+            <div class="col-h cO" style="font-size:11px">O</div>
+          </div>
+          <div id="brows2"></div>
+          <div style="text-align:center;font-size:10px;color:#888;margin-top:4px" id="gclbl2">Cartela #2</div>
+        </div>
+      </div>
+
+      <button class="bingo-btn" onclick="claimBingo()">🎉 Bingo!</button>
+      <div class="gactions">
+        <button class="lbtn" onclick="leaveGame()">Leave Game</button>
+        <button class="rbtn" onclick="refreshGrids()">Refresh</button>
+      </div>
+    </div>
   </div>
 </div>
-  <div class="bcard">
-    <div class="bhead">
-      <div class="col-h cB">B</div><div class="col-h cI">I</div>
-      <div class="col-h cN">N</div><div class="col-h cG">G</div>
-      <div class="col-h cO">O</div>
-    </div>
-    <div id="brows"></div>
-  </div>
-  <div style="text-align:center;font-size:12px;color:#666;padding:4px 0 8px" id="gclbl">Cartela #117</div>
-  <button class="bingo-btn" onclick="claimBingo()">🎉 Bingo!</button>
-  <div class="gactions">
-    <button class="lbtn" onclick="leaveGame()">Leave Game</button>
-    <button class="rbtn" onclick="renderCard()">Refresh</button>
-  </div>
-</div>
-<!-- ... Your existing screens like <div class="screen" id="sc-game"> etc ... -->
 
 <!-- Winner Announcement Popup with Live Grid -->
 <div id="winner-popup" class="winner-popup-container">
@@ -246,7 +491,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="join-btn" onclick="closeWinnerModal()" style="width:100%; border-radius:10px;">Return to Lobby</button>
   </div>
 </div>
-  
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
@@ -266,10 +511,13 @@ const GAMES = [
   {bet:300, win:0,   status:'waiting', bonus:true},
 ];
 
-let selGame = GAMES[0], selCard = 117, marked = new Set(), called = [], gint = null, cardCache = {};
+let selGame = GAMES[0], selCard1 = 117, selCard2 = 118; 
+let marked1 = new Set(), marked2 = new Set();
+let called = [], gint = null, cardCache = {};
 let walBal = 50; 
 let waitTimer = null;
 let waitSeconds = 40;
+let isAutoMode = false;
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -309,12 +557,12 @@ function renderLobby(){
 
 function joinGame(i){
   selGame = GAMES[i];
-  if(walBal < selGame.bet){
-    alert('❌ Insufficient balance! Please deposit funds via the bot.');
+  if(walBal < (selGame.bet * 2)){
+    alert('❌ Insufficient balance! Playing with 2 Cartelas requires a minimum balance of ' + (selGame.bet * 2) + ' ETB.');
     return;
   }
   document.getElementById('cpw').textContent = walBal;
-  document.getElementById('cps').textContent = selGame.bet;
+  document.getElementById('cps').textContent = (selGame.bet * 2);
   renderCardGrid(); goTo('cards');
 }
 
@@ -322,16 +570,32 @@ function renderCardGrid(){
   const g=document.getElementById('cgrid'); g.innerHTML='';
   for(let n=1;n<=120;n++){
     const d=document.createElement('div');
-    d.className='cn'+(n===selCard?' sel':'');
+    d.className='cn';
+    if(n===selCard1) d.classList.add('sel');
+    else if(n===selCard2) d.classList.add('sel2');
     d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
   }
-  renderCartela(selCard);
+  renderCartela(selCard1);
 }
 
 function selectCard(n){
-  selCard=n;
-  document.querySelectorAll('.cn').forEach((el,i)=>el.classList.toggle('sel',i+1===n));
-  renderCartela(n);
+  if(n === selCard1){
+    return; // Don't allow unselecting primary card
+  }
+  if(n === selCard2){
+    selCard2 = null;
+  } else {
+    selCard2 = n;
+  }
+  
+  document.querySelectorAll('.cn').forEach((el, i) => {
+    const cardNum = i + 1;
+    el.classList.remove('sel', 'sel2');
+    if (cardNum === selCard1) el.classList.add('sel');
+    else if (cardNum === selCard2) el.classList.add('sel2');
+  });
+  
+  renderCartela(selCard2 ? selCard2 : selCard1);
 }
 
 function renderCartela(n){
@@ -345,14 +609,13 @@ function renderCartela(n){
   document.getElementById('cart-lbl').textContent=`Cartela #${n}`;
 }
 
-// Player Count and Room Cycle Engine
 function confirmJoin(){
-  if (walBal < selGame.bet) {
+  const gameCost = selGame.bet * 2;
+  if (walBal < gameCost) {
     alert('❌ Insufficient balance to start this game!');
     return;
   }
 
-  // Simulate total active players in the room randomly (Change to live database variables if synced)
   const activePlayers = Math.floor(Math.random() * 5) + 1; 
 
   if (activePlayers < 3) {
@@ -361,11 +624,10 @@ function confirmJoin(){
     return;
   }
 
-  // If 3 or more players are ready, kick off the action immediately!
   selGame.status = 'running';
-  const data=JSON.stringify({action:'join_game',bet:selGame.bet,card:selCard,user_id:TGuser?.id});
+  const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
-  marked=new Set(); called=[];
+  marked1=new Set(); marked2=new Set(); called=[];
   startGame(); goTo('game');
 }
 
@@ -374,7 +636,6 @@ function startWaitingLoop() {
   clearInterval(waitTimer);
   waitSeconds = 40;
   
-  // Update status indicators across UI
   selGame.status = 'waiting';
   renderLobby();
 
@@ -387,7 +648,6 @@ function startWaitingLoop() {
 
     if (waitSeconds <= 0) {
       clearInterval(waitTimer);
-      // Automatically attempt to match players again after timer runs down
       waitSeconds = 40;
       confirmJoin();
     }
@@ -396,24 +656,69 @@ function startWaitingLoop() {
 
 const LETS=['B','I','N','G','O'],CCLS={B:'ccB',I:'ccI',N:'ccN',G:'ccG',O:'ccO'};
 
-function renderCard(){
-  const card=genCard(selCard);let html='';
+function toggleAutoMode() {
+  isAutoMode = document.getElementById('auto-toggle').checked;
+  toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
+}
+
+function renderMasterBoard() {
+  const letters = ['B', 'I', 'N', 'G', 'O'];
+  let html = '';
+  letters.forEach((l, idx) => {
+    const start = idx * 15 + 1;
+    const end = start + 14;
+    let numbersHtml = '';
+    for (let i = start; i <= end; i++) {
+      const isCalled = called.includes(i);
+      numbersHtml += `<div class="board-num ${isCalled ? 'called' : ''}">${i}</div>`;
+    }
+    html += `
+      <div class="board-row">
+        <span class="board-letter" style="color: var(--teal); font-weight: bold;">${l}</span>
+        <div class="board-numbers">${numbersHtml}</div>
+      </div>`;
+  });
+  document.getElementById('master-board').innerHTML = html;
+}
+
+function renderGameCard(cardNumber){
+  const selCard = cardNumber === 1 ? selCard1 : selCard2;
+  const marked = cardNumber === 1 ? marked1 : marked2;
+  
+  if(!selCard) {
+    document.getElementById(`brows${cardNumber}`).innerHTML = '<div style="padding:40px; color:#555; text-align:center;">Disabled</div>';
+    document.getElementById(`gclbl${cardNumber}`).textContent='No Card Selected';
+    return;
+  }
+  
+  const card=genCard(selCard); let html='';
   for(let r=0;r<5;r++){
     html+='<div class="brow">';
     for(let c=0;c<5;c++){
       const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
-      html+=`<div class="bcell ${mk?'mk':''} ${v===0?'free':''}" onclick="markCell('${key}',${c},${r})">${v===0?'★':v}</div>`;
+      html+=`<div class="bcell ${mk?'mk':''} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
     }
     html+='</div>';
   }
-  document.getElementById('brows').innerHTML=html;
-  document.getElementById('gclbl').textContent=`Cartela #${selCard}`;
-  document.getElementById('gb').textContent=selGame.bet;
+  document.getElementById(`brows${cardNumber}`).innerHTML=html;
+  document.getElementById(`gclbl${cardNumber}`).textContent=`Cartela #${selCard}`;
 }
 
-function markCell(key,c,r){
+function refreshGrids(){
+  renderGameCard(1);
+  renderGameCard(2);
+}
+
+function markCell(cardNumber,key,c,r){
+  if(isAutoMode) return; // Prevent manual tapping overrides in auto-mode
+  const selCard = cardNumber === 1 ? selCard1 : selCard2;
+  const marked = cardNumber === 1 ? marked1 : marked2;
+  
   const v=genCard(selCard)[c][r]; if(v===0)return;
-  if(called.includes(v)){marked.has(key)?marked.delete(key):marked.add(key);renderCard();}
+  if(called.includes(v)){
+    marked.has(key)?marked.delete(key):marked.add(key);
+    renderGameCard(cardNumber);
+  }
   else toast('Number not called yet!');
 }
 
@@ -429,7 +734,11 @@ function startGame(){
   document.getElementById('gp').textContent=pl;
   document.getElementById('gpc').textContent=pl+' players';
   document.getElementById('gd').textContent=Math.floor(Math.random()*200)+200;
-  renderCard();
+  document.getElementById('gb').textContent=selGame.bet;
+  
+  renderMasterBoard();
+  renderGameCard(1);
+  renderGameCard(2);
   
   callNum();
   
@@ -453,49 +762,103 @@ function callNum(){
   el.textContent=n; el.className=`circle ${CCLS[L]}`; el.style.background='';
   document.getElementById('ghist').textContent=called.slice(-5).reverse().join(' · ');
   document.getElementById('gcl').textContent=called.length;
-  renderCard();
+  
+  renderMasterBoard();
+  
+  if (isAutoMode) {
+    autoMarkCard(1, n);
+    autoMarkCard(2, n);
+  } else {
+    renderGameCard(1);
+    renderGameCard(2);
+  }
 }
 
-// Real-Time Instant Bingo Evaluation Logic
-function claimBingo(){
-  clearInterval(gint);
-  const card=genCard(selCard);
-  const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
-  
-  let pType = null, pIndex = -1;
+function autoMarkCard(cardNumber, valCalled) {
+  const selCard = cardNumber === 1 ? selCard1 : selCard2;
+  if (!selCard) return;
+  const card = genCard(selCard);
+  const marked = cardNumber === 1 ? marked1 : marked2;
 
-  for(let i=0; i<5; i++){
-    if([0,1,2,3,4].every(j=>m(j,i))) { pType = 'row'; pIndex = i; break; }
-  }
-  if(!pType){
-    for(let i=0; i<5; i++){
-      if([0,1,2,3,4].every(j=>m(i,j))) { pType = 'col'; pIndex = i; break; }
+  for (let c = 0; c < 5; c++) {
+    for (let r = 0; r < 5; r++) {
+      if (card[c][r] === valCalled) {
+        marked.add(`${c}-${r}`);
+      }
     }
   }
-  if(!pType && [0,1,2,3,4].every(i=>m(i,i))) pType = 'diag-back';
-  if(!pType && [0,1,2,3,4].every(i=>m(i,4-i))) pType = 'diag-forward';
+  renderGameCard(cardNumber);
+  checkAutoBingo(cardNumber);
+}
 
-  if(pType){
-    const rewardPayout = selGame.win > 0 ? selGame.win : (selGame.bet * 3);
+function checkAutoBingo(cardNumber) {
+  const selCard = cardNumber === 1 ? selCard1 : selCard2;
+  const card = genCard(selCard);
+  const marked = cardNumber === 1 ? marked1 : marked2;
+  const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
+  
+  let won = false;
+  for(let i=0;i<5;i++){
+    if([0,1,2,3,4].every(j=>m(j,i))) won=true;
+    if([0,1,2,3,4].every(j=>m(i,j))) won=true;
+  }
+  if([0,1,2,3,4].every(i=>m(i,i))) won=true;
+  if([0,1,2,3,4].every(i=>m(i,4-i))) won=true;
+
+  if (won) {
+    claimBingo(); 
+  }
+}
+
+function claimBingo(){
+  clearInterval(gint);
+  
+  const verifyCard = (cardNumber) => {
+    const selCard = cardNumber === 1 ? selCard1 : selCard2;
+    if(!selCard) return null;
+    const card=genCard(selCard);
+    const marked = cardNumber === 1 ? marked1 : marked2;
+    const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
+    
+    let pType = null, pIndex = -1;
+    for(let i=0; i<5; i++){
+      if([0,1,2,3,4].every(j=>m(j,i))) { pType = 'row'; pIndex = i; break; }
+    }
+    if(!pType){
+      for(let i=0; i<5; i++){
+        if([0,1,2,3,4].every(j=>m(i,j))) { pType = 'col'; pIndex = i; break; }
+      }
+    }
+    if(!pType && [0,1,2,3,4].every(i=>m(i,i))) pType = 'diag-back';
+    if(!pType && [0,1,2,3,4].every(i=>m(i,4-i))) pType = 'diag-forward';
+
+    if(pType) return { selCard, pType, pIndex };
+    return null;
+  };
+
+  const win1 = verifyCard(1);
+  const win2 = verifyCard(2);
+  const winningPlay = win1 || win2;
+
+  if(winningPlay){
+    const rewardPayout = selGame.win > 0 ? selGame.win : ((selGame.bet * 2) * 3);
     walBal += rewardPayout;
     document.getElementById('lbal').textContent = walBal + ' ETB';
     
-    tg.sendData(JSON.stringify({action:'bingo_win',card:selCard,bet:selGame.bet}));
-    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${selCard}`, selCard, pType, pIndex);
+    tg.sendData(JSON.stringify({action:'bingo_win',card:winningPlay.selCard,bet:(selGame.bet * 2)}));
+    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${winningPlay.selCard}`, winningPlay.selCard, winningPlay.pType, winningPlay.pIndex);
   } else {
     toast('❌ Invalid Bingo lines. Keep playing!');
     startGame();
   }
 }
 
-// Opponent Simulation Event Trigger
 function simulateOpponentWin() {
   clearInterval(gint);
   const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99", "@Yonas_Ke"];
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 120) + 1;
   
-  // Pick random pattern types to show on screen
   const types = ['row', 'col', 'diag-back', 'diag-forward'];
   const randomType = types[Math.floor(Math.random() * types.length)];
   const randomIndex = Math.floor(Math.random() * 5);
@@ -503,23 +866,19 @@ function simulateOpponentWin() {
   showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, randomType, randomIndex);
 }
 
-// Displays global alert container modal
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
   document.getElementById('win-head').textContent = headerText;
   document.getElementById('win-sub').textContent = subText;
   
-  // Generate the winner's card layout matrix array
   const cardData = genCard(cardNum);
   let html = '';
   
-  // Render a mini 5x5 layout grid
   for (let r = 0; r < 5; r++) {
     html += '<div class="win-row">';
     for (let c = 0; c < 5; c++) {
       const val = cardData[c][r];
       let isHighlighted = false;
       
-      // Calculate pattern highlights based on row, column or diagonals
       if (patternType === 'row' && r === patternIndex) isHighlighted = true;
       if (patternType === 'col' && c === patternIndex) isHighlighted = true;
       if (patternType === 'diag-back' && c === r) isHighlighted = true;
@@ -571,3 +930,5 @@ setInterval(()=>{
 
 renderLobby();
 </script>
+</body>
+</html>

@@ -121,53 +121,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   align-items: flex-start;
 }
 .left-panel {
-  flex: 1.2;
+  flex: 1.3;
   background: var(--card2);
   border-radius: 12px;
-  padding: 8px;
+  padding: 10px;
 }
 .right-panel {
-  flex: 1.8;
+  flex: 1.7;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* VERTICAL MASTER BOARD COLUMNS */
+/* VERTICAL MASTER BOARD COLUMNS (BIGGER LAYOUT) */
 .board-columns-container {
   display: flex;
   justify-content: space-between;
-  gap: 2px;
-  margin-top: 4px;
+  gap: 4px;
+  margin-top: 8px;
 }
 .board-col {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 5px; /* Spaced out further vertically */
 }
 .board-letter-header {
-  font-size: 13px;
+  font-size: 15px; /* Larger letter size */
   font-weight: 900;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 6px rgba(255,255,255,0.1);
 }
 .board-num-vertical {
-  width: 17px;
-  height: 17px;
+  width: 22px; /* Bigger diameter */
+  height: 22px;
   border-radius: 50%;
-  background: #25334a;
-  color: #556885;
+  background: #1b263b;
+  color: #64748b;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
-  font-weight: bold;
+  font-size: 10px; /* Highly legible */
+  font-weight: 800;
 }
 .board-num-vertical.called {
   background: var(--teal);
   color: #000;
-  box-shadow: 0 0 5px var(--teal);
+  box-shadow: 0 0 7px var(--teal);
 }
 
 .auto-control {
@@ -229,7 +230,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 }
 .bcell {
   flex: 1;
-  aspect-ratio: 1.2; /* slightly wider to optimize vertical screen height */
+  aspect-ratio: 1.25;
   background: var(--card);
   border-radius: 4px;
   display: flex;
@@ -497,28 +498,24 @@ if (TGuser) {
     document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
 }
 
+// Kept only 10, 20, 50, and 100 ETB games
 const GAMES = [
-  {bet:10,  win:0, status:'waiting', bonus:false},
-  {bet:20,  win:0, status:'waiting', bonus:true},
-  {bet:50,  win:0, status:'waiting', bonus:false},
-  {bet:80,  win:0, status:'waiting', bonus:false},
-  {bet:100, win:0, status:'waiting', bonus:true},
-  {bet:150, win:0, status:'waiting', bonus:false},
-  {bet:300, win:0, status:'waiting', bonus:true},
+  {bet:10,  win:0, status:'waiting', bonus:false, countdown:40, waitActive:true},
+  {bet:20,  win:0, status:'waiting', bonus:true, countdown:40, waitActive:true},
+  {bet:50,  win:0, status:'waiting', bonus:false, countdown:40, waitActive:true},
+  {bet:100, win:0, status:'waiting', bonus:true, countdown:40, waitActive:true},
 ];
 
-// Default selected cards
-let selCard1 = 117, selCard2 = 118; 
+let selGame = GAMES[0], selCard1 = 117, selCard2 = 118; 
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
-let walBal = 150; 
-let waitTimer = null;
-let waitSeconds = 40;
+let walBal = 250; 
+let lobbyTimer = null;
 let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let activeLobbyPlayers = 1; // Lowered multiplayer test threshold to 1 for quick testing
+let activeLobbyPlayers = 5; // Default player counter for calculation simulation
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -544,24 +541,52 @@ function genCard(n){
   card[2][2]=0;cardCache[n]=card;return card;
 }
 
+// Strict calculations based on custom commission ranges
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
-    // Calculations: (Bet - 2) * players
-    g.win = (g.bet - 2) * activeLobbyPlayers;
+    let multiplier = 0;
+    if (g.bet === 10) multiplier = g.bet - 2;
+    else if (g.bet === 20) multiplier = g.bet - 4;
+    else if (g.bet === 50) multiplier = g.bet - 6;
+    else if (g.bet === 100) multiplier = g.bet - 10;
+    
+    g.win = multiplier * activeLobbyPlayers;
   });
 }
 
 function renderLobby(){
   document.getElementById('lbal').textContent = walBal + ' ETB';
   calculateWinningAmounts();
-  document.getElementById('glist').innerHTML = GAMES.map((g,i)=>`
+  document.getElementById('glist').innerHTML = GAMES.map((g,i)=>{
+    let statusText = g.status;
+    if (g.status === 'waiting') {
+      statusText = `waiting (${g.countdown}s)`;
+    }
+    return `
     <div class="game-row">
       ${g.bonus?'<div class="bonus-tag">BONUS</div>':''}
       <div><div style="font-size:17px;font-weight:700;color:var(--teal)">${g.bet} ETB</div><div style="font-size:10px;color:#666">Bet</div></div>
       <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--gold)">${g.win} ETB</div><div style="font-size:10px;color:#666">Win (${activeLobbyPlayers} Players)</div></div>
-      <div><div class="pill ${g.status==='running'?'pill-run':'pill-wait'}" id="status-pill-${i}">${g.status}</div></div>
+      <div><div class="pill ${g.status==='running'?'pill-run':'pill-wait'}" id="status-pill-${i}">${statusText}</div></div>
       <button class="join-btn" onclick="joinGame(${i})">Join</button>
-    </div>`).join('');
+    </div>`}).join('');
+}
+
+// Automatic 40-second lobby countdown running on load for game boards
+function initLobbyCountdown() {
+  clearInterval(lobbyTimer);
+  lobbyTimer = setInterval(() => {
+    GAMES.forEach((g, idx) => {
+      if (g.status === 'waiting') {
+        g.countdown--;
+        if (g.countdown <= 0) {
+          g.countdown = 40;
+          // Loop and reset
+        }
+      }
+    });
+    renderLobby();
+  }, 1000);
 }
 
 function joinGame(i){
@@ -589,7 +614,6 @@ function renderCardGrid(){
 }
 
 function selectCard(n){
-  // Handle multi-select toggle mechanics
   if (selCard1 === n) {
     selCard1 = selCard2;
     selCard2 = null;
@@ -601,7 +625,6 @@ function selectCard(n){
     } else if (!selCard2) {
       selCard2 = n;
     } else {
-      // Both occupied: shift the selection (remove 1st, add new as 2nd)
       selCard1 = selCard2;
       selCard2 = n;
     }
@@ -643,13 +666,12 @@ function confirmJoin(){
     return;
   }
 
-  // Multi-player State Check (Test state: minimum 1 player)
   if (activeLobbyPlayers < 1) {
-    alert("ሌሎች ተጫዋቾች እስኪገቡ ድረስ ይጠብቁ..."); // wait until other people join in Amharic
-    startWaitingLoop();
+    alert("ሌሎች ተጫዋቾች እስኪገቡ ድረስ ይጠብቁ..."); 
     return;
   }
 
+  // Transitions to running ONLY right as calling actions fire
   selGame.status = 'running';
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
@@ -657,37 +679,15 @@ function confirmJoin(){
   startGame(); goTo('game');
 }
 
-function startWaitingLoop() {
-  goTo('lobby');
-  clearInterval(waitTimer);
-  waitSeconds = 10; // lower loop interval for smoother testing
-  
-  selGame.status = 'waiting';
-  renderLobby();
-
-  waitTimer = setInterval(() => {
-    waitSeconds--;
-    const currentPill = document.querySelector('.pill-wait');
-    if (currentPill) {
-      currentPill.innerHTML = `ሌሎች ተጫዋቾች እስኪገቡ ድረስ ይጠብቁ... (${waitSeconds}s)`;
-    }
-
-    if (waitSeconds <= 0) {
-      clearInterval(waitTimer);
-      activeLobbyPlayers = Math.floor(Math.random() * 5) + 1; // increase players automatically
-      confirmJoin();
-    }
-  }, 1000);
-}
-
 const LETS=['B','I','N','G','O'],CCLS={B:'ccB',I:'ccI',N:'ccN',G:'ccG',O:'ccO'};
+const COLOR_MAP={B:'var(--red)',I:'var(--blue)',N:'#38a169',G:'var(--orange)',O:'var(--purple)'};
 
 function toggleAutoMode() {
   isAutoMode = document.getElementById('auto-toggle').checked;
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
 }
 
-/* RENDERS COLUMNS VERTICALLY */
+/* RENDERS COLUMNS VERTICALLY WITH CUSTOM HEADER COLORS */
 function renderMasterBoard() {
   const letters = ['B', 'I', 'N', 'G', 'O'];
   let html = '';
@@ -699,9 +699,10 @@ function renderMasterBoard() {
       const isCalled = called.includes(i);
       numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called' : ''}">${i}</div>`;
     }
+    // Color matching applied directly to header tags
     html += `
       <div class="board-col">
-        <span class="board-letter-header" style="color: var(--teal); font-weight: bold;">${l}</span>
+        <span class="board-letter-header" style="color: ${COLOR_MAP[l]}">${l}</span>
         ${numbersHtml}
       </div>`;
   });
@@ -866,8 +867,13 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    // Calculate Payout: (Bet - 2) * players
-    const rewardPayout = (selGame.bet - 2) * activeLobbyPlayers;
+    // Safe custom margin reward payout calculation applied
+    let baseCut = 2;
+    if (selGame.bet === 20) baseCut = 4;
+    else if (selGame.bet === 50) baseCut = 6;
+    else if (selGame.bet === 100) baseCut = 10;
+
+    const rewardPayout = (selGame.bet - baseCut) * activeLobbyPlayers;
     walBal += rewardPayout;
     document.getElementById('lbal').textContent = walBal + ' ETB';
     
@@ -920,7 +926,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   document.getElementById('win-grid').innerHTML = html;
   document.getElementById('winner-popup').classList.add('active');
 
-  // Trigger 8-Second Auto-Close with dynamic visual HUD update
+  // Trigger 8-Second Auto-Close 
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   winnerCountdown = 8;
@@ -943,12 +949,19 @@ function closeWinnerModal() {
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
+  
+  // Instantly drop back to lobby status: waiting countdown state
+  selGame.status = 'waiting';
+  selGame.countdown = 40;
+  
   goTo('lobby');
   renderLobby();
 }
 
 function leaveGame(){
   clearInterval(gint);
+  selGame.status = 'waiting';
+  selGame.countdown = 40;
   goTo('lobby');
 }
 
@@ -975,6 +988,7 @@ setInterval(()=>{
 },1000);
 
 renderLobby();
+initLobbyCountdown();
 </script>
 </body>
 </html>

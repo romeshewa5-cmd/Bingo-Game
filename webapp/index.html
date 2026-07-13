@@ -145,16 +145,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px; /* Spaced out further vertically */
+  gap: 5px;
 }
 .board-letter-header {
-  font-size: 15px; /* Larger letter size */
+  font-size: 15px;
   font-weight: 900;
   margin-bottom: 8px;
   text-shadow: 0 0 6px rgba(255,255,255,0.1);
 }
 .board-num-vertical {
-  width: 22px; /* Bigger diameter */
+  width: 22px;
   height: 22px;
   border-radius: 50%;
   background: #1b263b;
@@ -162,7 +162,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px; /* Highly legible */
+  font-size: 10px;
   font-weight: 800;
 }
 .board-num-vertical.called {
@@ -359,7 +359,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="game-list" id="glist"></div>
   <div class="bnav">
     <div class="bni" onclick="toast('Leaderboard coming soon!')"><span style="font-size:20px">🏆</span>Leaderboard</div>
-    <div class="bni"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
+    <div class="bni" onclick="goTo('lobby')"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
     <div class="bni" onclick="toast('Profile coming soon!')"><span style="font-size:20px">👤</span>Profile</div>
   </div>
 </div>
@@ -985,7 +985,10 @@ function leaveGame(){
 
 function goTo(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('sc-'+n).classList.add('active');
+  const target = document.getElementById('sc-'+n);
+  if (target) {
+    target.classList.add('active');
+  }
   window.scrollTo(0,0);
 }
 
@@ -1005,7 +1008,11 @@ setInterval(()=>{
   document.getElementById('ts').textContent=String(s).padStart(2,'0');
 },1000);
 
-// 2. Safely trigger rendering once elements are fully declared
-renderLobby();
-initLobbyCountdown();
+// Initialize everything on load after DOM elements exist
+window.addEventListener('DOMContentLoaded', () => {
+  renderLobby();
+  initLobbyCountdown();
+});
 </script>
+</body>
+</html>

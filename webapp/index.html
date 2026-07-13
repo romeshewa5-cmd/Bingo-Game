@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Bingo Bot</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh}
+:root{--gold:#f0b429;--teal:#1bc8a0;--card:#162032;--card2:#1e2d44;--red:#e53e3e;--orange:#f6813a;--blue:#3182ce;--purple:#805ad5}
+.screen{display:none}.screen.active{display:block}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--card2);position:sticky;top:0;z-index:10}
+.nav-title{font-size:17px;font-weight:700}.nav-sub{font-size:11px;color:var(--teal)}
+.nav-back{color:var(--teal);font-size:13px;cursor:pointer}
+.banner{margin:12px;background:linear-gradient(135deg,#0d3b2e,#1a5c48);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid #2a6b55}
+.timer{display:flex;gap:6px;margin-top:6px}
+.tbox{background:rgba(0,0,0,.3);border-radius:6px;padding:3px 7px;text-align:center}
+.tnum{font-size:14px;font-weight:700;color:var(--teal);display:block}.tlbl{font-size:9px;color:#9ee8cc}
+.wallet{margin:0 12px 10px;background:var(--card);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--card2)}
+.game-list{padding:0 12px;display:flex;flex-direction:column;gap:8px;padding-bottom:90px}
+.game-row{background:var(--card);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--card2);position:relative;overflow:hidden}
+.bonus-tag{position:absolute;top:6px;left:-6px;background:var(--gold);color:#000;font-size:7px;font-weight:800;padding:2px 12px;transform:rotate(-35deg)}
+.join-btn{background:var(--orange);color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;border:none;cursor:pointer}
+.join-btn:active{opacity:.8}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px}
+.pill-wait{background:var(--card2);color:#888}.pill-run{background:#0d3b2e;color:var(--teal)}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--card2);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;font-size:10px;color:#666}
+.bni-play{background:var(--gold);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+.stats-bar{padding:10px 12px;background:var(--card2);display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--card)}
+.chip{background:var(--card);border-radius:20px;padding:4px 10px;font-size:11px;color:#aaa}
+.chip b{color:var(--teal)}
+.cartela-wrap{margin:10px 12px;background:var(--card2);border-radius:12px;padding:12px}
+.ch{display:flex;gap:4px;margin-bottom:4px}
+.col-h{flex:1;text-align:center;font-size:13px;font-weight:800}
+.cB{color:var(--red)}.cI{color:var(--blue)}.cN{color:#38a169}.cG{color:var(--orange)}.cO{color:var(--purple)}
+.crow{display:flex;gap:4px;margin-bottom:4px}
+.cc{flex:1;background:var(--card);border-radius:6px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
+.cc.free{background:#0d3b2e;color:var(--teal)}
+.card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px}
+.cn{background:var(--card2);border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#888;cursor:pointer;border:1px solid transparent;transition:all .1s}
+.cn.sel{background:var(--teal);color:#000;border-color:#0d8c6a}
+.cn:active{transform:scale(.88)}
+.start-btn{display:block;width:calc(100% - 24px);margin:12px 12px 90px;background:var(--orange);color:#fff;font-size:16px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer}
+.gstats{display:flex;padding:8px 10px;gap:5px;overflow-x:auto;border-bottom:1px solid var(--card2)}
+.gs{background:var(--card2);border-radius:8px;padding:4px 10px;text-align:center;white-space:nowrap;flex-shrink:0}
+.gsv{font-size:14px;font-weight:700;color:var(--teal)}.gsl{font-size:9px;color:#666}
+.callarea{margin:8px 12px;display:flex;gap:8px}
+.cdbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:1}
+.ccbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:2;display:flex;align-items:center;justify-content:space-between}
+.circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
+.ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
+.bcard{margin:6px 12px;background:var(--card2);border-radius:12px;padding:10px}
+.bhead{display:flex;gap:4px;margin-bottom:4px}
+.brow{display:flex;gap:4px;margin-bottom:4px}
+.bcell{flex:1;aspect-ratio:1;background:var(--card);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#bbb;border:1px solid var(--card2);cursor:pointer;transition:all .12s;user-select:none}
+.bcell.mk{background:#0d3b2e;color:var(--teal);border-color:var(--teal)}
+.bcell.free{background:#0d3b2e;color:var(--teal)}
+.bcell:active{transform:scale(.88)}
+.bingo-btn{display:block;width:calc(100% - 24px);margin:0 12px 8px;background:var(--orange);color:#fff;font-size:16px;font-weight:700;padding:13px;border-radius:12px;border:none;cursor:pointer}
+.gactions{display:flex;gap:8px;padding:0 12px 90px}
+.lbtn{flex:1;background:var(--red);color:#fff;font-size:13px;font-weight:700;padding:12px;border-radius:10px;border:none;cursor:pointer}
+.rbtn{flex:1;background:var(--blue);color:#fff;font-size:13px;font-weight:700;padding:12px;border-radius:10px;border:none;cursor:pointer}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--teal);color:#000;font-size:13px;font-weight:700;padding:10px 20px;border-radius:20px;display:none;z-index:999;white-space:nowrap;max-width:90%;text-align:center}
+.toast.show{display:block;animation:fio 2.8s ease forwards}
+@keyframes fio{0%,100%{opacity:0}15%,80%{opacity:1}}
+.slbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;padding:0 16px 8px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- LOBBY -->
+<div class="screen active" id="sc-lobby">
+  <div class="nav">
+    <div><div class="nav-title">🎮 Bingo Bot</div><div class="nav-sub" id="usub">18,510 players</div></div>
+    <div style="font-size:11px;color:#555">v1.0</div>
+  </div>
+  <div class="banner">
+    <div>
+      <div style="font-size:11px;color:#9ee8cc;margin-bottom:4px">🎉 ሳምንታዊ ውድድር</div>
+      <div style="font-size:13px;font-weight:700">Weekly Tournament</div>
+      <div class="timer">
+        <div class="tbox"><span class="tnum" id="td">06</span><span class="tlbl">DAYS</span></div>
+        <div class="tbox"><span class="tnum" id="th">14</span><span class="tlbl">HRS</span></div>
+        <div class="tbox"><span class="tnum" id="tm">57</span><span class="tlbl">MIN</span></div>
+        <div class="tbox"><span class="tnum" id="ts">00</span><span class="tlbl">SEC</span></div>
+      </div>
+    </div>
+    <div style="text-align:right"><div style="font-size:22px">🏆</div><div style="font-size:22px;font-weight:800;color:var(--gold)">20,000</div><div style="font-size:10px;color:#aaa">ETB PRIZE</div></div>
+  </div>
+  <div class="wallet">
+    <div><div style="font-size:12px;color:#888">💳 Wallet Balance</div><div style="font-size:20px;font-weight:700" id="lbal">-- ETB</div></div>
+    <div style="font-size:12px;color:var(--teal);cursor:pointer" onclick="toast('Use /deposit in the bot to add funds')">+ Deposit</div>
+  </div>
+  <div class="slbl">Choose a game</div>
+  <div class="game-list" id="glist"></div>
+  <div class="bnav">
+    <div class="bni" onclick="toast('Leaderboard coming soon!')"><span style="font-size:20px">🏆</span>Leaderboard</div>
+    <div class="bni"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
+    <div class="bni" onclick="toast('Profile coming soon!')"><span style="font-size:20px">👤</span>Profile</div>
+  </div>
+</div>
+
+<!-- CARD PICKER -->
+<div class="screen" id="sc-cards">
+  <div class="nav">
+    <div class="nav-back" onclick="goTo('lobby')">← Back</div>
+    <div class="nav-title">Select Card</div>
+    <div></div>
+  </div>
+  <div class="stats-bar">
+    <div class="chip">Wallet: <b id="cpw">--</b> ETB</div>
+    <div class="chip">Stake: <b id="cps">--</b> ETB</div>
+    <div class="chip">Active: <b>1</b></div>
+    <div class="chip">Bonus: <b>0</b></div>
+  </div>
+  <div class="cartela-wrap">
+    <div style="font-size:11px;color:#666;margin-bottom:8px">Card Preview — tap a number below to select</div>
+    <div class="ch">
+      <div class="col-h cB">B</div><div class="col-h cI">I</div>
+      <div class="col-h cN">N</div><div class="col-h cG">G</div>
+      <div class="col-h cO">O</div>
+    </div>
+    <div id="cart-rows"></div>
+    <div style="text-align:center;font-size:11px;color:#666;margin-top:4px" id="cart-lbl">Cartela #117</div>
+  </div>
+  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 120 cards — tap to preview</div>
+  <div class="card-grid" id="cgrid"></div>
+  <button class="start-btn" onclick="confirmJoin()">✅ Start Game</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="sc-game">
+  <div class="nav">
+    <div class="nav-back" onclick="leaveGame()">✕ Leave</div>
+    <div class="nav-title">Wana Bingo</div>
+    <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
+  </div>
+  <div class="gstats">
+    <div class="gs"><div class="gsv" id="gg">0</div><div class="gsl">Games</div></div>
+    <div class="gs"><div class="gsv" id="gd">304</div><div class="gsl">Derash</div></div>
+    <div class="gs"><div class="gsv" id="gp">38</div><div class="gsl">Players</div></div>
+    <div class="gs"><div class="gsv" id="gb">10</div><div class="gsl">Bet</div></div>
+    <div class="gs"><div class="gsv" id="gcl">0</div><div class="gsl">Call</div></div>
+    <div class="gs"><div class="gsv">300</div><div class="gsl">Bonus</div></div>
+  </div>
+  <div class="callarea">
+    <div class="cdbox">
+      <div style="font-size:10px;color:#666">Countdown</div>
+      <div style="font-size:30px;font-weight:800;color:var(--teal);line-height:1.1" id="gcd">--</div>
+    </div>
+    <div class="ccbox">
+      <div>
+        <div style="font-size:10px;color:#666">Current Call</div>
+        <div style="font-size:12px;color:#888;margin-top:4px" id="ghist">Waiting…</div>
+      </div>
+      <div class="circle" id="gcir" style="background:#333">--</div>
+    </div>
+  </div>
+  <div class="bcard">
+    <div class="bhead">
+      <div class="col-h cB">B</div><div class="col-h cI">I</div>
+      <div class="col-h cN">N</div><div class="col-h cG">G</div>
+      <div class="col-h cO">O</div>
+    </div>
+    <div id="brows"></div>
+  </div>
+  <div style="text-align:center;font-size:12px;color:#666;padding:4px 0 8px" id="gclbl">Cartela #117</div>
+  <button class="bingo-btn" onclick="claimBingo()">🎉 Bingo!</button>
+  <div class="gactions">
+    <button class="lbtn" onclick="leaveGame()">Leave Game</button>
+    <button class="rbtn" onclick="renderCard()">Refresh</button>
+  </div>
+</div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready(); tg.expand();
+const TGuser = tg.initDataUnsafe?.user;
+if (TGuser) document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
+
+const GAMES = [
+  {bet:10, win:336,status:'running',bonus:false},
+  {bet:20, win:0,  status:'waiting',bonus:true},
+  {bet:50, win:0,  status:'waiting',bonus:false},
+  {bet:80, win:0,  status:'waiting',bonus:false},
+  {bet:100,win:0,  status:'waiting',bonus:true},
+  {bet:150,win:0,  status:'waiting',bonus:false},
+  {bet:300,win:0,  status:'waiting',bonus:true},
+];
+
+let selGame=GAMES[0], selCard=117, marked=new Set(), called=[], gint=null, cd=30, cardCache={};
+let walBal = 50;
+
+function seededRand(s){return()=>{s=(s*1664525+1013904223)&0xFFFFFFFF;return(s>>>0)/0xFFFFFFFF}}
+function genCard(n){
+  if(cardCache[n])return cardCache[n];
+  const r=seededRand(n*31337),ranges=[[1,15],[16,30],[31,45],[46,60],[61,75]];
+  const card=ranges.map(([lo,hi])=>{
+    const pool=[];for(let i=lo;i<=hi;i++)pool.push(i);
+    const picks=[];while(picks.length<5){const idx=Math.floor(r()*pool.length);picks.push(pool.splice(idx,1)[0]);}
+    return picks;
+  });
+  card[2][2]=0;cardCache[n]=card;return card;
+}
+
+function renderLobby(){
+  document.getElementById('lbal').textContent=walBal+' ETB';
+  document.getElementById('glist').innerHTML=GAMES.map((g,i)=>`
+    <div class="game-row">
+      ${g.bonus?'<div class="bonus-tag">BONUS</div>':''}
+      <div><div style="font-size:17px;font-weight:700;color:var(--teal)">${g.bet} ETB</div><div style="font-size:10px;color:#666">Bet</div></div>
+      <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--gold)">${g.win?g.win+' ETB':'0 ETB'}</div><div style="font-size:10px;color:#666">Win</div></div>
+      <div><div class="pill ${g.status==='running'?'pill-run':'pill-wait'}">${g.status}</div></div>
+      <button class="join-btn" onclick="joinGame(${i})">Join</button>
+    </div>`).join('');
+}
+
+function joinGame(i){
+  selGame=GAMES[i];
+  if(walBal<selGame.bet){toast('❌ Insufficient balance! Use /deposit in bot.');return;}
+  document.getElementById('cpw').textContent=walBal;
+  document.getElementById('cps').textContent=selGame.bet;
+  renderCardGrid(); goTo('cards');
+}
+
+function renderCardGrid(){
+  const g=document.getElementById('cgrid'); g.innerHTML='';
+  for(let n=1;n<=120;n++){
+    const d=document.createElement('div');
+    d.className='cn'+(n===selCard?' sel':'');
+    d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
+  }
+  renderCartela(selCard);
+}
+function selectCard(n){
+  selCard=n;
+  document.querySelectorAll('.cn').forEach((el,i)=>el.classList.toggle('sel',i+1===n));
+  renderCartela(n);
+}
+function renderCartela(n){
+  const card=genCard(n);let html='';
+  for(let r=0;r<5;r++){
+    html+='<div class="crow">';
+    for(let c=0;c<5;c++){const v=card[c][r];html+=`<div class="cc ${v===0?'free':''}">${v===0?'★':v}</div>`;}
+    html+='</div>';
+  }
+  document.getElementById('cart-rows').innerHTML=html;
+  document.getElementById('cart-lbl').textContent=`Cartela #${n}`;
+}
+
+function confirmJoin(){
+  const data=JSON.stringify({action:'join_game',bet:selGame.bet,card:selCard,user_id:TGuser?.id});
+  tg.sendData(data);
+  marked=new Set(); called=[];
+  startGame(); goTo('game');
+}
+
+const LETS=['B','I','N','G','O'],CCLS={B:'ccB',I:'ccI',N:'ccN',G:'ccG',O:'ccO'};
+function renderCard(){
+  const card=genCard(selCard);let html='';
+  for(let r=0;r<5;r++){
+    html+='<div class="brow">';
+    for(let c=0;c<5;c++){
+      const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
+      html+=`<div class="bcell ${mk?'mk':''} ${v===0?'free':''}" onclick="markCell('${key}',${c},${r})">${v===0?'★':v}</div>`;
+    }
+    html+='</div>';
+  }
+  document.getElementById('brows').innerHTML=html;
+  document.getElementById('gclbl').textContent=`Cartela #${selCard}`;
+  document.getElementById('gb').textContent=selGame.bet;
+}
+function markCell(key,c,r){
+  const v=genCard(selCard)[c][r]; if(v===0)return;
+  if(called.includes(v)){marked.has(key)?marked.delete(key):marked.add(key);renderCard();}
+  else toast('Number not called yet!');
+}
+
+function startGame(){
+  cd=30; clearInterval(gint);
+  document.getElementById('gcd').textContent=cd;
+  document.getElementById('gcir').textContent='--';
+  document.getElementById('gcir').className='circle';
+  document.getElementById('gcir').style.background='#333';
+  document.getElementById('ghist').textContent='Waiting…';
+  const pl=20+Math.floor(Math.random()*30);
+  document.getElementById('gp').textContent=pl;
+  document.getElementById('gpc').textContent=pl+' players';
+  document.getElementById('gd').textContent=Math.floor(Math.random()*200)+200;
+  renderCard();
+  gint=setInterval(()=>{
+    cd--;document.getElementById('gcd').textContent=cd;
+    if(cd<=0){callNum();cd=8;}
+  },1000);
+}
+function callNum(){
+  const all=Array.from({length:75},(_,i)=>i+1),left=all.filter(n=>!called.includes(n));
+  if(!left.length){clearInterval(gint);return;}
+  const n=left[Math.floor(Math.random()*left.length)];
+  called.push(n);
+  const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
+  const el=document.getElementById('gcir');
+  el.textContent=n; el.className=`circle ${CCLS[L]}`; el.style.background='';
+  document.getElementById('ghist').textContent=called.slice(-5).reverse().join(' · ');
+  document.getElementById('gcl').textContent=called.length;
+  renderCard();
+}
+
+function claimBingo(){
+  clearInterval(gint);
+  const card=genCard(selCard),m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
+  let won=false;
+  for(let i=0;i<5;i++){
+    if([0,1,2,3,4].every(j=>m(j,i)))won=true;
+    if([0,1,2,3,4].every(j=>m(i,j)))won=true;
+  }
+  if([0,1,2,3,4].every(i=>m(i,i)))won=true;
+  if([0,1,2,3,4].every(i=>m(i,4-i)))won=true;
+  if(won){
+    tg.sendData(JSON.stringify({action:'bingo_claim',card:selCard,bet:selGame.bet}));
+    toast('🎉 BINGO! Claim sent for verification!');
+  }else{
+    toast('❌ No complete line yet — keep playing!');
+    startGame();
+  }
+}
+
+function leaveGame(){clearInterval(gint);goTo('lobby');}
+function goTo(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-'+n).classList.add('active');
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show';
+  setTimeout(()=>el.className='toast',3000);
+}
+
+let tsec=6*86400+14*3600+57*60;
+setInterval(()=>{
+  tsec=Math.max(0,tsec-1);
+  const d=Math.floor(tsec/86400),h=Math.floor(tsec%86400/3600),m=Math.floor(tsec%3600/60),s=tsec%60;
+  document.getElementById('td').textContent=String(d).padStart(2,'0');
+  document.getElementById('th').textContent=String(h).padStart(2,'0');
+  document.getElementById('tm').textContent=String(m).padStart(2,'0');
+  document.getElementById('ts').textContent=String(s).padStart(2,'0');
+},1000);
+
+renderLobby();
+</script>
+</body>
+</html>

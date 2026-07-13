@@ -112,47 +112,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
 .ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
 
-/* STRICT HORIZONTAL SPLIT LAYOUT */
+/* HORIZONTAL SPLIT LAYOUT */
 .game-container {
   display: flex;
-  flex-direction: row; /* Forces horizontal alignment on ALL screens */
+  flex-direction: row;
   gap: 10px;
   padding: 0 8px;
   align-items: flex-start;
 }
 .left-panel {
-  flex: 1.1;
+  flex: 1.2;
   background: var(--card2);
   border-radius: 12px;
   padding: 8px;
 }
 .right-panel {
-  flex: 1.9;
+  flex: 1.8;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
-.board-row {
+
+/* VERTICAL MASTER BOARD COLUMNS */
+.board-columns-container {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 6px;
-  background: var(--card);
-  padding: 4px 6px;
-  border-radius: 6px;
-}
-.board-letter {
-  font-size: 14px;
-  font-weight: 900;
-  width: 15px;
-  text-align: center;
-}
-.board-numbers {
-  display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   gap: 2px;
+  margin-top: 4px;
 }
-.board-num {
+.board-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.board-letter-header {
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+.board-num-vertical {
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -164,11 +164,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   font-size: 8px;
   font-weight: bold;
 }
-.board-num.called {
+.board-num-vertical.called {
   background: var(--teal);
   color: #000;
   box-shadow: 0 0 5px var(--teal);
 }
+
 .auto-control {
   display: flex;
   align-items: center;
@@ -205,14 +206,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 input:checked + .slider { background-color: var(--teal); }
 input:checked + .slider:before { transform: translateX(18px); }
 
-.cards-wrapper {
+/* VERTICAL CARDS STACKED TOP & BOTTOM */
+.cards-wrapper-vertical {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  gap: 8px;
 }
 .card-unit {
-  flex: 1;
   background: var(--card2);
-  padding: 6px;
+  padding: 8px;
   border-radius: 10px;
 }
 .bhead-mini {
@@ -227,13 +229,13 @@ input:checked + .slider:before { transform: translateX(18px); }
 }
 .bcell {
   flex: 1;
-  aspect-ratio: 1;
+  aspect-ratio: 1.2; /* slightly wider to optimize vertical screen height */
   background: var(--card);
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: #bbb;
   border: 1px solid var(--card2);
@@ -371,7 +373,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="stats-bar">
     <div class="chip">Wallet: <b id="cpw">--</b> ETB</div>
     <div class="chip">Stake (2x): <b id="cps">--</b> ETB</div>
-    <div class="chip">Active Cards: <b>2</b></div>
+    <div class="chip">Active Cards: <b id="cac">2</b></div>
     <div class="chip">Bonus: <b>0</b></div>
   </div>
   <div class="cartela-wrap">
@@ -407,20 +409,20 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 
   <div class="game-container">
-    <!-- Left Column: Master Caller Board & Auto Trigger -->
+    <!-- Left Column: Master Caller Board (Vertical Columns B I N G O) -->
     <div class="left-panel">
       <div class="auto-control">
-        <span style="font-weight:bold; font-size:10px; color:#fff;">⚡ Auto-Mark</span>
+        <span style="font-weight:bold; font-size:9px; color:#fff;">⚡ Auto</span>
         <label class="switch">
           <input type="checkbox" id="auto-toggle" onchange="toggleAutoMode()">
           <span class="slider"></span>
         </label>
       </div>
       <div style="font-size:9px; color:#888; text-transform:uppercase; margin-bottom:8px; font-weight:bold; text-align:center;">Board</div>
-      <div id="master-board"></div>
+      <div id="master-board" class="board-columns-container"></div>
     </div>
 
-    <!-- Right Column: Playing Cartelas & Caller Circle -->
+    <!-- Right Column: Playing Cartelas Stacked Vertically & Caller Circle -->
     <div class="right-panel">
       <div class="callarea" style="margin:0; padding:0;">
         <div class="cdbox" style="padding: 6px;">
@@ -436,7 +438,8 @@ input:checked + .slider:before { transform: translateX(18px); }
         </div>
       </div>
 
-      <div class="cards-wrapper">
+      <!-- Two Cartelas stacked vertically -->
+      <div class="cards-wrapper-vertical">
         <!-- Cartela #1 Unit -->
         <div class="card-unit">
           <div class="bhead-mini">
@@ -469,16 +472,18 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- Winner Announcement Popup with Live Grid -->
+<!-- Winner Announcement Popup with Live Grid and Auto-Close Timer -->
 <div id="winner-popup" class="winner-popup-container">
   <div class="winner-card-body">
     <div style="font-size: 35px; margin-bottom: 8px;">👑</div>
     <div id="win-head" style="font-weight: 800; font-size: 20px; color: var(--gold); margin-bottom: 5px;">Player Name</div>
     <div id="win-sub" style="font-size: 14px; color: #fff; margin-bottom: 12px;">Winning Card: #--</div>
     
-    <!-- This renders the visual winning pattern grid -->
-    <div id="win-grid" style="display: flex; flex-direction: column; gap: 4px; margin: 0 auto 20px auto; width: fit-content; background: #111; padding: 6px; border-radius: 8px;"></div>
+    <!-- Visual winning pattern grid -->
+    <div id="win-grid" style="display: flex; flex-direction: column; gap: 4px; margin: 0 auto 15px auto; width: fit-content; background: #111; padding: 6px; border-radius: 8px;"></div>
     
+    <!-- Auto-Close Countdown HUD -->
+    <div id="win-timer" style="font-size: 11px; color: var(--teal); margin-bottom: 12px; font-weight: bold;">Closing in 8s...</div>
     <button class="join-btn" onclick="closeWinnerModal()" style="width:100%; border-radius:10px;">Return to Lobby</button>
   </div>
 </div>
@@ -493,22 +498,27 @@ if (TGuser) {
 }
 
 const GAMES = [
-  {bet:10,  win:336, status:'waiting', bonus:false},
-  {bet:20,  win:0,   status:'waiting', bonus:true},
-  {bet:50,  win:0,   status:'waiting', bonus:false},
-  {bet:80,  win:0,   status:'waiting', bonus:false},
-  {bet:100, win:0,   status:'waiting', bonus:true},
-  {bet:150, win:0,   status:'waiting', bonus:false},
-  {bet:300, win:0,   status:'waiting', bonus:true},
+  {bet:10,  win:0, status:'waiting', bonus:false},
+  {bet:20,  win:0, status:'waiting', bonus:true},
+  {bet:50,  win:0, status:'waiting', bonus:false},
+  {bet:80,  win:0, status:'waiting', bonus:false},
+  {bet:100, win:0, status:'waiting', bonus:true},
+  {bet:150, win:0, status:'waiting', bonus:false},
+  {bet:300, win:0, status:'waiting', bonus:true},
 ];
 
-let selGame = GAMES[0], selCard1 = 117, selCard2 = 118; 
+// Default selected cards
+let selCard1 = 117, selCard2 = 118; 
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
-let walBal = 50; 
+let walBal = 150; 
 let waitTimer = null;
 let waitSeconds = 40;
 let isAutoMode = false;
+let winnerPopupTimeout = null;
+let winnerPopupInterval = null;
+let winnerCountdown = 8;
+let activeLobbyPlayers = 1; // Lowered multiplayer test threshold to 1 for quick testing
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -534,13 +544,21 @@ function genCard(n){
   card[2][2]=0;cardCache[n]=card;return card;
 }
 
+function calculateWinningAmounts() {
+  GAMES.forEach(g => {
+    // Calculations: (Bet - 2) * players
+    g.win = (g.bet - 2) * activeLobbyPlayers;
+  });
+}
+
 function renderLobby(){
   document.getElementById('lbal').textContent = walBal + ' ETB';
+  calculateWinningAmounts();
   document.getElementById('glist').innerHTML = GAMES.map((g,i)=>`
     <div class="game-row">
       ${g.bonus?'<div class="bonus-tag">BONUS</div>':''}
       <div><div style="font-size:17px;font-weight:700;color:var(--teal)">${g.bet} ETB</div><div style="font-size:10px;color:#666">Bet</div></div>
-      <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--gold)">${g.win?g.win+' ETB':'0 ETB'}</div><div style="font-size:10px;color:#666">Win</div></div>
+      <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--gold)">${g.win} ETB</div><div style="font-size:10px;color:#666">Win (${activeLobbyPlayers} Players)</div></div>
       <div><div class="pill ${g.status==='running'?'pill-run':'pill-wait'}" id="status-pill-${i}">${g.status}</div></div>
       <button class="join-btn" onclick="joinGame(${i})">Join</button>
     </div>`).join('');
@@ -566,27 +584,45 @@ function renderCardGrid(){
     else if(n===selCard2) d.classList.add('sel2');
     d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
   }
-  renderCartela(selCard1);
+  renderCartela(selCard2 ? selCard2 : selCard1);
+  updateActiveCardCountHUD();
 }
 
 function selectCard(n){
-  if(n === selCard1){
-    return;
-  }
-  if(n === selCard2){
+  // Handle multi-select toggle mechanics
+  if (selCard1 === n) {
+    selCard1 = selCard2;
+    selCard2 = null;
+  } else if (selCard2 === n) {
     selCard2 = null;
   } else {
-    selCard2 = n;
+    if (!selCard1) {
+      selCard1 = n;
+    } else if (!selCard2) {
+      selCard2 = n;
+    } else {
+      // Both occupied: shift the selection (remove 1st, add new as 2nd)
+      selCard1 = selCard2;
+      selCard2 = n;
+    }
   }
-  
+
   document.querySelectorAll('.cn').forEach((el, i) => {
     const cardNum = i + 1;
     el.classList.remove('sel', 'sel2');
     if (cardNum === selCard1) el.classList.add('sel');
     else if (cardNum === selCard2) el.classList.add('sel2');
   });
-  
-  renderCartela(selCard2 ? selCard2 : selCard1);
+
+  renderCartela(selCard2 ? selCard2 : (selCard1 ? selCard1 : 117));
+  updateActiveCardCountHUD();
+}
+
+function updateActiveCardCountHUD() {
+  let activeCount = 0;
+  if(selCard1) activeCount++;
+  if(selCard2) activeCount++;
+  document.getElementById('cac').textContent = activeCount;
 }
 
 function renderCartela(n){
@@ -607,10 +643,9 @@ function confirmJoin(){
     return;
   }
 
-  const activePlayers = Math.floor(Math.random() * 5) + 1; 
-
-  if (activePlayers < 3) {
-    alert(`⏳ Not enough players (${activePlayers}/3). Entering lobby cooldown queue...`);
+  // Multi-player State Check (Test state: minimum 1 player)
+  if (activeLobbyPlayers < 1) {
+    alert("ሌሎች ተጫዋቾች እስኪገቡ ድረስ ይጠብቁ..."); // wait until other people join in Amharic
     startWaitingLoop();
     return;
   }
@@ -625,7 +660,7 @@ function confirmJoin(){
 function startWaitingLoop() {
   goTo('lobby');
   clearInterval(waitTimer);
-  waitSeconds = 40;
+  waitSeconds = 10; // lower loop interval for smoother testing
   
   selGame.status = 'waiting';
   renderLobby();
@@ -634,12 +669,12 @@ function startWaitingLoop() {
     waitSeconds--;
     const currentPill = document.querySelector('.pill-wait');
     if (currentPill) {
-      currentPill.textContent = `waiting (${waitSeconds}s)`;
+      currentPill.innerHTML = `ሌሎች ተጫዋቾች እስኪገቡ ድረስ ይጠብቁ... (${waitSeconds}s)`;
     }
 
     if (waitSeconds <= 0) {
       clearInterval(waitTimer);
-      waitSeconds = 40;
+      activeLobbyPlayers = Math.floor(Math.random() * 5) + 1; // increase players automatically
       confirmJoin();
     }
   }, 1000);
@@ -652,6 +687,7 @@ function toggleAutoMode() {
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
 }
 
+/* RENDERS COLUMNS VERTICALLY */
 function renderMasterBoard() {
   const letters = ['B', 'I', 'N', 'G', 'O'];
   let html = '';
@@ -661,12 +697,12 @@ function renderMasterBoard() {
     let numbersHtml = '';
     for (let i = start; i <= end; i++) {
       const isCalled = called.includes(i);
-      numbersHtml += `<div class="board-num ${isCalled ? 'called' : ''}">${i}</div>`;
+      numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called' : ''}">${i}</div>`;
     }
     html += `
-      <div class="board-row">
-        <span class="board-letter" style="color: var(--teal); font-weight: bold;">${l}</span>
-        <div class="board-numbers">${numbersHtml}</div>
+      <div class="board-col">
+        <span class="board-letter-header" style="color: var(--teal); font-weight: bold;">${l}</span>
+        ${numbersHtml}
       </div>`;
   });
   document.getElementById('master-board').innerHTML = html;
@@ -677,7 +713,7 @@ function renderGameCard(cardNumber){
   const marked = cardNumber === 1 ? marked1 : marked2;
   
   if(!selCard) {
-    document.getElementById(`brows${cardNumber}`).innerHTML = '<div style="padding:40px; color:#555; text-align:center; font-size:10px;">Disabled</div>';
+    document.getElementById(`brows${cardNumber}`).innerHTML = '<div style="padding:20px; color:#555; text-align:center; font-size:10px;">Disabled</div>';
     document.getElementById(`gclbl${cardNumber}`).textContent='No Card';
     return;
   }
@@ -721,7 +757,7 @@ function startGame(){
   document.getElementById('gcir').style.background = '#333';
   document.getElementById('ghist').textContent = 'Waiting…';
   
-  const pl=20+Math.floor(Math.random()*30);
+  const pl = activeLobbyPlayers;
   document.getElementById('gp').textContent=pl;
   document.getElementById('gpc').textContent=pl+' players';
   document.getElementById('gd').textContent=Math.floor(Math.random()*200)+200;
@@ -735,7 +771,7 @@ function startGame(){
   
   gint = setInterval(() => {
     callNum();
-    if(Math.random() < 0.015 && called.length > 5) {
+    if(Math.random() < 0.02 && called.length > 5) {
        simulateOpponentWin();
     }
   }, 2000); 
@@ -830,7 +866,8 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    const rewardPayout = selGame.win > 0 ? selGame.win : ((selGame.bet * 2) * 3);
+    // Calculate Payout: (Bet - 2) * players
+    const rewardPayout = (selGame.bet - 2) * activeLobbyPlayers;
     walBal += rewardPayout;
     document.getElementById('lbal').textContent = walBal + ' ETB';
     
@@ -882,9 +919,29 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   
   document.getElementById('win-grid').innerHTML = html;
   document.getElementById('winner-popup').classList.add('active');
+
+  // Trigger 8-Second Auto-Close with dynamic visual HUD update
+  clearTimeout(winnerPopupTimeout);
+  clearInterval(winnerPopupInterval);
+  winnerCountdown = 8;
+  document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
+
+  winnerPopupInterval = setInterval(() => {
+    winnerCountdown--;
+    document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
+    if(winnerCountdown <= 0) {
+       clearInterval(winnerPopupInterval);
+    }
+  }, 1000);
+
+  winnerPopupTimeout = setTimeout(() => {
+    closeWinnerModal();
+  }, 8000);
 }
 
 function closeWinnerModal() {
+  clearTimeout(winnerPopupTimeout);
+  clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   goTo('lobby');
   renderLobby();

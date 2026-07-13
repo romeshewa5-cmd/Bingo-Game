@@ -181,7 +181,11 @@ const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 const TGuser = tg.initDataUnsafe?.user;
 if (TGuser) document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
-
+// Syncs your live ETB database balance straight into your mobile game screen
+if (tg.initDataUnsafe?.start_param) {
+    walBal = parseFloat(tg.initDataUnsafe.start_param) || 50;
+}
+document.getElementById('lbal').textContent = walBal + ' ETB';
 const GAMES = [
   {bet:10, win:336,status:'running',bonus:false},
   {bet:20, win:0,  status:'waiting',bonus:true},
@@ -221,8 +225,15 @@ function renderLobby(){
 
 function joinGame(i){
   selGame=GAMES[i];
-  if(walBal<selGame.bet){toast('❌ Insufficient balance! Use /deposit in bot.');return;}
-  document.getElementById('cpw').textContent=walBal;
+  
+  // Try to read the real balance from your UI element, otherwise fallback to walBal
+  let currentBalance = parseFloat(document.getElementById('lbal').textContent) || walBal;
+  
+  if(currentBalance < selGame.bet){
+    alert('❌ Insufficient balance! Please deposit funds via the bot.');
+    return;
+  }
+  document.getElementById('cpw').textContent=currentBalance;
   document.getElementById('cps').textContent=selGame.bet;
   renderCardGrid(); goTo('cards');
 }
@@ -253,11 +264,18 @@ function renderCartela(n){
 }
 
 function confirmJoin(){
-  // Prevent starting if the player doesn't have enough money
-  if (walBal < selGame.bet) {
-    toast('❌ Insufficient balance! Go back and deposit funds.');
+  let currentBalance = parseFloat(document.getElementById('cpw').textContent) || walBal;
+
+  if (currentBalance < selGame.bet) {
+    alert('❌ Insufficient balance to start this game!');
     return;
   }
+
+  const data=JSON.stringify({action:'join_game',bet:selGame.bet,card:selCard,user_id:TGuser?.id});
+  tg.sendData(data);
+  marked=new Set(); called=[];
+  startGame(); goTo('game');
+}
 
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card:selCard,user_id:TGuser?.id});
   tg.sendData(data);

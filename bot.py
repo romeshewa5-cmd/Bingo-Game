@@ -33,15 +33,16 @@ TRANSFER_USER,  TRANSFER_AMOUNT                 = range(5, 7)
 
 # ── Flask routes ──────────────────────────────────────────────────────────────
 # ── Flask routes ──────────────────────────────────────────────────────────────
+# ── Flask routes ──────────────────────────────────────────────────────────────
 @app.get("/")
 def index():
-    # This delivers your main HTML file when the app opens
-    return send_from_directory(".", "index.html")
+    # Looks inside the webapp folder for your main file
+    return send_from_directory("webapp", "index.html")
 
 @app.get("/<path:path>")
 def serve_static(path):
-    # This ensures your CSS, JS, or image assets load properly
-    return send_from_directory(".", path)
+    # Looks inside the webapp folder for any CSS, JS, or images
+    return send_from_directory("webapp", path)
 
 @app.get("/health")
 def health():

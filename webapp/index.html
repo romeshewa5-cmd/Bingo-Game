@@ -112,77 +112,77 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
 .ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
 
-/* Custom Layout additions */
+/* STRICT HORIZONTAL SPLIT LAYOUT */
 .game-container {
   display: flex;
-  gap: 16px;
-  padding: 0 12px;
-  flex-direction: row;
+  flex-direction: row; /* Forces horizontal alignment on ALL screens */
+  gap: 10px;
+  padding: 0 8px;
   align-items: flex-start;
 }
 .left-panel {
   flex: 1.1;
   background: var(--card2);
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
 }
 .right-panel {
   flex: 1.9;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .board-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 6px;
   background: var(--card);
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
 }
 .board-letter {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 900;
-  width: 20px;
+  width: 15px;
   text-align: center;
 }
 .board-numbers {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 2px;
 }
 .board-num {
-  width: 24px;
-  height: 24px;
+  width: 17px;
+  height: 17px;
   border-radius: 50%;
   background: #25334a;
   color: #556885;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: bold;
 }
 .board-num.called {
   background: var(--teal);
   color: #000;
-  box-shadow: 0 0 6px var(--teal);
+  box-shadow: 0 0 5px var(--teal);
 }
 .auto-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--card);
-  padding: 10px 12px;
+  padding: 8px;
   border-radius: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 22px;
+  width: 36px;
+  height: 18px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
@@ -191,50 +191,50 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: #3e3e4f;
   transition: .3s;
-  border-radius: 22px;
+  border-radius: 18px;
 }
 .slider:before {
   position: absolute;
   content: "";
-  height: 16px; width: 16px;
+  height: 12px; width: 12px;
   left: 3px; bottom: 3px;
   background-color: white;
   transition: .3s;
   border-radius: 50%;
 }
 input:checked + .slider { background-color: var(--teal); }
-input:checked + .slider:before { transform: translateX(22px); }
+input:checked + .slider:before { transform: translateX(18px); }
 
 .cards-wrapper {
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 .card-unit {
   flex: 1;
   background: var(--card2);
-  padding: 10px;
-  border-radius: 12px;
+  padding: 6px;
+  border-radius: 10px;
 }
 .bhead-mini {
   display: flex;
-  gap: 4px;
-  margin-bottom: 4px;
+  gap: 2px;
+  margin-bottom: 2px;
 }
 .brow {
   display: flex;
-  gap: 4px;
-  margin-bottom: 4px;
+  gap: 2px;
+  margin-bottom: 2px;
 }
 .bcell {
   flex: 1;
   aspect-ratio: 1;
   background: var(--card);
-  border-radius: 6px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
   color: #bbb;
   border: 1px solid var(--card2);
   cursor: pointer;
@@ -257,26 +257,26 @@ input:checked + .slider:before { transform: translateX(22px); }
   width: 100%;
   background: var(--orange);
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 13px;
-  border-radius: 12px;
+  padding: 10px;
+  border-radius: 10px;
   border: none;
   cursor: pointer;
 }
 .gactions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 4px;
 }
 .lbtn {
   flex: 1;
   background: var(--red);
   color: #fff;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 10px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
 }
@@ -284,10 +284,10 @@ input:checked + .slider:before { transform: translateX(22px); }
   flex: 1;
   background: var(--blue);
   color: #fff;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 10px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
 }
@@ -323,15 +323,6 @@ input:checked + .slider:before { transform: translateX(22px); }
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 0 16px 8px;
-}
-
-@media (max-width: 768px) {
-  .game-container {
-    flex-direction: column-reverse;
-  }
-  .left-panel, .right-panel {
-    width: 100%;
-  }
 }
 </style>
 </head>
@@ -419,29 +410,29 @@ input:checked + .slider:before { transform: translateX(22px); }
     <!-- Left Column: Master Caller Board & Auto Trigger -->
     <div class="left-panel">
       <div class="auto-control">
-        <span style="font-weight:bold; font-size:12px; color:#fff;">⚡ Auto-Mark Mode</span>
+        <span style="font-weight:bold; font-size:10px; color:#fff;">⚡ Auto-Mark</span>
         <label class="switch">
           <input type="checkbox" id="auto-toggle" onchange="toggleAutoMode()">
           <span class="slider"></span>
         </label>
       </div>
-      <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:10px; font-weight:bold; text-align:center;">Called Numbers History</div>
+      <div style="font-size:9px; color:#888; text-transform:uppercase; margin-bottom:8px; font-weight:bold; text-align:center;">Board</div>
       <div id="master-board"></div>
     </div>
 
     <!-- Right Column: Playing Cartelas & Caller Circle -->
     <div class="right-panel">
       <div class="callarea" style="margin:0; padding:0;">
-        <div class="cdbox" style="padding: 10px;">
-          <div style="font-size:10px;color:#666">Status</div>
-          <div style="font-size:24px;font-weight:800;color:var(--teal);line-height:1.2" id="gcd">LIVE</div>
+        <div class="cdbox" style="padding: 6px;">
+          <div style="font-size:9px;color:#666">Status</div>
+          <div style="font-size:18px;font-weight:800;color:var(--teal);line-height:1.2" id="gcd">LIVE</div>
         </div>
-        <div class="ccbox" style="padding: 10px;">
+        <div class="ccbox" style="padding: 6px;">
           <div>
-            <div style="font-size:10px;color:#666">Current Call</div>
-            <div style="font-size:11px;color:#888;margin-top:2px" id="ghist">Waiting…</div>
+            <div style="font-size:9px;color:#666">Current Call</div>
+            <div style="font-size:10px;color:#888;margin-top:2px" id="ghist">Waiting…</div>
           </div>
-          <div class="circle" id="gcir" style="background:#333; width:44px; height:44px; font-size:20px;">--</div>
+          <div class="circle" id="gcir" style="background:#333; width:36px; height:36px; font-size:16px;">--</div>
         </div>
       </div>
 
@@ -449,29 +440,29 @@ input:checked + .slider:before { transform: translateX(22px); }
         <!-- Cartela #1 Unit -->
         <div class="card-unit">
           <div class="bhead-mini">
-            <div class="col-h cB" style="font-size:11px">B</div><div class="col-h cI" style="font-size:11px">I</div>
-            <div class="col-h cN" style="font-size:11px">N</div><div class="col-h cG" style="font-size:11px">G</div>
-            <div class="col-h cO" style="font-size:11px">O</div>
+            <div class="col-h cB" style="font-size:9px">B</div><div class="col-h cI" style="font-size:9px">I</div>
+            <div class="col-h cN" style="font-size:9px">N</div><div class="col-h cG" style="font-size:9px">G</div>
+            <div class="col-h cO" style="font-size:9px">O</div>
           </div>
           <div id="brows1"></div>
-          <div style="text-align:center;font-size:10px;color:#888;margin-top:4px" id="gclbl1">Cartela #1</div>
+          <div style="text-align:center;font-size:9px;color:#888;margin-top:4px" id="gclbl1">Cartela #1</div>
         </div>
 
         <!-- Cartela #2 Unit -->
         <div class="card-unit">
           <div class="bhead-mini">
-            <div class="col-h cB" style="font-size:11px">B</div><div class="col-h cI" style="font-size:11px">I</div>
-            <div class="col-h cN" style="font-size:11px">N</div><div class="col-h cG" style="font-size:11px">G</div>
-            <div class="col-h cO" style="font-size:11px">O</div>
+            <div class="col-h cB" style="font-size:9px">B</div><div class="col-h cI" style="font-size:9px">I</div>
+            <div class="col-h cN" style="font-size:9px">N</div><div class="col-h cG" style="font-size:9px">G</div>
+            <div class="col-h cO" style="font-size:9px">O</div>
           </div>
           <div id="brows2"></div>
-          <div style="text-align:center;font-size:10px;color:#888;margin-top:4px" id="gclbl2">Cartela #2</div>
+          <div style="text-align:center;font-size:9px;color:#888;margin-top:4px" id="gclbl2">Cartela #2</div>
         </div>
       </div>
 
       <button class="bingo-btn" onclick="claimBingo()">🎉 Bingo!</button>
       <div class="gactions">
-        <button class="lbtn" onclick="leaveGame()">Leave Game</button>
+        <button class="lbtn" onclick="leaveGame()">Leave</button>
         <button class="rbtn" onclick="refreshGrids()">Refresh</button>
       </div>
     </div>
@@ -580,7 +571,7 @@ function renderCardGrid(){
 
 function selectCard(n){
   if(n === selCard1){
-    return; // Don't allow unselecting primary card
+    return;
   }
   if(n === selCard2){
     selCard2 = null;
@@ -686,8 +677,8 @@ function renderGameCard(cardNumber){
   const marked = cardNumber === 1 ? marked1 : marked2;
   
   if(!selCard) {
-    document.getElementById(`brows${cardNumber}`).innerHTML = '<div style="padding:40px; color:#555; text-align:center;">Disabled</div>';
-    document.getElementById(`gclbl${cardNumber}`).textContent='No Card Selected';
+    document.getElementById(`brows${cardNumber}`).innerHTML = '<div style="padding:40px; color:#555; text-align:center; font-size:10px;">Disabled</div>';
+    document.getElementById(`gclbl${cardNumber}`).textContent='No Card';
     return;
   }
   
@@ -701,7 +692,7 @@ function renderGameCard(cardNumber){
     html+='</div>';
   }
   document.getElementById(`brows${cardNumber}`).innerHTML=html;
-  document.getElementById(`gclbl${cardNumber}`).textContent=`Cartela #${selCard}`;
+  document.getElementById(`gclbl${cardNumber}`).textContent=`#${selCard}`;
 }
 
 function refreshGrids(){
@@ -710,7 +701,7 @@ function refreshGrids(){
 }
 
 function markCell(cardNumber,key,c,r){
-  if(isAutoMode) return; // Prevent manual tapping overrides in auto-mode
+  if(isAutoMode) return;
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   const marked = cardNumber === 1 ? marked1 : marked2;
   
@@ -744,8 +735,6 @@ function startGame(){
   
   gint = setInterval(() => {
     callNum();
-    
-    // Low chance (approx 1.5% per tick) for an automated opponent to hit Bingo
     if(Math.random() < 0.015 && called.length > 5) {
        simulateOpponentWin();
     }

@@ -406,7 +406,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div class="gs"><div class="gsv" id="gp">38</div><div class="gsl">Players</div></div>
     <div class="gs"><div class="gsv" id="gb">10</div><div class="gsl">Bet</div></div>
     <div class="gs"><div class="gsv" id="gcl">0</div><div class="gsl">Call</div></div>
-    <div class="gs"><div class="gsv">300</div><div class="gsl">Bonus</div></div>
+    <div class="gs"><div class="gsv" id="g-bonus-disp">300</div><div class="gsl">Bonus</div></div>
   </div>
 
   <div class="game-container">
@@ -516,6 +516,9 @@ let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
 let activeLobbyPlayers = 5; // Default player counter for calculation simulation
+
+// Tracking bonus amounts
+let currentBonus = 300; // Tracks active game bonus[cite: 1]
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -758,6 +761,10 @@ function startGame(){
   document.getElementById('gcir').style.background = '#333';
   document.getElementById('ghist').textContent = 'Waiting…';
   
+  // Initialize dynamic starting bonus[cite: 1]
+  currentBonus = 300;[cite: 1]
+  document.getElementById('g-bonus-disp').textContent = currentBonus;
+  
   const pl = activeLobbyPlayers;
   document.getElementById('gp').textContent=pl;
   document.getElementById('gpc').textContent=pl+' players';
@@ -770,12 +777,13 @@ function startGame(){
   
   callNum();
   
+  // Calling Speed set to 4000ms (4 seconds)[cite: 1]
   gint = setInterval(() => {
     callNum();
     if(Math.random() < 0.02 && called.length > 5) {
        simulateOpponentWin();
     }
-  }, 4000); 
+  }, 4000);[cite: 1]
 }
 
 function callNum(){
@@ -783,11 +791,24 @@ function callNum(){
   if(!left.length){clearInterval(gint);return;}
   const n=left[Math.floor(Math.random()*left.length)];
   called.push(n);
+  
+  const callCount = called.length;
+  
+  // Bonus logic: Starts flat at 300 for first 4 calls, drops by 50 starting call 5[cite: 1]
+  if (callCount <= 4) {[cite: 1]
+    currentBonus = 300;[cite: 1]
+  } else {[cite: 1]
+    currentBonus = Math.max(0, 300 - ((callCount - 4) * 50));[cite: 1]
+  }[cite: 1]
+  
+  // Dynamic UI update
+  document.getElementById('g-bonus-disp').textContent = currentBonus;
+  
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
   const el=document.getElementById('gcir');
   el.textContent=n; el.className=`circle ${CCLS[L]}`; el.style.background='';
   document.getElementById('ghist').textContent=called.slice(-5).reverse().join(' · ');
-  document.getElementById('gcl').textContent=called.length;
+  document.getElementById('gcl').textContent=callCount;
   
   renderMasterBoard();
   
@@ -873,15 +894,23 @@ function claimBingo(){
     else if (selGame.bet === 50) baseCut = 6;
     else if (selGame.bet === 100) baseCut = 10;
 
-    const rewardPayout = (selGame.bet - baseCut) * activeLobbyPlayers;
-    walBal += rewardPayout;
+    // Combined Standard payout and active Bonus[cite: 1]
+    const basePayout = (selGame.bet - baseCut) * activeLobbyPlayers;
+    const totalPayout = basePayout + currentBonus;[cite: 1]
+    walBal += totalPayout;
     document.getElementById('lbal').textContent = walBal + ' ETB';
     
-    tg.sendData(JSON.stringify({action:'bingo_win',card:winningPlay.selCard,bet:(selGame.bet * 2)}));
-    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${winningPlay.selCard}`, winningPlay.selCard, winningPlay.pType, winningPlay.pIndex);
+    tg.sendData(JSON.stringify({action:'bingo_win',card:winningPlay.selCard,bet:(selGame.bet * 2), won_bonus: currentBonus}));[cite: 1]
+    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${winningPlay.selCard} (+${currentBonus} Bonus!)`, winningPlay.selCard, winningPlay.pType, winningPlay.pIndex);[cite: 1]
   } else {
     toast('❌ Invalid Bingo lines. Keep playing!');
-    startGame();
+    // Resume game loop safely
+    gint = setInterval(() => {
+      callNum();
+      if(Math.random() < 0.02 && called.length > 5) {
+         simulateOpponentWin();
+      }
+    }, 4000);[cite: 1]
   }
 }
 

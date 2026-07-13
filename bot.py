@@ -56,7 +56,7 @@ def webhook(token):
 # ── Keyboards ─────────────────────────────────────────────────────────────────
 def main_kb():
     return ReplyKeyboardMarkup([
-        [KeyboardButton("🎮 Play Now", web_app=WebAppInfo(url=https://github.com/romeshewa5-cmd/Bingo-Game/tree/main/webapp))],
+        [KeyboardButton("🎮 Play Now", web_app=WebAppInfo(url=WEBAPP_URL))],
         [KeyboardButton("💰 Check Balance"), KeyboardButton("💳 Deposit")],
         [KeyboardButton("📤 Withdraw"),       KeyboardButton("🔄 Transfer")],
         [KeyboardButton("📋 Transactions"),   KeyboardButton("ℹ️ Instructions")],

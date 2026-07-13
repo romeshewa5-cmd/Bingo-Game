@@ -38,6 +38,30 @@
 .winner-popup-container.active .winner-card-body {
   transform: scale(1);
 }
+  .win-row {
+  display: flex;
+  gap: 4px;
+}
+.win-cell {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2a2a35;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 4px;
+}
+.win-cell.highlight {
+  background: var(--gold) !important;
+  color: #000 !important;
+  box-shadow: 0 0 8px var(--gold);
+}
+.win-cell.free {
+  color: var(--teal);
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh}
 :root{--gold:#f0b429;--teal:#1bc8a0;--card:#162032;--card2:#1e2d44;--red:#e53e3e;--orange:#f6813a;--blue:#3182ce;--purple:#805ad5}
@@ -209,17 +233,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <!-- ... Your existing screens like <div class="screen" id="sc-game"> etc ... -->
 
-  <!-- Winner Announcement Popup -->
-  <div id="winner-popup" class="winner-popup-container">
-    <div class="winner-card-body">
-      <div style="font-size: 35px; margin-bottom: 8px;">👑</div>
-      <div id="win-head" style="font-weight: 800; font-size: 20px; color: var(--gold); margin-bottom: 5px;">Player Name</div>
-      <div id="win-sub" style="font-size: 14px; color: #fff; margin-bottom: 5px;">Winning Card: #--</div>
-      <div id="win-foot" style="font-size: 12px; color: var(--teal); font-weight: bold; margin-bottom: 20px;">Pattern: None</div>
-      <button class="join-btn" onclick="closeWinnerModal()" style="width:100%; border-radius:10px;">Return to Lobby</button>
-    </div>
+<!-- Winner Announcement Popup with Live Grid -->
+<div id="winner-popup" class="winner-popup-container">
+  <div class="winner-card-body">
+    <div style="font-size: 35px; margin-bottom: 8px;">👑</div>
+    <div id="win-head" style="font-weight: 800; font-size: 20px; color: var(--gold); margin-bottom: 5px;">Player Name</div>
+    <div id="win-sub" style="font-size: 14px; color: #fff; margin-bottom: 12px;">Winning Card: #--</div>
+    
+    <!-- This renders the visual winning pattern grid -->
+    <div id="win-grid" style="display: flex; flex-direction: column; gap: 4px; margin: 0 auto 20px auto; width: fit-content; background: #111; padding: 6px; border-radius: 8px;"></div>
+    
+    <button class="join-btn" onclick="closeWinnerModal()" style="width:100%; border-radius:10px;">Return to Lobby</button>
   </div>
-
+</div>
+  
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
@@ -435,44 +462,26 @@ function claimBingo(){
   const card=genCard(selCard);
   const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
   
-  let winPattern = null;
+  let pType = null, pIndex = -1;
 
-  // 1. Check Rows
   for(let i=0; i<5; i++){
-    if([0,1,2,3,4].every(j=>m(j,i))) {
-      winPattern = `Horizontal Row ${i+1}`;
-      break;
-    }
+    if([0,1,2,3,4].every(j=>m(j,i))) { pType = 'row'; pIndex = i; break; }
   }
-  // 2. Check Columns
-  if(!winPattern){
+  if(!pType){
     for(let i=0; i<5; i++){
-      if([0,1,2,3,4].every(j=>m(i,j))) {
-        winPattern = `Vertical Column ${i+1}`;
-        break;
-      }
+      if([0,1,2,3,4].every(j=>m(i,j))) { pType = 'col'; pIndex = i; break; }
     }
   }
-  // 3. Diagonal Top-Left to Bottom-Right
-  if(!winPattern && [0,1,2,3,4].every(i=>m(i,i))) {
-    winPattern = "Diagonal (\\)";
-  }
-  // 4. Diagonal Bottom-Left to Top-Right
-  if(!winPattern && [0,1,2,3,4].every(i=>m(i,4-i))) {
-    winPattern = "Diagonal (/)";
-  }
+  if(!pType && [0,1,2,3,4].every(i=>m(i,i))) pType = 'diag-back';
+  if(!pType && [0,1,2,3,4].every(i=>m(i,4-i))) pType = 'diag-forward';
 
-  // Instant verification output
-  if(winPattern){
-    // Calculate Reward instantly
+  if(pType){
     const rewardPayout = selGame.win > 0 ? selGame.win : (selGame.bet * 3);
     walBal += rewardPayout;
     document.getElementById('lbal').textContent = walBal + ' ETB';
     
-    // Broadcast the alert locally & back to the Bot database
-    tg.sendData(JSON.stringify({action:'bingo_win',card:selCard,bet:selGame.bet,pattern:winPattern}));
-    
-    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${selCard}`, `Pattern: ${winPattern}`);
+    tg.sendData(JSON.stringify({action:'bingo_win',card:selCard,bet:selGame.bet}));
+    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${selCard}`, selCard, pType, pIndex);
   } else {
     toast('❌ Invalid Bingo lines. Keep playing!');
     startGame();
@@ -485,20 +494,46 @@ function simulateOpponentWin() {
   const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99", "@Yonas_Ke"];
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 120) + 1;
-  const patterns = ["Horizontal Row 3", "Diagonal (\\)", "Vertical Column 2", "Horizontal Row 1"];
-  const randomPattern = patterns[Math.floor(Math.random() * patterns.length)];
+  
+  // Pick random pattern types to show on screen
+  const types = ['row', 'col', 'diag-back', 'diag-forward'];
+  const randomType = types[Math.floor(Math.random() * types.length)];
+  const randomIndex = Math.floor(Math.random() * 5);
 
-  showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, `Pattern: ${randomPattern}`);
+  showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, randomType, randomIndex);
 }
 
 // Displays global alert container modal
-function showGlobalWinnerBanner(headerText, subText, footerText) {
-  const winnerModal = document.getElementById('winner-popup');
+function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
   document.getElementById('win-head').textContent = headerText;
   document.getElementById('win-sub').textContent = subText;
-  document.getElementById('win-foot').textContent = footerText;
   
-  winnerModal.classList.add('active');
+  // Generate the winner's card layout matrix array
+  const cardData = genCard(cardNum);
+  let html = '';
+  
+  // Render a mini 5x5 layout grid
+  for (let r = 0; r < 5; r++) {
+    html += '<div class="win-row">';
+    for (let c = 0; c < 5; c++) {
+      const val = cardData[c][r];
+      let isHighlighted = false;
+      
+      // Calculate pattern highlights based on row, column or diagonals
+      if (patternType === 'row' && r === patternIndex) isHighlighted = true;
+      if (patternType === 'col' && c === patternIndex) isHighlighted = true;
+      if (patternType === 'diag-back' && c === r) isHighlighted = true;
+      if (patternType === 'diag-forward' && c === (4 - r)) isHighlighted = true;
+      
+      html += `<div class="win-cell ${isHighlighted ? 'highlight' : ''} ${val === 0 ? 'free' : ''}">
+        ${val === 0 ? '★' : val}
+      </div>`;
+    }
+    html += '</div>';
+  }
+  
+  document.getElementById('win-grid').innerHTML = html;
+  document.getElementById('winner-popup').classList.add('active');
 }
 
 function closeWinnerModal() {

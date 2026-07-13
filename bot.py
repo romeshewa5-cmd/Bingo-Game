@@ -1,5 +1,5 @@
 import logging, json, os, asyncio, threading
-from flask import Flask, request, Response
+from flask import Flask, request, Response, send_from_directory
 from telegram import (
     Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup,
     ReplyKeyboardMarkup, KeyboardButton
@@ -32,25 +32,19 @@ WITHDRAW_AMOUNT, WITHDRAW_PHONE                 = range(3, 5)
 TRANSFER_USER,  TRANSFER_AMOUNT                 = range(5, 7)
 
 # ── Flask routes ──────────────────────────────────────────────────────────────
+# ── Flask routes ──────────────────────────────────────────────────────────────
 @app.get("/")
 def index():
-    return Response("Bingo Bot is running!", status=200)
+    # This delivers your main HTML file when the app opens
+    return send_from_directory(".", "index.html")
+
+@app.get("/<path:path>")
+def serve_static(path):
+    # This ensures your CSS, JS, or image assets load properly
+    return send_from_directory(".", path)
 
 @app.get("/health")
 def health():
-    return Response("OK", status=200)
-
-@app.post(f"/webhook/<token>")
-def webhook(token):
-    if token != BOT_TOKEN:
-        return Response("Forbidden", status=403)
-    data   = request.get_json(force=True)
-    update = Update.de_json(data, ptb.bot)
-    future = asyncio.run_coroutine_threadsafe(ptb.process_update(update), bot_loop)
-    try:
-        future.result(timeout=30)
-    except Exception as e:
-        logger.error(f"Update error: {e}")
     return Response("OK", status=200)
 
 # ── Keyboards ─────────────────────────────────────────────────────────────────

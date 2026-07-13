@@ -498,6 +498,9 @@ if (TGuser) {
     document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
 }
 
+// 1. Declare active players FIRST so renderLobby never hits an undefined reference
+let activeLobbyPlayers = 5; 
+
 // Kept only 10, 20, 50, and 100 ETB games
 const GAMES = [
   {bet:10,  win:0, status:'waiting', bonus:false, countdown:40, waitActive:true},
@@ -515,10 +518,9 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let activeLobbyPlayers = 5; // Default player counter for calculation simulation
 
 // Tracking bonus amounts
-let currentBonus = 300; // Tracks active game bonus[cite: 1]
+let currentBonus = 300; 
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -579,12 +581,11 @@ function renderLobby(){
 function initLobbyCountdown() {
   clearInterval(lobbyTimer);
   lobbyTimer = setInterval(() => {
-    GAMES.forEach((g, idx) => {
+    GAMES.forEach((g) => {
       if (g.status === 'waiting') {
         g.countdown--;
         if (g.countdown <= 0) {
           g.countdown = 40;
-          // Loop and reset
         }
       }
     });
@@ -674,7 +675,6 @@ function confirmJoin(){
     return;
   }
 
-  // Transitions to running ONLY right as calling actions fire
   selGame.status = 'running';
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
@@ -690,7 +690,6 @@ function toggleAutoMode() {
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
 }
 
-/* RENDERS COLUMNS VERTICALLY WITH CUSTOM HEADER COLORS */
 function renderMasterBoard() {
   const letters = ['B', 'I', 'N', 'G', 'O'];
   let html = '';
@@ -702,7 +701,6 @@ function renderMasterBoard() {
       const isCalled = called.includes(i);
       numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called' : ''}">${i}</div>`;
     }
-    // Color matching applied directly to header tags
     html += `
       <div class="board-col">
         <span class="board-letter-header" style="color: ${COLOR_MAP[l]}">${l}</span>
@@ -761,7 +759,6 @@ function startGame(){
   document.getElementById('gcir').style.background = '#333';
   document.getElementById('ghist').textContent = 'Waiting…';
   
-  // Initialize dynamic starting bonus[cite: 1]
   currentBonus = 300;[cite: 1]
   document.getElementById('g-bonus-disp').textContent = currentBonus;
   
@@ -777,7 +774,6 @@ function startGame(){
   
   callNum();
   
-  // Calling Speed set to 4000ms (4 seconds)[cite: 1]
   gint = setInterval(() => {
     callNum();
     if(Math.random() < 0.02 && called.length > 5) {
@@ -794,14 +790,12 @@ function callNum(){
   
   const callCount = called.length;
   
-  // Bonus logic: Starts flat at 300 for first 4 calls, drops by 50 starting call 5[cite: 1]
   if (callCount <= 4) {[cite: 1]
     currentBonus = 300;[cite: 1]
   } else {[cite: 1]
     currentBonus = Math.max(0, 300 - ((callCount - 4) * 50));[cite: 1]
   }[cite: 1]
   
-  // Dynamic UI update
   document.getElementById('g-bonus-disp').textContent = currentBonus;
   
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
@@ -888,13 +882,11 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    // Safe custom margin reward payout calculation applied
     let baseCut = 2;
     if (selGame.bet === 20) baseCut = 4;
     else if (selGame.bet === 50) baseCut = 6;
     else if (selGame.bet === 100) baseCut = 10;
 
-    // Combined Standard payout and active Bonus[cite: 1]
     const basePayout = (selGame.bet - baseCut) * activeLobbyPlayers;
     const totalPayout = basePayout + currentBonus;[cite: 1]
     walBal += totalPayout;
@@ -904,7 +896,6 @@ function claimBingo(){
     showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${winningPlay.selCard} (+${currentBonus} Bonus!)`, winningPlay.selCard, winningPlay.pType, winningPlay.pIndex);[cite: 1]
   } else {
     toast('❌ Invalid Bingo lines. Keep playing!');
-    // Resume game loop safely
     gint = setInterval(() => {
       callNum();
       if(Math.random() < 0.02 && called.length > 5) {
@@ -955,7 +946,6 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   document.getElementById('win-grid').innerHTML = html;
   document.getElementById('winner-popup').classList.add('active');
 
-  // Trigger 8-Second Auto-Close 
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   winnerCountdown = 8;
@@ -979,7 +969,6 @@ function closeWinnerModal() {
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   
-  // Instantly drop back to lobby status: waiting countdown state
   selGame.status = 'waiting';
   selGame.countdown = 40;
   
@@ -1016,8 +1005,7 @@ setInterval(()=>{
   document.getElementById('ts').textContent=String(s).padStart(2,'0');
 },1000);
 
+// 2. Safely trigger rendering once elements are fully declared
 renderLobby();
 initLobbyCountdown();
 </script>
-</body>
-</html>

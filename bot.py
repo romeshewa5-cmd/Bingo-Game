@@ -15,12 +15,12 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=lo
 logger = logging.getLogger(__name__)
 
 # ── Config (set these in Render → Environment) ────────────────────────────────
-BOT_TOKEN       = os.environ.get("BOT_TOKEN",       "PASTE_YOUR_BOT_TOKEN_HERE")
-WEBAPP_URL      = os.environ.get("WEBAPP_URL",      "https://YOUR_USERNAME.github.io/bingo-webapp")
+BOT_TOKEN       = os.environ.get("BOT_TOKEN",       "8388233934:AAHosCkcQgogC9x92pGQ6_AjYTuRFogHlDY")
+WEBAPP_URL      = os.environ.get("WEBAPP_URL",      "https://github.com/romeshewa5-cmd/Bingo-Game/tree/main/webapp")
 ADMIN_ID        = int(os.environ.get("ADMIN_ID",    "0"))
-TELEBIRR_NUMBER = os.environ.get("TELEBIRR_NUMBER", "0971959649")
-CBE_NUMBER      = os.environ.get("CBE_NUMBER",      "1000123456789")
-WEBHOOK_URL     = os.environ.get("WEBHOOK_URL",     "")
+TELEBIRR_NUMBER = os.environ.get("TELEBIRR_NUMBER", "0926710936")
+CBE_NUMBER      = os.environ.get("CBE_NUMBER",      "1000132035605")
+WEBHOOK_URL     = os.environ.get("WEBHOOK_URL",     "https://fast-bingo-5ipb.onrender.com")
 PORT            = int(os.environ.get("PORT",        10000))
 
 db  = Database()

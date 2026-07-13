@@ -180,12 +180,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 const TGuser = tg.initDataUnsafe?.user;
-if (TGuser) document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
-// Syncs your live ETB database balance straight into your mobile game screen
-if (tg.initDataUnsafe?.start_param) {
-    walBal = parseFloat(tg.initDataUnsafe.start_param) || 50;
+
+// 1. Safe username display
+if (TGuser) {
+    document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
 }
-document.getElementById('lbal').textContent = walBal + ' ETB';
+
+// 2. Safe balance initialization (defaults to 50 ETB if no database connection is active yet)
+let walBal = 50; 
+try {
+    if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+        let paramBal = parseFloat(tg.initDataUnsafe.start_param);
+        if (!isNaN(paramBal)) {
+            walBal = paramBal;
+        }
+    }
+} catch (e) {
+    console.log("Balance sync skipped, using default.");
+}
+
+// 3. Your games list data definitions
 const GAMES = [
   {bet:10, win:336,status:'running',bonus:false},
   {bet:20, win:0,  status:'waiting',bonus:true},

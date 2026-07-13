@@ -15,12 +15,12 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=lo
 logger = logging.getLogger(__name__)
 
 # ── Config (set these in Render → Environment) ────────────────────────────────
-BOT_TOKEN       = os.environ.get("BOT_TOKEN",       "PASTE_YOUR_BOT_TOKEN_HERE")
-WEBAPP_URL      = os.environ.get("WEBAPP_URL",      "https://YOUR_USERNAME.github.io/bingo-webapp")
+BOT_TOKEN       = os.environ.get("BOT_TOKEN",       "8388233934:AAHosCkcQgogC9x92pGQ6_AjYTuRFogHlDY")
+WEBAPP_URL      = os.environ.get("WEBAPP_URL",      "https://github.com/romeshewa5-cmd/Bingo-Game/tree/main/webapp")
 ADMIN_ID        = int(os.environ.get("ADMIN_ID",    "0"))
-TELEBIRR_NUMBER = os.environ.get("TELEBIRR_NUMBER", "0971959649")
-CBE_NUMBER      = os.environ.get("CBE_NUMBER",      "1000123456789")
-WEBHOOK_URL     = os.environ.get("WEBHOOK_URL",     "")
+TELEBIRR_NUMBER = os.environ.get("TELEBIRR_NUMBER", "0926710936")
+CBE_NUMBER      = os.environ.get("CBE_NUMBER",      "1000132035605")
+WEBHOOK_URL     = os.environ.get("WEBHOOK_URL",     "https://fast-bingo-5ipb.onrender.com")
 PORT            = int(os.environ.get("PORT",        10000))
 
 db  = Database()
@@ -56,7 +56,7 @@ def webhook(token):
 # ── Keyboards ─────────────────────────────────────────────────────────────────
 def main_kb():
     return ReplyKeyboardMarkup([
-        [KeyboardButton("🎮 Play Now", web_app=WebAppInfo(url=WEBAPP_URL))],
+        [KeyboardButton("🎮 Play Now", web_app=WebAppInfo(url=https://github.com/romeshewa5-cmd/Bingo-Game/tree/main/webapp))],
         [KeyboardButton("💰 Check Balance"), KeyboardButton("💳 Deposit")],
         [KeyboardButton("📤 Withdraw"),       KeyboardButton("🔄 Transfer")],
         [KeyboardButton("📋 Transactions"),   KeyboardButton("ℹ️ Instructions")],
@@ -85,7 +85,7 @@ async def check_balance(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def play(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Tap to open the game! 🎮",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎮 Open Game", web_app=WebAppInfo(url=WEBAPP_URL))]]))
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎮 Open Game", web_app=WebAppInfo(url=https://github.com/romeshewa5-cmd/Bingo-Game/tree/main/webapp))]]))
 
 # DEPOSIT
 async def deposit_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -307,7 +307,7 @@ async def handle_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 # ── Build PTB ─────────────────────────────────────────────────────────────────
 def build_ptb():
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(8388233934:AAHosCkcQgogC9x92pGQ6_AjYTuRFogHlDY).build()
     dep_conv = ConversationHandler(
         entry_points=[CommandHandler("deposit", deposit_start)],
         states={
@@ -345,7 +345,7 @@ ptb = build_ptb()
 
 async def _init():
     await ptb.initialize(); await ptb.start()
-    wh = f"{WEBHOOK_URL}/webhook/{BOT_TOKEN}"
+    wh = f"{https://fast-bingo-5ipb.onrender.com}/webhook/{8388233934:AAHosCkcQgogC9x92pGQ6_AjYTuRFogHlDY}"
     await ptb.bot.set_webhook(url=wh)
     logger.info(f"✅ Webhook set → {wh}")
 

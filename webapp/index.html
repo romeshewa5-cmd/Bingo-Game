@@ -66,7 +66,8 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh}
 :root{--gold:#f0b429;--teal:#1bc8a0;--card:#162032;--card2:#1e2d44;--red:#e53e3e;--orange:#f6813a;--blue:#3182ce;--purple:#805ad5}
-.screen{display:none}.screen.active{display:block}
+.screen{display:none; opacity:0; transition: opacity 0.15s ease-in-out;}
+.screen.active{display:block; opacity:1;}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--card2);position:sticky;top:0;z-index:10}
 .nav-title{font-size:17px;font-weight:700}.nav-sub{font-size:11px;color:var(--teal)}
 .nav-back{color:var(--teal);font-size:13px;cursor:pointer}
@@ -498,7 +499,6 @@ if (TGuser) {
     document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
 }
 
-// 1. Declare active players FIRST so renderLobby never hits an undefined reference
 let activeLobbyPlayers = 5; 
 
 // Kept only 10, 20, 50, and 100 ETB games
@@ -519,8 +519,7 @@ let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
 
-// Tracking bonus amounts
-let currentBonus = 300; 
+let currentBonus = 300;[cite: 1]
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -546,7 +545,7 @@ function genCard(n){
   card[2][2]=0;cardCache[n]=card;return card;
 }
 
-// Strict calculations based on custom commission ranges
+// Calculations based on standard configurations
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
     let multiplier = 0;
@@ -560,9 +559,12 @@ function calculateWinningAmounts() {
 }
 
 function renderLobby(){
+  const glist = document.getElementById('glist');
+  if (!glist) return; // Prevent breakdown if DOM element missing on fast renders
+
   document.getElementById('lbal').textContent = walBal + ' ETB';
   calculateWinningAmounts();
-  document.getElementById('glist').innerHTML = GAMES.map((g,i)=>{
+  glist.innerHTML = GAMES.map((g,i)=>{
     let statusText = g.status;
     if (g.status === 'waiting') {
       statusText = `waiting (${g.countdown}s)`;
@@ -577,7 +579,6 @@ function renderLobby(){
     </div>`}).join('');
 }
 
-// Automatic 40-second lobby countdown running on load for game boards
 function initLobbyCountdown() {
   clearInterval(lobbyTimer);
   lobbyTimer = setInterval(() => {
@@ -984,16 +985,30 @@ function leaveGame(){
 }
 
 function goTo(n){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const target = document.getElementById('sc-'+n);
+  // Find all elements with screen class
+  const screens = document.querySelectorAll('.screen');
+  if (screens.length === 0) {
+    // If DOM is not ready, retry in 50ms
+    setTimeout(() => goTo(n), 50);
+    return;
+  }
+  
+  screens.forEach(s => {
+    s.classList.remove('active');
+  });
+  
+  const target = document.getElementById('sc-' + n);
   if (target) {
     target.classList.add('active');
+  } else {
+    console.error("Target screen not found: sc-" + n);
   }
   window.scrollTo(0,0);
 }
 
 function toast(msg){
   const el=document.getElementById('toast');
+  if(!el) return;
   el.textContent=msg; el.className='toast show';
   setTimeout(()=>el.className='toast',3000);
 }
@@ -1002,13 +1017,16 @@ let tsec=6*86400+14*3600+57*60;
 setInterval(()=>{
   tsec=Math.max(0,tsec-1);
   const d=Math.floor(tsec/86400),h=Math.floor(tsec%86400/3600),m=Math.floor(tsec%3600/60),s=tsec%60;
-  document.getElementById('td').textContent=String(d).padStart(2,'0');
-  document.getElementById('th').textContent=String(h).padStart(2,'0');
-  document.getElementById('tm').textContent=String(m).padStart(2,'0');
-  document.getElementById('ts').textContent=String(s).padStart(2,'0');
+  const td = document.getElementById('td');
+  if(td) {
+    td.textContent=String(d).padStart(2,'0');
+    document.getElementById('th').textContent=String(h).padStart(2,'0');
+    document.getElementById('tm').textContent=String(m).padStart(2,'0');
+    document.getElementById('ts').textContent=String(s).padStart(2,'0');
+  }
 },1000);
 
-// Initialize everything on load after DOM elements exist
+// Safe Initialization
 window.addEventListener('DOMContentLoaded', () => {
   renderLobby();
   initLobbyCountdown();

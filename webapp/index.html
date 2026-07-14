@@ -517,6 +517,7 @@ const GAMES = [
 ];
 
 let selGame = GAMES[0], selCard1 = 117, selCard2 = 118; 
+let hasJoinedActiveGame = false; // Tracks if the player actually started the game
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
 let walBal = 250; 
@@ -602,13 +603,12 @@ function initLobbyCountdown() {
 function joinGame(i){
   selGame = GAMES[i];
   
-  // If this player is already in this game and it's active, automatically rejoin them
   const isGameRunning = selGame.status === 'running';
-  const hasActiveCards = selCard1 || selCard2;
   
-  if (isGameRunning && hasActiveCards) {
+  // Only auto-rejoin if they genuinely clicked "Start Game" earlier
+  if (isGameRunning && hasJoinedActiveGame) {
     toast('⚡ Rejoining your active game...');
-    startGame(); // Resume the active loop
+    startGame(); 
     goTo('game');
     return;
   }
@@ -623,10 +623,8 @@ function joinGame(i){
   renderCardGrid(); 
   goTo('cards');
 }
-
 function renderCardGrid(){
   const g=document.getElementById('cgrid'); g.innerHTML='';
-  // Loop increased to 150 to generate all selection cards
   for(let n=1;n<=150;n++){
     const d=document.createElement('div');
     d.className='cn';
@@ -634,10 +632,20 @@ function renderCardGrid(){
     else if(n===selCard2) d.classList.add('sel2');
     d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
   }
+  
+  // Show a locked warning if they are viewing cards during a running game
+  const isRunning = selGame && selGame.status === 'running';
+  const infoLbl = document.getElementById('cart-lbl');
+  if (isRunning) {
+    infoLbl.innerHTML = `Cartela #${selCard2 ? selCard2 : selCard1} <br><span style="color: var(--red); font-weight: bold; font-size: 9px;">⚠️ Game in Progress - Selection Locked</span>`;
+  } else {
+    infoLbl.innerHTML = `Cartela #${selCard2 ? selCard2 : selCard1}`;
+  }
+  
   renderCartela(selCard2 ? selCard2 : selCard1);
   updateActiveCardCountHUD();
 }
-function selectCard(n){
+  function selectCard(n){
   // Block any selection interaction if the game is currently running
   if (selGame && selGame.status === 'running') {
     toast('⚠️ A game is currently running! Selection is disabled until it ends.');
@@ -706,12 +714,14 @@ function confirmJoin(){
   }
 
   selGame.status = 'running';
+  hasJoinedActiveGame = true; // Flag that the player is officially in the live game
+  
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
   marked1=new Set(); marked2=new Set(); called=[];
   startGame(); goTo('game');
 }
-function toggleAutoMode() {
+  function toggleAutoMode() {
   isAutoMode = document.getElementById('auto-toggle').checked;
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
 }
@@ -1027,9 +1037,22 @@ function leaveGame(){
   clearInterval(gint);
   selGame.status = 'waiting';
   selGame.countdown = 40;
+  hasJoinedActiveGame = false; // Reset active session
   goTo('lobby');
 }
 
+function closeWinnerModal() {
+  clearTimeout(winnerPopupTimeout);
+  clearInterval(winnerPopupInterval);
+  document.getElementById('winner-popup').classList.remove('active');
+  
+  selGame.status = 'waiting';
+  selGame.countdown = 40;
+  hasJoinedActiveGame = false; // Reset active session
+  
+  goTo('lobby');
+  renderLobby();
+}
 function goTo(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('sc-'+n).classList.add('active');

@@ -749,7 +749,9 @@ function markCell(cardNumber,key,c,r){
   }
   else toast('Number not called yet!');
 }
-
+  
+let currentBonus = 300; // Tracks the active bonus (starts at 300)
+  
 function startGame(){
   clearInterval(gint);
   document.getElementById('gcd').textContent = "LIVE"; 
@@ -757,6 +759,9 @@ function startGame(){
   document.getElementById('gcir').className = 'circle';
   document.getElementById('gcir').style.background = '#333';
   document.getElementById('ghist').textContent = 'Waiting…';
+  
+  // Reset bonus pool to 300 at the start of every new game
+  currentBonus = 300; 
   
   const pl = activeLobbyPlayers;
   document.getElementById('gp').textContent=pl;
@@ -770,24 +775,40 @@ function startGame(){
   
   callNum();
   
+  // Interval set to 4000ms (4 seconds)
   gint = setInterval(() => {
     callNum();
     if(Math.random() < 0.02 && called.length > 5) {
        simulateOpponentWin();
     }
-  }, 4000); 
+  }, 3000); 
 }
-
 function callNum(){
   const all=Array.from({length:75},(_,i)=>i+1),left=all.filter(n=>!called.includes(n));
   if(!left.length){clearInterval(gint);return;}
   const n=left[Math.floor(Math.random()*left.length)];
   called.push(n);
+  
+  const callCount = called.length;
+  
+  // BONUS LOGIC: Holds at 300 for Calls 1-4, starts dropping by 50 on Call 5
+  if (callCount <= 4) {
+    currentBonus = 300;
+  } else {
+    currentBonus = Math.max(0, 300 - ((callCount - 4) * 50));
+  }
+  
+  // Update the bonus display in the game stats bar dynamically!
+  const bonusDisplays = document.querySelectorAll('.gsv');
+  if (bonusDisplays && bonusDisplays[5]) {
+    bonusDisplays[5].textContent = currentBonus; 
+  }
+  
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
   const el=document.getElementById('gcir');
   el.textContent=n; el.className=`circle ${CCLS[L]}`; el.style.background='';
   document.getElementById('ghist').textContent=called.slice(-5).reverse().join(' · ');
-  document.getElementById('gcl').textContent=called.length;
+  document.getElementById('gcl').textContent=callCount;
   
   renderMasterBoard();
   
@@ -799,7 +820,6 @@ function callNum(){
     renderGameCard(2);
   }
 }
-
 function autoMarkCard(cardNumber, valCalled) {
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   if (!selCard) return;

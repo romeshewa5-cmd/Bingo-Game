@@ -10,7 +10,7 @@
 .winner-popup-container {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,14 +24,14 @@
   pointer-events: auto;
 }
 .winner-card-body {
-  background: #1e1e24;
+  background: #11141d;
   border: 2px solid var(--gold);
-  border-radius: 16px;
+  border-radius: 20px;
   width: 85%;
   max-width: 320px;
   padding: 25px;
   text-align: center;
-  box-shadow: 0px 8px 30px rgba(0,0,0,0.5);
+  box-shadow: 0px 8px 30px rgba(0,0,0,0.8);
   transform: scale(0.9);
   transition: transform 0.3s ease;
 }
@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2a2a35;
+  background: #1b2230;
   color: #fff;
   font-size: 12px;
   font-weight: bold;
@@ -57,20 +57,38 @@
 .win-cell.highlight {
   background: var(--gold) !important;
   color: #000 !important;
-  box-shadow: 0 0 8px var(--gold);
+  box-shadow: 0 0 10px var(--gold);
 }
 .win-cell.free {
   color: var(--teal);
 }
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh}
-:root{--gold:#f0b429;--teal:#1bc8a0;--card:#162032;--card2:#1e2d44;--red:#e53e3e;--orange:#f6813a;--blue:#3182ce;--purple:#805ad5}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#090d16;color:#fff;min-height:100vh}
+
+/* NEW DESIGN COLOR VARIABLES MATCHING THE PREMIUM NEON THEME */
+:root {
+  --gold: #ffbd14;
+  --teal: #00e676;
+  --bg-dark: #090d16;
+  --card: #111726;
+  --card2: #1b2438;
+  --card3: #232f4a;
+  --red: #ff3b30;
+  
+  /* Modern Column Colors matched to Image 2 */
+  --col-B: #2196f3; /* Bright Blue */
+  --col-I: #3f51b5; /* Indigo */
+  --col-N: #9c27b0; /* Purple */
+  --col-G: #4caf50; /* Solid Green */
+  --col-O: #ff9800; /* Rich Orange */
+}
+
 .screen{display:none}.screen.active{display:block}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--card2);position:sticky;top:0;z-index:10}
 .nav-title{font-size:17px;font-weight:700}.nav-sub{font-size:11px;color:var(--teal)}
 .nav-back{color:var(--teal);font-size:13px;cursor:pointer}
-.banner{margin:12px;background:linear-gradient(135deg,#0d3b2e,#1a5c48);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid #2a6b55}
+.banner{margin:12px;background:linear-gradient(135deg,#0e261f,#144234);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid #1a5241}
 .timer{display:flex;gap:6px;margin-top:6px}
 .tbox{background:rgba(0,0,0,.3);border-radius:6px;padding:3px 7px;text-align:center}
 .tnum{font-size:14px;font-weight:700;color:var(--teal);display:block}.tlbl{font-size:9px;color:#9ee8cc}
@@ -78,30 +96,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .game-list{padding:0 12px;display:flex;flex-direction:column;gap:8px;padding-bottom:90px}
 .game-row{background:var(--card);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--card2);position:relative;overflow:hidden}
 .bonus-tag{position:absolute;top:6px;left:-6px;background:var(--gold);color:#000;font-size:7px;font-weight:800;padding:2px 12px;transform:rotate(-35deg)}
-.join-btn{background:var(--orange);color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;border:none;cursor:pointer}
+.join-btn{background:var(--col-O);color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;border:none;cursor:pointer}
 .join-btn:active{opacity:.8}
 .pill{font-size:10px;padding:2px 8px;border-radius:20px}
-.pill-wait{background:var(--card2);color:#888}.pill-run{background:#742a2a;color:#fc8181}
+.pill-wait{background:var(--card2);color:#888}.pill-run{background:#691c1c;color:#fc8181}
 .bnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--card2);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
 .bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;font-size:10px;color:#666}
 .bni-play{background:var(--gold);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
+
 .stats-bar{padding:10px 12px;background:var(--card2);display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--card)}
 .chip{background:var(--card);border-radius:20px;padding:4px 10px;font-size:11px;color:#aaa}
 .chip b{color:var(--teal)}
-.ch{display:flex;gap:4px;margin-bottom:4px}
-.col-h{flex:1;text-align:center;font-size:13px;font-weight:800}
-.cB{color:var(--red)}.cI{color:var(--blue)}.cN{color:#38a169}.cG{color:var(--orange)}.cO{color:var(--purple)}
-.crow{display:flex;gap:2px;margin-bottom:2px}
-.cc{flex:1;background:var(--card);border-radius:4px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
-.cc.free{background:#0d3b2e;color:var(--teal)}
 
+/* SELECTION AND CARD GRID STYLES */
 .card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px 90px}
 .cn{background:var(--card2);border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#888;cursor:pointer;border:1px solid transparent;transition:all .1s}
 .cn.sel{background:var(--teal);color:#000;border-color:#0d8c6a}
 .cn.sel2{background:var(--gold);color:#000;border-color:#b58514}
 .cn:active{transform:scale(.88)}
 
-/* TOP SIDE-BY-SIDE FLEX CONTAINER */
+/* SIDE-BY-SIDE SELECTION HEADER PANEL */
 .selection-top-panel {
   display: flex;
   gap: 12px;
@@ -128,7 +142,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   justify-content: space-between;
 }
 .mini-start-btn {
-  background: var(--orange);
+  background: var(--col-O);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -140,41 +154,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 }
 .mini-start-btn:active { opacity: 0.9; }
 
-.gstats{display:flex;padding:8px 10px;gap:5px;overflow-x:auto;border-bottom:1px solid var(--card2)}
-.gs{background:var(--card2);border-radius:8px;padding:4px 10px;text-align:center;white-space:nowrap;flex-shrink:0}
-.gsv{font-size:14px;font-weight:700;color:var(--teal)}.gsl{font-size:9px;color:#666}
-.callarea{margin:8px 12px;display:flex;gap:8px}
-.cdbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:1}
-.ccbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:2;display:flex;align-items:center;justify-content:space-between}
-.circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
-.ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
+/* COMPACT MINI LOBBY ROW CHIP VIEWER */
+.crow{display:flex;gap:2px;margin-bottom:2px}
+.cc{flex:1;background:var(--card);border-radius:4px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
+.cc.free{background:#0b2e24;color:var(--teal)}
 
-/* HORIZONTAL SPLIT LAYOUT */
+/* MODERN GAME HEADER PILLS (Image 2 Stats) */
+.gstats-pills-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  background: var(--card);
+  border-bottom: 1px solid var(--card2);
+}
+.gstat-pill {
+  background: var(--card2);
+  border-radius: 100px;
+  padding: 4px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  border: 1px solid var(--card3);
+}
+.gstat-pill-val {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+.gstat-pill-label {
+  font-size: 9px;
+  color: #7b8b9a;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* HORIZONTAL SPLIT PLAY AREA LAYOUT */
 .game-container {
   display: flex;
   flex-direction: row;
   gap: 10px;
-  padding: 0 8px;
-  align-items: flex-start;
+  padding: 10px 8px;
+  align-items: stretch;
 }
 .left-panel {
-  flex: 1.2;
-  background: var(--card2);
+  flex: 1.1;
+  background: var(--card);
   border-radius: 12px;
   padding: 10px;
+  border: 1px solid var(--card2);
 }
 .right-panel {
-  flex: 1.8;
+  flex: 1.9;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-/* VERTICAL MASTER BOARD COLUMNS */
+/* PREMIUM VERTICAL MASTER CALLER BOARD */
 .board-columns-container {
   display: flex;
   justify-content: space-between;
-  gap: 4px;
+  gap: 3px;
   margin-top: 8px;
 }
 .board-col {
@@ -185,161 +227,246 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   gap: 4px;
 }
 .board-letter-header {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
+  width: 100%;
+  text-align: center;
+  padding: 3px 0;
+  border-radius: 4px;
+  color: #fff !important;
   margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
+.board-letter-header.h-B { background: var(--col-B); }
+.board-letter-header.h-I { background: var(--col-I); }
+.board-letter-header.h-N { background: var(--col-N); }
+.board-letter-header.h-G { background: var(--col-G); }
+.board-letter-header.h-O { background: var(--col-O); }
+
 .board-num-vertical {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #1b263b;
-  color: #64748b;
+  background: var(--card2);
+  color: #4a5c78;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 800;
 }
-.board-num-vertical.called {
-  background: var(--teal);
-  color: #000;
-  box-shadow: 0 0 5px var(--teal);
-}
+.board-num-vertical.called-B { background: var(--col-B); color: #fff; box-shadow: 0 0 6px var(--col-B); }
+.board-num-vertical.called-I { background: var(--col-I); color: #fff; box-shadow: 0 0 6px var(--col-I); }
+.board-num-vertical.called-N { background: var(--col-N); color: #fff; box-shadow: 0 0 6px var(--col-N); }
+.board-num-vertical.called-G { background: var(--col-G); color: #fff; box-shadow: 0 0 6px var(--col-G); }
+.board-num-vertical.called-O { background: var(--col-O); color: #fff; box-shadow: 0 0 6px var(--col-O); }
 
+/* AUTOMATIC TOGGLE STYLE SWITCH */
 .auto-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--card);
-  padding: 6px;
+  background: var(--card2);
+  padding: 6px 10px;
   border-radius: 8px;
   margin-bottom: 8px;
+  border: 1px solid var(--card3);
 }
 .switch {
   position: relative;
   display: inline-block;
-  width: 32px;
-  height: 16px;
+  width: 34px;
+  height: 18px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
   position: absolute;
   cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #3e3e4f;
-  transition: .3s;
+  background-color: #2b384e;
+  transition: .2s;
   border-radius: 16px;
 }
 .slider:before {
   position: absolute;
   content: "";
-  height: 10px; width: 10px;
+  height: 12px; width: 12px;
   left: 3px; bottom: 3px;
   background-color: white;
-  transition: .3s;
+  transition: .2s;
   border-radius: 50%;
 }
 input:checked + .slider { background-color: var(--teal); }
 input:checked + .slider:before { transform: translateX(16px); }
 
-/* VERTICAL CARDS STACKED TOP & BOTTOM */
+/* CURRENT CALL FRAME AND LATEST ROLLS PREVIEW */
+.live-stream-header {
+  display: flex;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 8px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--card2);
+}
+.live-stream-label {
+  font-size: 8px;
+  color: #7b8b9a;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.scrolling-rolls-well {
+  flex: 1;
+  background: rgba(0,0,0,0.2);
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  font-size: 11px;
+  color: #738496;
+}
+.live-main-ball-display {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  color: #000;
+  background: #fff;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 10px rgba(255, 189, 20, 0.5);
+  flex-shrink: 0;
+}
+
+/* PLAYING CARTELAS DESIGN (Bright light backgrounds with column-colored blocks) */
 .cards-wrapper-vertical {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .card-unit {
-  background: var(--card2);
-  padding: 8px;
+  background: var(--card);
+  padding: 6px;
   border-radius: 10px;
+  border: 1px solid var(--card2);
 }
 .empty-placeholder-unit {
-  background: rgba(22, 32, 50, 0.4);
-  border: 2px dashed #2e3c54;
-  height: 125px;
+  background: rgba(22, 32, 50, 0.2);
+  border: 1px dashed #2e3c54;
+  height: 100px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #52637a;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
 }
+
+/* Header Columns for Active Card Game Grid */
 .bhead-mini {
   display: flex;
-  gap: 2px;
-  margin-bottom: 2px;
+  gap: 3px;
+  margin-bottom: 4px;
 }
+.bhead-mini .col-h {
+  flex: 1;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+  border-radius: 3px;
+  padding: 2px 0;
+  color: #fff !important;
+}
+.bhead-mini .col-h.cB { background: var(--col-B); }
+.bhead-mini .col-h.cI { background: var(--col-I); }
+.bhead-mini .col-h.cN { background: var(--col-N); }
+.bhead-mini .col-h.cG { background: var(--col-G); }
+.bhead-mini .col-h.cO { background: var(--col-O); }
+
 .brow {
   display: flex;
-  gap: 2px;
-  margin-bottom: 2px;
+  gap: 3px;
+  margin-bottom: 3px;
 }
+/* White backgrounds, dark text, clean borders */
 .bcell {
   flex: 1;
-  aspect-ratio: 1.25;
-  background: var(--card);
+  aspect-ratio: 1.15;
+  background: #ffffff;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
-  font-weight: 700;
-  color: #bbb;
-  border: 1px solid var(--card2);
+  font-weight: 800;
+  color: #121824;
+  border: 1px solid #d0d7de;
   cursor: pointer;
-  transition: all .12s;
+  transition: all .1s;
   user-select: none;
 }
-.bcell.mk {
-  background: #0d3b2e;
-  color: var(--teal);
-  border-color: var(--teal);
-}
+/* Completely color-filled marked matching columns */
+.bcell.mk-B { background: var(--col-B) !important; color: #fff !important; border-color: var(--col-B) !important; }
+.bcell.mk-I { background: var(--col-I) !important; color: #fff !important; border-color: var(--col-I) !important; }
+.bcell.mk-N { background: var(--col-N) !important; color: #fff !important; border-color: var(--col-N) !important; }
+.bcell.mk-G { background: var(--col-G) !important; color: #fff !important; border-color: var(--col-G) !important; }
+.bcell.mk-O { background: var(--col-O) !important; color: #fff !important; border-color: var(--col-O) !important; }
+
+/* Free space star center */
 .bcell.free {
-  background: #0d3b2e;
-  color: var(--teal);
+  background: var(--card3) !important;
+  color: var(--gold) !important;
+  border-color: var(--card3) !important;
 }
 
-.bingo-btn {
-  display: block;
-  width: 100%;
-  background: var(--orange);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 10px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-}
-.gactions {
+/* SMART DOCK ACTIONS (At the bottom of screen play container) */
+.game-bottom-control-dock {
   display: flex;
   gap: 6px;
   margin-top: 4px;
 }
-.lbtn {
+.dock-btn {
   flex: 1;
-  background: var(--red);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 10px;
+  height: 40px;
   border-radius: 8px;
   border: none;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #fff;
   cursor: pointer;
+  transition: opacity 0.1s;
 }
-.rbtn {
-  flex: 1;
-  background: var(--blue);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+.dock-btn:active { opacity: 0.85; }
+.dock-btn.leave { background: var(--red); }
+.dock-btn.refresh { background: var(--card3); color: #cbd5e1; }
+.dock-btn.dynamic-action {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.dock-btn.dynamic-action.auto-active {
+  background: var(--teal) !important;
+  color: #000 !important;
+  pointer-events: none; /* Inactive static button */
+}
+
+/* DYNAMIC SCALER FOR 2-CARD LAYOUT */
+.two-card-active .bcell {
+  font-size: 9px !important;
+  aspect-ratio: 1.25 !important;
+}
+.two-card-active .bhead-mini .col-h {
+  font-size: 8px !important;
+  padding: 1px 0 !important;
 }
 
 .toast {
@@ -438,7 +565,6 @@ input:checked + .slider:before { transform: translateX(16px); }
     <div class="chip">Active Cards: <b id="cac">1</b></div>
   </div>
 
-  <!-- COMPACT SIDE-BY-SIDE FLEX CONTAINER -->
   <div class="selection-top-panel">
     <!-- Left column: Small Preview Card -->
     <div class="top-preview-box">
@@ -468,20 +594,21 @@ input:checked + .slider:before { transform: translateX(16px); }
     <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
   </div>
   
-  <div class="gstats">
-    <div class="gs"><div class="gsv" id="gg">1</div><div class="gsl">Games</div></div>
-    <div class="gs"><div class="gsv" id="gd">304</div><div class="gsl">Derash</div></div>
-    <div class="gs"><div class="gsv" id="gp">38</div><div class="gsl">Players</div></div>
-    <div class="gs"><div class="gsv" id="gb">10</div><div class="gsl">Bet</div></div>
-    <div class="gs"><div class="gsv" id="gcl">0</div><div class="gsl">Call</div></div>
-    <div class="gs"><div class="gsv" id="gbonus">300</div><div class="gsl">Bonus</div></div>
+  <!-- MODERN METRICS PILLS (Image 2) -->
+  <div class="gstats-pills-bar">
+    <div class="gstat-pill"><span class="gstat-pill-label">Game ID</span><span class="gstat-pill-val" id="gg">1</span></div>
+    <div class="gstat-pill"><span class="gstat-pill-label">Players</span><span class="gstat-pill-val" id="gp">38</span></div>
+    <div class="gstat-pill"><span class="gstat-pill-label">Bet</span><span class="gstat-pill-val" id="gb">10</span></div>
+    <div class="gstat-pill"><span class="gstat-pill-label">Derash</span><span class="gstat-pill-val" style="color: var(--teal)" id="gd">304</span></div>
+    <div class="gstat-pill"><span class="gstat-pill-label">Called</span><span class="gstat-pill-val" id="gcl">0</span></div>
+    <div class="gstat-pill"><span class="gstat-pill-label">Bonus</span><span class="gstat-pill-val" style="color: var(--gold)" id="gbonus">300</span></div>
   </div>
 
   <div class="game-container">
     <!-- Left Panel: Master Caller Board -->
     <div class="left-panel">
       <div class="auto-control">
-        <span style="font-weight:bold; font-size:9px; color:#fff;">⚡ Auto</span>
+        <span style="font-weight:bold; font-size:9px; color:#fff;">⚡ Auto-Mark</span>
         <label class="switch">
           <input type="checkbox" id="auto-toggle" onchange="toggleAutoMode()">
           <span class="slider"></span>
@@ -491,45 +618,43 @@ input:checked + .slider:before { transform: translateX(16px); }
       <div id="master-board" class="board-columns-container"></div>
     </div>
 
-    <!-- Right Panel: Stacked Playing Cards & Live Status Heads -->
+    <!-- Right Panel: Playing Cards & Current Call displays -->
     <div class="right-panel">
-      <div class="callarea" style="margin:0; padding:0;">
-        <div class="cdbox" style="padding: 6px;">
-          <div style="font-size:9px;color:#666">Status</div>
-          <div style="font-size:16px;font-weight:800;color:var(--teal);line-height:1.2" id="gcd">LIVE</div>
-        </div>
-        <div class="ccbox" style="padding: 6px;">
+      <!-- Live Rolling stream call display -->
+      <div class="live-stream-header">
+        <div class="scrolling-rolls-well">
           <div>
-            <div style="font-size:9px;color:#666" id="gcall-title">Current Call</div>
-            <div style="font-size:10px;color:#888;margin-top:2px" id="ghist">Waiting…</div>
+            <div class="live-stream-label">Live Stream Rolls</div>
+            <div id="ghist">Waiting for call...</div>
           </div>
-          <div class="circle" id="gcir" style="background:#333; width:34px; height:34px; font-size:14px;">--</div>
         </div>
+        <div class="live-main-ball-display" id="gcir">--</div>
       </div>
 
-      <!-- Live Interactive Active Cartelas Wrapper -->
-      <div class="cards-wrapper-vertical">
+      <!-- Live Interactive Cartelas container Wrapper -->
+      <div class="cards-wrapper-vertical" id="game-cards-wrapper">
         <!-- Card 1 Slot -->
         <div id="slot-card1-container">
           <div class="card-unit">
             <div class="bhead-mini">
-              <div class="col-h cB" style="font-size:9px">B</div><div class="col-h cI" style="font-size:9px">I</div>
-              <div class="col-h cN" style="font-size:9px">N</div><div class="col-h cG" style="font-size:9px">G</div>
-              <div class="col-h cO" style="font-size:9px">O</div>
+              <div class="col-h cB">B</div><div class="col-h cI">I</div>
+              <div class="col-h cN">N</div><div class="col-h cG">G</div>
+              <div class="col-h cO">O</div>
             </div>
             <div id="brows1"></div>
             <div style="text-align:center;font-size:9px;color:#888;margin-top:4px" id="gclbl1">Cartela #1</div>
           </div>
         </div>
 
-        <!-- Card 2 Slot (Dynamic Card OR Empty Placeholder Graphic) -->
+        <!-- Card 2 Slot (Will load automatically) -->
         <div id="slot-card2-container"></div>
       </div>
 
-      <button class="bingo-btn" onclick="claimBingo()">🎉 Bingo!</button>
-      <div class="gactions">
-        <button class="lbtn" onclick="goTo('lobby')">Lobby</button>
-        <button class="rbtn" onclick="refreshGrids()">Refresh</button>
+      <!-- DOCK BUTTON CONTAINER (Leave, Refresh, Action) -->
+      <div class="game-bottom-control-dock">
+        <button class="dock-btn leave" onclick="goTo('lobby')">Leave</button>
+        <button class="dock-btn refresh" onclick="refreshGrids()">Refresh</button>
+        <button class="dock-btn dynamic-action" id="main-payout-btn" onclick="claimBingo()">🎉 Bingo!</button>
       </div>
     </div>
   </div>
@@ -568,11 +693,10 @@ const GAMES = [
 ];
 
 const LETS = ['B', 'I', 'N', 'G', 'O'];
-const CCLS = { B: 'ccB', I: 'ccI', N: 'ccN', G: 'ccG', O: 'ccO' };
-const COLOR_MAP = { B: 'var(--red)', I: 'var(--blue)', N: '#38a169', G: 'var(--orange)', O: 'var(--purple)' };
+const COLOR_CLASSES = { B: 'called-B', I: 'called-I', N: 'called-N', G: 'called-G', O: 'called-O' };
 
 let selGame = GAMES[0];
-let selCard1 = 117, selCard2 = null; // Default to 1 card selected
+let selCard1 = 117, selCard2 = null; 
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
 let walBal = 250; 
@@ -581,7 +705,7 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let activeLobbyPlayers = 38; // Default to a realistic live player list count
+let activeLobbyPlayers = 38; 
 let currentBonus = 300;
 
 function seededRand(s){return()=>{s=(s*1664525+1013904223)&0xFFFFFFFF;return(s>>>0)/0xFFFFFFFF}}
@@ -597,7 +721,6 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
-// Calculates Derash (Winning Amount) using: (Bet - 2) * Players
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
     g.win = (g.bet - 2) * activeLobbyPlayers;
@@ -762,18 +885,23 @@ function confirmJoin(){
 
 function syncActiveGameScreenStructure() {
   const container2 = document.getElementById('slot-card2-container');
+  const cardWrapper = document.getElementById('game-cards-wrapper');
+  
   if (selCard2) {
+    // Add scaler class to prevent scrolling and fit both cards
+    cardWrapper.classList.add('two-card-active');
     container2.innerHTML = `
-      <div class="card-unit" style="margin-top: 4px;">
+      <div class="card-unit">
         <div class="bhead-mini">
-          <div class="col-h cB" style="font-size:9px">B</div><div class="col-h cI" style="font-size:9px">I</div>
-          <div class="col-h cN" style="font-size:9px">N</div><div class="col-h cG" style="font-size:9px">G</div>
-          <div class="col-h cO" style="font-size:9px">O</div>
+          <div class="col-h cB">B</div><div class="col-h cI">I</div>
+          <div class="col-h cN">N</div><div class="col-h cG">G</div>
+          <div class="col-h cO">O</div>
         </div>
         <div id="brows2"></div>
         <div style="text-align:center;font-size:9px;color:#888;margin-top:4px" id="gclbl2">Cartela #2</div>
       </div>`;
   } else {
+    cardWrapper.classList.remove('two-card-active');
     container2.innerHTML = `
       <div class="empty-placeholder-unit">
         Slot 2 Empty (1 Card Mode)
@@ -786,7 +914,17 @@ function syncActiveGameScreenStructure() {
 
 function toggleAutoMode() {
   isAutoMode = document.getElementById('auto-toggle').checked;
-  toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
+  const mainBtn = document.getElementById('main-payout-btn');
+  
+  if (isAutoMode) {
+    mainBtn.textContent = "AUTOMATIC";
+    mainBtn.classList.add('auto-active');
+    toast("⚡ Auto-Mark & Auto-Claim Active");
+  } else {
+    mainBtn.textContent = "🎉 Bingo!";
+    mainBtn.classList.remove('auto-active');
+    toast("🛑 Manual Mark Active");
+  }
 }
 
 function renderMasterBoard() {
@@ -796,11 +934,12 @@ function renderMasterBoard() {
     let numbersHtml = '';
     for (let i = start; i <= start + 14; i++) {
       const isCalled = called.includes(i);
-      numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called' : ''}">${i}</div>`;
+      const callClass = isCalled ? `called-${l}` : '';
+      numbersHtml += `<div class="board-num-vertical ${callClass}">${i}</div>`;
     }
     html += `
       <div class="board-col">
-        <span class="board-letter-header" style="color: ${COLOR_MAP[l]}">${l}</span>
+        <span class="board-letter-header h-${l}">${l}</span>
         ${numbersHtml}
       </div>`;
   });
@@ -817,7 +956,9 @@ function renderGameCard(cardNumber){
     html+='<div class="brow">';
     for(let c=0;c<5;c++){
       const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
-      html+=`<div class="bcell ${mk?'mk':''} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
+      const letter = LETS[c];
+      const mkClass = mk ? `mk-${letter}` : '';
+      html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
     }
     html+='</div>';
   }
@@ -852,31 +993,26 @@ function startBackgroundEngine(){
   document.getElementById('gd').textContent = currentDerash;
   document.getElementById('gb').textContent = selGame.bet;
 
-  // If the game was already running when joined, jump straight to drawing numbers
   if (selGame.status === 'running') {
     startLiveNumberCalling();
     return;
   }
 
-  // Clear visual cues and start local countdown
   let secondsLeft = selGame.countdown;
   
-  document.getElementById('gcd').textContent = "WAITING";
-  document.getElementById('gcall-title').textContent = "Starts In";
-  document.getElementById('gcir').textContent = secondsLeft;
-  document.getElementById('gcir').className = "circle";
-  document.getElementById('ghist').textContent = "Get ready!";
+  document.getElementById('gcir').textContent = "--";
+  document.getElementById('ghist').textContent = "Get ready! Deciding cards...";
   
   gint = setInterval(() => {
     secondsLeft--;
-    selGame.countdown = secondsLeft; // sync back to lobby preview
+    selGame.countdown = secondsLeft;
     
     if (secondsLeft > 0) {
       document.getElementById('gcir').textContent = secondsLeft;
     } else {
       clearInterval(gint);
       selGame.status = 'running';
-      selGame.countdown = 40; // Reset countdown for lobby's next rotation
+      selGame.countdown = 40;
       startLiveNumberCalling();
     }
   }, 1000);
@@ -884,9 +1020,6 @@ function startBackgroundEngine(){
 
 function startLiveNumberCalling() {
   selGame.status = 'running';
-  document.getElementById('gcd').textContent = "LIVE";
-  document.getElementById('gcall-title').textContent = "Current Call";
-  
   processCycleCall();
   gint = setInterval(() => {
     processCycleCall();
@@ -917,9 +1050,16 @@ function processCycleCall(){
   const activeGameScreen = document.getElementById('sc-game').classList.contains('active');
   if (activeGameScreen) {
     const el = document.getElementById('gcir');
-    if(el) { el.textContent=n; el.className=`circle ${CCLS[L]}`; }
+    if(el) { 
+      el.textContent=`${L}-${n}`; 
+      // Apply correct gold calling animation glow
+      el.style.boxShadow = `0 0 15px var(--col-${L})`;
+    }
     const hEl = document.getElementById('ghist');
-    if(hEl) hEl.textContent=called.slice(-5).reverse().join(' · ');
+    if(hEl) hEl.textContent=called.slice(-5).reverse().map(num => {
+      const charIndex = num<=15?0:num<=30?1:num<=45?2:num<=60?3:4;
+      return `${LETS[charIndex]}-${num}`;
+    }).join(' · ');
     const clEl = document.getElementById('gcl');
     if(clEl) clEl.textContent=callCount;
     renderMasterBoard();
@@ -1097,7 +1237,6 @@ function closeWinnerModal() {
   renderLobby();
 }
 
-// Fixed Refresh logic to keep grids safe
 function refreshGrids(){
   const isGameActive = document.getElementById('sc-game').classList.contains('active');
   if (isGameActive) {

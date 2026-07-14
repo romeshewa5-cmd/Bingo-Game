@@ -597,7 +597,7 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
-// Strictly Calculates Derash (Winning Amount) using: (Bet - 2) * Players
+// Calculates Derash (Winning Amount) using: (Bet - 2) * Players
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
     g.win = (g.bet - 2) * activeLobbyPlayers;
@@ -644,7 +644,6 @@ function initLobbyCountdown() {
       if (g.status === 'waiting') {
         g.countdown--;
         if (g.countdown <= 0) {
-          // Triggers actual live calling start if user joins activeGame right on the finish
           g.status = 'running';
           g.countdown = 40;
         }
@@ -846,7 +845,6 @@ function markCell(cardNumber,key,c,r){
 function startBackgroundEngine(){
   clearInterval(gint);
   
-  // Calculate Derash formula accurately: (Bet - 2) * Players
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
   
   document.getElementById('gp').textContent = activeLobbyPlayers;
@@ -854,26 +852,34 @@ function startBackgroundEngine(){
   document.getElementById('gd').textContent = currentDerash;
   document.getElementById('gb').textContent = selGame.bet;
 
-  // Real-time Countdown Controller
-  if (selGame.status === 'waiting' && selGame.countdown > 0) {
-    document.getElementById('gcd').textContent = "WAITING";
-    document.getElementById('gcall-title').textContent = "Starts In";
-    document.getElementById('gcir').textContent = selGame.countdown;
-    document.getElementById('gcir').className = "circle";
-    document.getElementById('ghist').textContent = "Get ready!";
-    
-    gint = setInterval(() => {
-      if (selGame.countdown > 0) {
-        document.getElementById('gcir').textContent = selGame.countdown;
-      } else {
-        // Safe transition to live sequence once counter hits 0
-        clearInterval(gint);
-        startLiveNumberCalling();
-      }
-    }, 250);
-  } else {
+  // If the game was already running when joined, jump straight to drawing numbers
+  if (selGame.status === 'running') {
     startLiveNumberCalling();
+    return;
   }
+
+  // Clear visual cues and start local countdown
+  let secondsLeft = selGame.countdown;
+  
+  document.getElementById('gcd').textContent = "WAITING";
+  document.getElementById('gcall-title').textContent = "Starts In";
+  document.getElementById('gcir').textContent = secondsLeft;
+  document.getElementById('gcir').className = "circle";
+  document.getElementById('ghist').textContent = "Get ready!";
+  
+  gint = setInterval(() => {
+    secondsLeft--;
+    selGame.countdown = secondsLeft; // sync back to lobby preview
+    
+    if (secondsLeft > 0) {
+      document.getElementById('gcir').textContent = secondsLeft;
+    } else {
+      clearInterval(gint);
+      selGame.status = 'running';
+      selGame.countdown = 40; // Reset countdown for lobby's next rotation
+      startLiveNumberCalling();
+    }
+  }, 1000);
 }
 
 function startLiveNumberCalling() {
@@ -1091,6 +1097,7 @@ function closeWinnerModal() {
   renderLobby();
 }
 
+// Fixed Refresh logic to keep grids safe
 function refreshGrids(){
   const isGameActive = document.getElementById('sc-game').classList.contains('active');
   if (isGameActive) {

@@ -500,7 +500,7 @@ input:checked + .slider:before { transform: translateX(16px); }
         </div>
         <div class="ccbox" style="padding: 6px;">
           <div>
-            <div style="font-size:9px;color:#666">Current Call</div>
+            <div style="font-size:9px;color:#666" id="gcall-title">Current Call</div>
             <div style="font-size:10px;color:#888;margin-top:2px" id="ghist">Waiting…</div>
           </div>
           <div class="circle" id="gcir" style="background:#333; width:34px; height:34px; font-size:14px;">--</div>
@@ -774,15 +774,18 @@ function confirmJoin(){
   walBal -= gameCost;
   document.getElementById('lbal').textContent = walBal + ' ETB';
 
-  selGame.status = 'running';
   selGame.isUserActiveGame = true; 
   
   marked1 = new Set(); marked2 = new Set(); called = [];
   
-  // Construct layouts & run Background Background Engine
+  // Construct layouts
   syncActiveGameScreenStructure();
-  startBackgroundEngine(); 
+  
+  // Transition to the game screen immediately
   goTo('game');
+  
+  // Start countdown delay or immediate game based on state
+  startBackgroundEngine(); 
 }
 
 function syncActiveGameScreenStructure() {
@@ -869,18 +872,48 @@ function markCell(cardNumber,key,c,r){
 
 function startBackgroundEngine(){
   clearInterval(gint);
-  document.getElementById('gcd').textContent = "LIVE"; 
   
   const pl = activeLobbyPlayers;
   document.getElementById('gp').textContent=pl;
   document.getElementById('gpc').textContent=pl+' players';
   document.getElementById('gd').textContent=Math.floor(Math.random()*150)+200;
   document.getElementById('gb').textContent=selGame.bet;
-  
-  processCycleCall();
-  gint = setInterval(() => {
+
+  // Check if countdown is still going
+  if (selGame.status === 'waiting' && selGame.countdown > 0) {
+    document.getElementById('gcd').textContent = "WAITING";
+    document.getElementById('gcall-title').textContent = "Starts In";
+    document.getElementById('gcir').textContent = selGame.countdown;
+    document.getElementById('gcir').className = "circle";
+    document.getElementById('ghist').textContent = "Get ready!";
+    
+    gint = setInterval(() => {
+      // countdown is already being decremented in lobbyTimer, we just read/sync it here
+      if (selGame.countdown > 0) {
+        document.getElementById('gcir').textContent = selGame.countdown;
+      } else {
+        // Countdown finished, begin actual number calling process
+        selGame.status = 'running';
+        document.getElementById('gcd').textContent = "LIVE";
+        document.getElementById('gcall-title').textContent = "Current Call";
+        clearInterval(gint);
+        
+        processCycleCall();
+        gint = setInterval(() => {
+          processCycleCall();
+        }, 3000);
+      }
+    }, 100);
+  } else {
+    // If countdown already ended, start calling instantly
+    selGame.status = 'running';
+    document.getElementById('gcd').textContent = "LIVE";
+    document.getElementById('gcall-title').textContent = "Current Call";
     processCycleCall();
-  }, 3000); 
+    gint = setInterval(() => {
+      processCycleCall();
+    }, 3000);
+  }
 }
 
 function processCycleCall(){
@@ -892,7 +925,14 @@ function processCycleCall(){
   
   // Calculate Dynamic Bonus HUD
   const callCount = called.length;
-  currentBonus = callCount <= 4 ? 300 : Math.max(0, 300 - ((callCount - 4) * 20));
+  // Flat 300 till the 4th number called, then decline by 50 starting from the 5th called number to be 0 by the 10th
+  if (callCount <= 4) {
+    currentBonus = 300;
+  } else if (callCount >= 10) {
+    currentBonus = 0;
+  } else {
+    currentBonus = 300 - ((callCount - 4) * 50);
+  }
   
   const bonusDisplay = document.getElementById('gbonus');
   if (bonusDisplay) bonusDisplay.textContent = currentBonus;

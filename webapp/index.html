@@ -66,8 +66,7 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1b2a;color:#fff;min-height:100vh}
 :root{--gold:#f0b429;--teal:#1bc8a0;--card:#162032;--card2:#1e2d44;--red:#e53e3e;--orange:#f6813a;--blue:#3182ce;--purple:#805ad5}
-.screen{display:none; opacity:0; transition: opacity 0.15s ease-in-out;}
-.screen.active{display:block; opacity:1;}
+.screen{display:none}.screen.active{display:block}
 .nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--card2);position:sticky;top:0;z-index:10}
 .nav-title{font-size:17px;font-weight:700}.nav-sub{font-size:11px;color:var(--teal)}
 .nav-back{color:var(--teal);font-size:13px;cursor:pointer}
@@ -89,33 +88,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stats-bar{padding:10px 12px;background:var(--card2);display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--card)}
 .chip{background:var(--card);border-radius:20px;padding:4px 10px;font-size:11px;color:#aaa}
 .chip b{color:var(--teal)}
-
 /* COMPACT SCREENSHOT STYLED PREVIEW */
-.cartela-wrap{
+.cartela-wrap {
   margin: 10px auto;
   background: transparent;
   padding: 0;
-  max-width: 180px; /* Limits preview size to be small just like the screenshot */
+  max-width: 180px; /* Shrinks the preview block */
   text-align: center;
 }
-.crow{display:flex;gap:3px;margin-bottom:3px}
-.cc{
-  flex:1;
-  background:rgba(255,255,255,0.15);
-  border-radius:4px;
-  aspect-ratio:1.2;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:10px;
-  font-weight:700;
-  color:#fff;
-  border:none;
-}
-.cc.free{background:rgba(27,200,160,0.25);color:var(--teal)}
+.ch{display:flex;gap:4px;margin-bottom:4px}
+.col-h{flex:1;text-align:center;font-size:13px;font-weight:800}
+.cB{color:var(--red)}.cI{color:var(--blue)}.cN{color:#38a169}.cG{color:var(--orange)}.cO{color:var(--purple)}
+.crow{display:flex;gap:4px;margin-bottom:4px}
+.cc{flex:1;background:var(--card);border-radius:6px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
+.cc.free{background:#0d3b2e;color:var(--teal)}
 
-.card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;padding:0 12px}
-.cn{background:rgba(255,255,255,0.06);border-radius:10px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:#fff;cursor:pointer;border:1px solid transparent;transition:all .1s}
+.card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px}
+.cn{background:var(--card2);border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#888;cursor:pointer;border:1px solid transparent;transition:all .1s}
 .cn.sel{background:var(--teal);color:#000;border-color:#0d8c6a}
 .cn.sel2{background:var(--gold);color:#000;border-color:#b58514}
 .cn:active{transform:scale(.88)}
@@ -163,16 +152,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 5px; /* Spaced out further vertically */
 }
 .board-letter-header {
-  font-size: 15px;
+  font-size: 15px; /* Larger letter size */
   font-weight: 900;
   margin-bottom: 8px;
   text-shadow: 0 0 6px rgba(255,255,255,0.1);
 }
 .board-num-vertical {
-  width: 22px;
+  width: 22px; /* Bigger diameter */
   height: 22px;
   border-radius: 50%;
   background: #1b263b;
@@ -180,7 +169,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 10px; /* Highly legible */
   font-weight: 800;
 }
 .board-num-vertical.called {
@@ -377,7 +366,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="game-list" id="glist"></div>
   <div class="bnav">
     <div class="bni" onclick="toast('Leaderboard coming soon!')"><span style="font-size:20px">🏆</span>Leaderboard</div>
-    <div class="bni" onclick="goTo('lobby')"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
+    <div class="bni"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
     <div class="bni" onclick="toast('Profile coming soon!')"><span style="font-size:20px">👤</span>Profile</div>
   </div>
 </div>
@@ -396,10 +385,16 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div class="chip">Bonus: <b>0</b></div>
   </div>
   <div class="cartela-wrap">
+    <div style="font-size:11px;color:#666;margin-bottom:8px">Card Preview — tap numbers below to assign Cartela #1 (Green) and #2 (Gold)</div>
+    <div class="ch">
+      <div class="col-h cB">B</div><div class="col-h cI">I</div>
+      <div class="col-h cN">N</div><div class="col-h cG">G</div>
+      <div class="col-h cO">O</div>
+    </div>
     <div id="cart-rows"></div>
-    <div style="text-align:center;font-size:10px;font-weight:bold;color:var(--gold);margin-top:6px" id="cart-lbl">Cartela #117</div>
+    <div style="text-align:center;font-size:11px;color:#666;margin-top:4px" id="cart-lbl">Cartela #117</div>
   </div>
-  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 150 cards — select up to two cards</div>
+  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 120 cards — select up to two cards</div>
   <div class="card-grid" id="cgrid"></div>
   <button class="start-btn" onclick="confirmJoin()">✅ Start Game</button>
 </div>
@@ -418,7 +413,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div class="gs"><div class="gsv" id="gp">38</div><div class="gsl">Players</div></div>
     <div class="gs"><div class="gsv" id="gb">10</div><div class="gsl">Bet</div></div>
     <div class="gs"><div class="gsv" id="gcl">0</div><div class="gsl">Call</div></div>
-    <div class="gs"><div class="gsv" id="g-bonus-disp">300</div><div class="gsl">Bonus</div></div>
+    <div class="gs"><div class="gsv">300</div><div class="gsl">Bonus</div></div>
   </div>
 
   <div class="game-container">
@@ -510,8 +505,6 @@ if (TGuser) {
     document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
 }
 
-let activeLobbyPlayers = 5; 
-
 // Kept only 10, 20, 50, and 100 ETB games
 const GAMES = [
   {bet:10,  win:0, status:'waiting', bonus:false, countdown:40, waitActive:true},
@@ -529,8 +522,7 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-
-let currentBonus = 300;[cite: 1]
+let activeLobbyPlayers = 5; // Default player counter for calculation simulation
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -556,7 +548,7 @@ function genCard(n){
   card[2][2]=0;cardCache[n]=card;return card;
 }
 
-// Calculations based on standard configurations
+// Strict calculations based on custom commission ranges
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
     let multiplier = 0;
@@ -570,12 +562,9 @@ function calculateWinningAmounts() {
 }
 
 function renderLobby(){
-  const glist = document.getElementById('glist');
-  if (!glist) return;
-
   document.getElementById('lbal').textContent = walBal + ' ETB';
   calculateWinningAmounts();
-  glist.innerHTML = GAMES.map((g,i)=>{
+  document.getElementById('glist').innerHTML = GAMES.map((g,i)=>{
     let statusText = g.status;
     if (g.status === 'waiting') {
       statusText = `waiting (${g.countdown}s)`;
@@ -590,14 +579,16 @@ function renderLobby(){
     </div>`}).join('');
 }
 
+// Automatic 40-second lobby countdown running on load for game boards
 function initLobbyCountdown() {
   clearInterval(lobbyTimer);
   lobbyTimer = setInterval(() => {
-    GAMES.forEach((g) => {
+    GAMES.forEach((g, idx) => {
       if (g.status === 'waiting') {
         g.countdown--;
         if (g.countdown <= 0) {
           g.countdown = 40;
+          // Loop and reset
         }
       }
     });
@@ -618,7 +609,7 @@ function joinGame(i){
 
 function renderCardGrid(){
   const g=document.getElementById('cgrid'); g.innerHTML='';
-  // Upgraded layout limits here to generate 150 unique cards dynamically
+  // Loop increased to 150 to generate all selection cards
   for(let n=1;n<=150;n++){
     const d=document.createElement('div');
     d.className='cn';
@@ -629,7 +620,6 @@ function renderCardGrid(){
   renderCartela(selCard2 ? selCard2 : selCard1);
   updateActiveCardCountHUD();
 }
-
 function selectCard(n){
   if (selCard1 === n) {
     selCard1 = selCard2;
@@ -688,6 +678,7 @@ function confirmJoin(){
     return;
   }
 
+  // Transitions to running ONLY right as calling actions fire
   selGame.status = 'running';
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
@@ -703,6 +694,7 @@ function toggleAutoMode() {
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
 }
 
+/* RENDERS COLUMNS VERTICALLY WITH CUSTOM HEADER COLORS */
 function renderMasterBoard() {
   const letters = ['B', 'I', 'N', 'G', 'O'];
   let html = '';
@@ -714,6 +706,7 @@ function renderMasterBoard() {
       const isCalled = called.includes(i);
       numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called' : ''}">${i}</div>`;
     }
+    // Color matching applied directly to header tags
     html += `
       <div class="board-col">
         <span class="board-letter-header" style="color: ${COLOR_MAP[l]}">${l}</span>
@@ -764,6 +757,8 @@ function markCell(cardNumber,key,c,r){
   else toast('Number not called yet!');
 }
 
+  let currentBonus = 300; // Tracks the active bonus (starts at 300)
+  
 function startGame(){
   clearInterval(gint);
   document.getElementById('gcd').textContent = "LIVE"; 
@@ -772,8 +767,8 @@ function startGame(){
   document.getElementById('gcir').style.background = '#333';
   document.getElementById('ghist').textContent = 'Waiting…';
   
-  currentBonus = 300;[cite: 1]
-  document.getElementById('g-bonus-disp').textContent = currentBonus;
+  // Reset bonus pool to 300 at the start of every new game
+  currentBonus = 300; 
   
   const pl = activeLobbyPlayers;
   document.getElementById('gp').textContent=pl;
@@ -787,14 +782,14 @@ function startGame(){
   
   callNum();
   
+  // Interval set to 4000ms (4 seconds)
   gint = setInterval(() => {
     callNum();
     if(Math.random() < 0.02 && called.length > 5) {
        simulateOpponentWin();
     }
-  }, 4000);[cite: 1]
+  }, 3000); 
 }
-
 function callNum(){
   const all=Array.from({length:75},(_,i)=>i+1),left=all.filter(n=>!called.includes(n));
   if(!left.length){clearInterval(gint);return;}
@@ -803,13 +798,18 @@ function callNum(){
   
   const callCount = called.length;
   
-  if (callCount <= 4) {[cite: 1]
-    currentBonus = 300;[cite: 1]
-  } else {[cite: 1]
-    currentBonus = Math.max(0, 300 - ((callCount - 4) * 50));[cite: 1]
-  }[cite: 1]
+  // BONUS LOGIC: Holds at 300 for Calls 1-4, starts dropping by 50 on Call 5
+  if (callCount <= 4) {
+    currentBonus = 300;
+  } else {
+    currentBonus = Math.max(0, 300 - ((callCount - 4) * 50));
+  }
   
-  document.getElementById('g-bonus-disp').textContent = currentBonus;
+  // Update the bonus display in the game stats bar dynamically!
+  const bonusDisplays = document.querySelectorAll('.gsv');
+  if (bonusDisplays && bonusDisplays[5]) {
+    bonusDisplays[5].textContent = currentBonus; 
+  }
   
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
   const el=document.getElementById('gcir');
@@ -827,7 +827,6 @@ function callNum(){
     renderGameCard(2);
   }
 }
-
 function autoMarkCard(cardNumber, valCalled) {
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   if (!selCard) return;
@@ -895,26 +894,21 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
+    // Safe custom margin reward payout calculation applied
     let baseCut = 2;
     if (selGame.bet === 20) baseCut = 4;
     else if (selGame.bet === 50) baseCut = 6;
     else if (selGame.bet === 100) baseCut = 10;
 
-    const basePayout = (selGame.bet - baseCut) * activeLobbyPlayers;
-    const totalPayout = basePayout + currentBonus;[cite: 1]
-    walBal += totalPayout;
+    const rewardPayout = (selGame.bet - baseCut) * activeLobbyPlayers;
+    walBal += rewardPayout;
     document.getElementById('lbal').textContent = walBal + ' ETB';
     
-    tg.sendData(JSON.stringify({action:'bingo_win',card:winningPlay.selCard,bet:(selGame.bet * 2), won_bonus: currentBonus}));[cite: 1]
-    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${winningPlay.selCard} (+${currentBonus} Bonus!)`, winningPlay.selCard, winningPlay.pType, winningPlay.pIndex);[cite: 1]
+    tg.sendData(JSON.stringify({action:'bingo_win',card:winningPlay.selCard,bet:(selGame.bet * 2)}));
+    showGlobalWinnerBanner(`🎉 Congratulations! You Won!`, `Winning Cartela: #${winningPlay.selCard}`, winningPlay.selCard, winningPlay.pType, winningPlay.pIndex);
   } else {
     toast('❌ Invalid Bingo lines. Keep playing!');
-    gint = setInterval(() => {
-      callNum();
-      if(Math.random() < 0.02 && called.length > 5) {
-         simulateOpponentWin();
-      }
-    }, 4000);[cite: 1]
+    startGame();
   }
 }
 
@@ -930,7 +924,6 @@ function simulateOpponentWin() {
 
   showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, randomType, randomIndex);
 }
-
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
   document.getElementById('win-head').textContent = headerText;
   document.getElementById('win-sub').textContent = subText;
@@ -959,6 +952,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   document.getElementById('win-grid').innerHTML = html;
   document.getElementById('winner-popup').classList.add('active');
 
+  // Trigger 8-Second Auto-Close 
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   winnerCountdown = 8;
@@ -982,6 +976,7 @@ function closeWinnerModal() {
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   
+  // Instantly drop back to lobby status: waiting countdown state
   selGame.status = 'waiting';
   selGame.countdown = 40;
   
@@ -997,28 +992,13 @@ function leaveGame(){
 }
 
 function goTo(n){
-  const screens = document.querySelectorAll('.screen');
-  if (screens.length === 0) {
-    setTimeout(() => goTo(n), 50);
-    return;
-  }
-  
-  screens.forEach(s => {
-    s.classList.remove('active');
-  });
-  
-  const target = document.getElementById('sc-' + n);
-  if (target) {
-    target.classList.add('active');
-  } else {
-    console.error("Target screen not found: sc-" + n);
-  }
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-'+n).classList.add('active');
   window.scrollTo(0,0);
 }
 
 function toast(msg){
   const el=document.getElementById('toast');
-  if(!el) return;
   el.textContent=msg; el.className='toast show';
   setTimeout(()=>el.className='toast',3000);
 }
@@ -1027,20 +1007,14 @@ let tsec=6*86400+14*3600+57*60;
 setInterval(()=>{
   tsec=Math.max(0,tsec-1);
   const d=Math.floor(tsec/86400),h=Math.floor(tsec%86400/3600),m=Math.floor(tsec%3600/60),s=tsec%60;
-  const td = document.getElementById('td');
-  if(td) {
-    td.textContent=String(d).padStart(2,'0');
-    document.getElementById('th').textContent=String(h).padStart(2,'0');
-    document.getElementById('tm').textContent=String(m).padStart(2,'0');
-    document.getElementById('ts').textContent=String(s).padStart(2,'0');
-  }
+  document.getElementById('td').textContent=String(d).padStart(2,'0');
+  document.getElementById('th').textContent=String(h).padStart(2,'0');
+  document.getElementById('tm').textContent=String(m).padStart(2,'0');
+  document.getElementById('ts').textContent=String(s).padStart(2,'0');
 },1000);
 
-// Safe Initialization
-window.addEventListener('DOMContentLoaded', () => {
-  renderLobby();
-  initLobbyCountdown();
-});
+renderLobby();
+initLobbyCountdown();
 </script>
 </body>
 </html>

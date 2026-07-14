@@ -88,14 +88,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stats-bar{padding:10px 12px;background:var(--card2);display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--card)}
 .chip{background:var(--card);border-radius:20px;padding:4px 10px;font-size:11px;color:#aaa}
 .chip b{color:var(--teal)}
-/* COMPACT SCREENSHOT STYLED PREVIEW */
-.cartela-wrap {
-  margin: 10px auto;
-  background: transparent;
-  padding: 0;
-  max-width: 180px; /* Shrinks the preview block */
-  text-align: center;
-}
 .ch{display:flex;gap:4px;margin-bottom:4px}
 .col-h{flex:1;text-align:center;font-size:13px;font-weight:800}
 .cB{color:var(--red)}.cI{color:var(--blue)}.cN{color:#38a169}.cG{color:var(--orange)}.cO{color:var(--purple)}
@@ -118,7 +110,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ccbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:2;display:flex;align-items:center;justify-content:space-between}
 .circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
 .ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
-
+/* COMPACT SCREENSHOT STYLED PREVIEW */
+    .cartela-wrap {
+      margin: 10px auto;
+      background: transparent;
+      padding: 0;
+      max-width: 180px; /* Shrinks the preview block */
+      text-align: center;
+    }
 /* HORIZONTAL SPLIT LAYOUT */
 .game-container {
   display: flex;
@@ -376,6 +375,13 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="nav">
     <div class="nav-back" onclick="goTo('lobby')">← Back</div>
     <div class="nav-title">Select Cards</div>
+    <!-- Wrapper added around it -->
+<div id="selection-preview-container">
+  <div class="cartela-wrap">
+    <div id="cart-lbl">Cartela #117</div>
+    <div id="cartela-preview"></div>
+  </div>
+</div>
     <!-- Added Refresh Button in Header -->
     <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Refresh</div>
   </div>
@@ -387,8 +393,6 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div class="chip">Active Cards: <b id="cac">2</b></div>
     <div class="chip">Bonus: <b>0</b></div>
   </div>
-  <div class="cartela-wrap">
-    <div style="font-size:11px;color:#666;margin-bottom:8px">Card Preview — tap numbers below to assign Cartela #1 (Green) and #2 (Gold)</div>
     <div class="ch">
       <div class="col-h cB">B</div><div class="col-h cI">I</div>
       <div class="col-h cN">N</div><div class="col-h cG">G</div>
@@ -565,24 +569,21 @@ function calculateWinningAmounts() {
   });
 }
 
-function renderLobby(){
-  document.getElementById('lbal').textContent = walBal + ' ETB';
-  calculateWinningAmounts();
-  document.getElementById('glist').innerHTML = GAMES.map((g,i)=>{
-    let statusText = g.status;
-    if (g.status === 'waiting') {
-      statusText = `waiting (${g.countdown}s)`;
+function renderLobby() {
+  // Reset any running states if the player is back in the lobby and not in an active session
+  if (!hasJoinedActiveGame && selGame) {
+    selGame.status = 'waiting';
+  }
+  
+  // Also loop through all games to ensure they default back to waiting if they got stuck
+  GAMES.forEach(game => {
+    if (!hasJoinedActiveGame) {
+      game.status = 'waiting';
     }
-    return `
-    <div class="game-row">
-      ${g.bonus?'<div class="bonus-tag">BONUS</div>':''}
-      <div><div style="font-size:17px;font-weight:700;color:var(--teal)">${g.bet} ETB</div><div style="font-size:10px;color:#666">Bet</div></div>
-      <div style="text-align:center"><div style="font-size:15px;font-weight:600;color:var(--gold)">${g.win} ETB</div><div style="font-size:10px;color:#666">Win (${activeLobbyPlayers} Players)</div></div>
-      <div><div class="pill ${g.status==='running'?'pill-run':'pill-wait'}" id="status-pill-${i}">${statusText}</div></div>
-      <button class="join-btn" onclick="joinGame(${i})">Join</button>
-    </div>`}).join('');
-}
+  });
 
+  // ... your existing code to render the lobby list UI ...
+}
 // Automatic 40-second lobby countdown running on load for game boards
 function initLobbyCountdown() {
   clearInterval(lobbyTimer);
@@ -1034,11 +1035,16 @@ function closeWinnerModal() {
 }
 
 function leaveGame(){
-  clearInterval(gint);
-  selGame.status = 'waiting';
-  selGame.countdown = 40;
-  hasJoinedActiveGame = false; // Reset active session
+  clearInterval(gint); // Stop the calling interval loop
+  
+  if (selGame) {
+    selGame.status = 'waiting';
+    selGame.countdown = 40;
+  }
+  
+  hasJoinedActiveGame = false; // Reset session tracking
   goTo('lobby');
+  renderLobby(); // Re-render lobby to show updated 'waiting' states
 }
 
 function closeWinnerModal() {
@@ -1054,12 +1060,27 @@ function closeWinnerModal() {
   renderLobby();
 }
 function goTo(n){
+  // 1. Hide all screens
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('sc-'+n).classList.add('active');
+  
+  // 2. Show the target screen
+  const target = document.getElementById('sc-'+n);
+  if (target) target.classList.add('active');
+  
+  // 3. Scroll to the top
   window.scrollTo(0,0);
-}
 
-function toast(msg){
+  // 4. Toggle the preview container visibility
+  const previewContainer = document.getElementById('selection-preview-container');
+  if (previewContainer) {
+    if (n === 'cards') {
+      previewContainer.style.display = 'block'; // Only show on selection screen
+    } else {
+      previewContainer.style.display = 'none';  // Hide on lobby, game, etc.
+    }
+  }
+}
+  function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.className='toast show';
   setTimeout(()=>el.className='toast',3000);
@@ -1075,6 +1096,10 @@ setInterval(()=>{
   document.getElementById('ts').textContent=String(s).padStart(2,'0');
 },1000);
 
+// Add this at the bottom of your script or inside your init/onload function
+GAMES.forEach(game => {
+  game.status = 'waiting';
+});
 renderLobby();
 initLobbyCountdown();
 </script>

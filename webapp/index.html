@@ -66,10 +66,9 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#090d16;color:#fff;min-height:100vh}
 
-/* NEW DESIGN COLOR VARIABLES MATCHING THE PREMIUM NEON THEME */
 :root {
   --gold: #ffbd14;
-  --teal: #00e676;
+  --teal: #0fc082; /* Unified marked green */
   --bg-dark: #090d16;
   --card: #111726;
   --card2: #1b2438;
@@ -159,35 +158,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cc{flex:1;background:var(--card);border-radius:4px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
 .cc.free{background:#0b2e24;color:var(--teal)}
 
-/* MODERN GAME HEADER PILLS (Image 2 Stats) */
-.gstats-pills-bar {
+/* MODERN STATUS BAR - SIX STACKED BLOCKS (Image 2 Style) */
+.gstats-row-container {
   display: flex;
+  justify-content: space-between;
   gap: 6px;
-  padding: 8px 10px;
-  overflow-x: auto;
-  background: var(--card);
-  border-bottom: 1px solid var(--card2);
+  padding: 10px 12px;
+  background: #121824;
 }
-.gstat-pill {
-  background: var(--card2);
-  border-radius: 100px;
-  padding: 4px 12px;
+.gstat-block {
+  flex: 1;
+  background: #1b2233;
+  border-radius: 8px;
+  padding: 6px 4px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  border: 1px solid var(--card3);
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
 }
-.gstat-pill-val {
+.gstat-lbl {
+  font-size: 9px;
+  color: #7d8c9e;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 3px;
+  white-space: nowrap;
+}
+.gstat-val {
   font-size: 11px;
   font-weight: 800;
   color: #fff;
-}
-.gstat-pill-label {
-  font-size: 9px;
-  color: #7b8b9a;
-  text-transform: uppercase;
-  font-weight: 600;
+  word-break: break-all;
 }
 
 /* HORIZONTAL SPLIT PLAY AREA LAYOUT */
@@ -204,6 +207,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   border-radius: 12px;
   padding: 10px;
   border: 1px solid var(--card2);
+  display: flex;
+  flex-direction: column;
 }
 .right-panel {
   flex: 1.9;
@@ -212,29 +217,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   gap: 8px;
 }
 
-/* PREMIUM VERTICAL MASTER CALLER BOARD */
+/* PREMIUM VERTICAL MASTER CALLER BOARD - FULL HEIGHT EXPANSION */
 .board-columns-container {
   display: flex;
   justify-content: space-between;
-  gap: 3px;
-  margin-top: 8px;
+  gap: 4px;
+  flex-grow: 1;
 }
 .board-col {
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  gap: 4px;
 }
 .board-letter-header {
   font-size: 13px;
   font-weight: 900;
   width: 100%;
   text-align: center;
-  padding: 3px 0;
+  padding: 4px 0;
   border-radius: 4px;
   color: #fff !important;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 .board-letter-header.h-B { background: var(--col-B); }
@@ -244,39 +249,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .board-letter-header.h-O { background: var(--col-O); }
 
 .board-num-vertical {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--card2);
-  color: #4a5c78;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  background: rgba(27, 34, 51, 0.5);
+  color: rgba(255, 255, 255, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 800;
+  margin-bottom: 3px;
 }
-.board-num-vertical.called-B { background: var(--col-B); color: #fff; box-shadow: 0 0 6px var(--col-B); }
-.board-num-vertical.called-I { background: var(--col-I); color: #fff; box-shadow: 0 0 6px var(--col-I); }
-.board-num-vertical.called-N { background: var(--col-N); color: #fff; box-shadow: 0 0 6px var(--col-N); }
-.board-num-vertical.called-G { background: var(--col-G); color: #fff; box-shadow: 0 0 6px var(--col-G); }
-.board-num-vertical.called-O { background: var(--col-O); color: #fff; box-shadow: 0 0 6px var(--col-O); }
+.board-num-vertical.called-B { background: var(--col-B) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-B); }
+.board-num-vertical.called-I { background: var(--col-I) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-I); }
+.board-num-vertical.called-N { background: var(--col-N) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-N); }
+.board-num-vertical.called-G { background: var(--col-G) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-G); }
+.board-num-vertical.called-O { background: var(--col-O) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-O); }
 
-/* AUTOMATIC TOGGLE STYLE SWITCH */
+/* AUTOMATIC TOGGLE SITUATED RIGHT ABOVE THE CARTELA */
 .auto-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--card2);
-  padding: 6px 10px;
-  border-radius: 8px;
-  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
   border: 1px solid var(--card3);
 }
 .switch {
   position: relative;
   display: inline-block;
-  width: 34px;
-  height: 18px;
+  width: 38px;
+  height: 20px;
 }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
@@ -290,62 +295,64 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .slider:before {
   position: absolute;
   content: "";
-  height: 12px; width: 12px;
+  height: 14px; width: 14px;
   left: 3px; bottom: 3px;
   background-color: white;
   transition: .2s;
   border-radius: 50%;
 }
 input:checked + .slider { background-color: var(--teal); }
-input:checked + .slider:before { transform: translateX(16px); }
+input:checked + .slider:before { transform: translateX(18px); }
 
-/* CURRENT CALL FRAME AND LATEST ROLLS PREVIEW */
-.live-stream-header {
-  display: flex;
+/* LATEST ROLLS & CENTERED CURRENT BALL DISPLAY */
+.current-ball-container {
   background: var(--card);
   border-radius: 12px;
-  padding: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   border: 1px solid var(--card2);
 }
-.live-stream-label {
-  font-size: 8px;
-  color: #7b8b9a;
-  text-transform: uppercase;
-  font-weight: 700;
-  margin-bottom: 3px;
-}
-.scrolling-rolls-well {
-  flex: 1;
-  background: rgba(0,0,0,0.2);
-  border-radius: 6px;
-  padding: 6px;
+.rolls-well-pills {
   display: flex;
-  align-items: center;
   gap: 6px;
+  width: 100%;
+  justify-content: center;
   overflow: hidden;
-  font-size: 11px;
-  color: #738496;
 }
+.roll-pill {
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+.roll-pill.col-B { background: var(--col-B); }
+.roll-pill.col-I { background: var(--col-I); }
+.roll-pill.col-N { background: var(--col-N); }
+.roll-pill.col-G { background: var(--col-G); }
+.roll-pill.col-O { background: var(--col-O); }
+
 .live-main-ball-display {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 900;
-  color: #000;
-  background: #fff;
-  border: 3px solid var(--gold);
-  box-shadow: 0 0 10px rgba(255, 189, 20, 0.5);
+  color: #090d16;
+  background: #ffffff;
+  border: 4px solid var(--gold);
+  box-shadow: 0 0 14px rgba(255, 189, 20, 0.4);
   flex-shrink: 0;
 }
 
-/* PLAYING CARTELAS DESIGN (Bright light backgrounds with column-colored blocks) */
+/* PLAYING CARTELAS DESIGN */
 .cards-wrapper-vertical {
   display: flex;
   flex-direction: column;
@@ -353,15 +360,15 @@ input:checked + .slider:before { transform: translateX(16px); }
 }
 .card-unit {
   background: var(--card);
-  padding: 6px;
-  border-radius: 10px;
+  padding: 8px;
+  border-radius: 12px;
   border: 1px solid var(--card2);
 }
 .empty-placeholder-unit {
   background: rgba(22, 32, 50, 0.2);
   border: 1px dashed #2e3c54;
   height: 100px;
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -379,10 +386,10 @@ input:checked + .slider:before { transform: translateX(16px); }
 .bhead-mini .col-h {
   flex: 1;
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 900;
-  border-radius: 3px;
-  padding: 2px 0;
+  border-radius: 4px;
+  padding: 3px 0;
   color: #fff !important;
 }
 .bhead-mini .col-h.cB { background: var(--col-B); }
@@ -396,7 +403,6 @@ input:checked + .slider:before { transform: translateX(16px); }
   gap: 3px;
   margin-bottom: 3px;
 }
-/* White backgrounds, dark text, clean borders */
 .bcell {
   flex: 1;
   aspect-ratio: 1.15;
@@ -413,12 +419,12 @@ input:checked + .slider:before { transform: translateX(16px); }
   transition: all .1s;
   user-select: none;
 }
-/* Completely color-filled marked matching columns */
-.bcell.mk-B { background: var(--col-B) !important; color: #fff !important; border-color: var(--col-B) !important; }
-.bcell.mk-I { background: var(--col-I) !important; color: #fff !important; border-color: var(--col-I) !important; }
-.bcell.mk-N { background: var(--col-N) !important; color: #fff !important; border-color: var(--col-N) !important; }
-.bcell.mk-G { background: var(--col-G) !important; color: #fff !important; border-color: var(--col-G) !important; }
-.bcell.mk-O { background: var(--col-O) !important; color: #fff !important; border-color: var(--col-O) !important; }
+/* Unified marked state in pure green color (#0fc082) */
+.bcell.marked-active {
+  background: var(--teal) !important;
+  color: #ffffff !important;
+  border-color: var(--teal) !important;
+}
 
 /* Free space star center */
 .bcell.free {
@@ -427,18 +433,18 @@ input:checked + .slider:before { transform: translateX(16px); }
   border-color: var(--card3) !important;
 }
 
-/* SMART DOCK ACTIONS (At the bottom of screen play container) */
+/* SMART DOCK ACTIONS (Bottom buttons) */
 .game-bottom-control-dock {
   display: flex;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: auto; /* Pushes buttons to the bottom of right panel */
 }
 .dock-btn {
   flex: 1;
-  height: 40px;
-  border-radius: 8px;
+  height: 44px;
+  border-radius: 10px;
   border: none;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   color: #fff;
@@ -449,14 +455,15 @@ input:checked + .slider:before { transform: translateX(16px); }
 .dock-btn.leave { background: var(--red); }
 .dock-btn.refresh { background: var(--card3); color: #cbd5e1; }
 .dock-btn.dynamic-action {
-  background: linear-gradient(135deg, #ff9800, #f57c00);
+  background: var(--teal);
+  color: #fff;
   font-size: 12px;
   letter-spacing: 0.5px;
 }
 .dock-btn.dynamic-action.auto-active {
   background: var(--teal) !important;
-  color: #000 !important;
-  pointer-events: none; /* Inactive static button */
+  color: #ffffff !important;
+  pointer-events: none;
 }
 
 /* DYNAMIC SCALER FOR 2-CARD LAYOUT */
@@ -475,7 +482,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   left: 50%;
   transform: translateX(-50%);
   background: var(--teal);
-  color: #000;
+  color: #fff;
   font-size: 13px;
   font-weight: 700;
   padding: 10px 20px;
@@ -594,41 +601,58 @@ input:checked + .slider:before { transform: translateX(16px); }
     <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
   </div>
   
-  <!-- MODERN METRICS PILLS (Image 2) -->
-  <div class="gstats-pills-bar">
-    <div class="gstat-pill"><span class="gstat-pill-label">Game ID</span><span class="gstat-pill-val" id="gg">1</span></div>
-    <div class="gstat-pill"><span class="gstat-pill-label">Players</span><span class="gstat-pill-val" id="gp">38</span></div>
-    <div class="gstat-pill"><span class="gstat-pill-label">Bet</span><span class="gstat-pill-val" id="gb">10</span></div>
-    <div class="gstat-pill"><span class="gstat-pill-label">Derash</span><span class="gstat-pill-val" style="color: var(--teal)" id="gd">304</span></div>
-    <div class="gstat-pill"><span class="gstat-pill-label">Called</span><span class="gstat-pill-val" id="gcl">0</span></div>
-    <div class="gstat-pill"><span class="gstat-pill-label">Bonus</span><span class="gstat-pill-val" style="color: var(--gold)" id="gbonus">300</span></div>
+  <!-- MODERN METRICS PILLS (Image 2 Six Stacked Row Layout) -->
+  <div class="gstats-row-container">
+    <div class="gstat-block">
+      <span class="gstat-lbl">Game ID</span>
+      <span class="gstat-val" id="gg">1</span>
+    </div>
+    <div class="gstat-block">
+      <span class="gstat-lbl">Players</span>
+      <span class="gstat-val" id="gp">38</span>
+    </div>
+    <div class="gstat-block">
+      <span class="gstat-lbl">Bet</span>
+      <span class="gstat-val" id="gb">10</span>
+    </div>
+    <div class="gstat-block">
+      <span class="gstat-lbl">Derash</span>
+      <span class="gstat-val" style="color: var(--teal)" id="gd">304</span>
+    </div>
+    <div class="gstat-block">
+      <span class="gstat-lbl">Called</span>
+      <span class="gstat-val" id="gcl">0</span>
+    </div>
+    <div class="gstat-block">
+      <span class="gstat-lbl">Bonus</span>
+      <span class="gstat-val" style="color: var(--gold)" id="gbonus">300</span>
+    </div>
   </div>
 
   <div class="game-container">
     <!-- Left Panel: Master Caller Board -->
     <div class="left-panel">
-      <div class="auto-control">
-        <span style="font-weight:bold; font-size:9px; color:#fff;">⚡ Auto-Mark</span>
-        <label class="switch">
-          <input type="checkbox" id="auto-toggle" onchange="toggleAutoMode()">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div style="font-size:9px; color:#888; text-transform:uppercase; margin-bottom:6px; font-weight:bold; text-align:center;">Board</div>
+      <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:8px; font-weight:bold; text-align:center; letter-spacing: 0.5px;">Board</div>
       <div id="master-board" class="board-columns-container"></div>
     </div>
 
     <!-- Right Panel: Playing Cards & Current Call displays -->
     <div class="right-panel">
-      <!-- Live Rolling stream call display -->
-      <div class="live-stream-header">
-        <div class="scrolling-rolls-well">
-          <div>
-            <div class="live-stream-label">Live Stream Rolls</div>
-            <div id="ghist">Waiting for call...</div>
-          </div>
+      <!-- Centered Display for Current Ball & Previous Rolls -->
+      <div class="current-ball-container">
+        <div class="rolls-well-pills" id="ghist-pills">
+          <!-- Latest 5 horizontal rounded pills will load dynamically here -->
         </div>
         <div class="live-main-ball-display" id="gcir">--</div>
+      </div>
+
+      <!-- AUTOMATIC MODE TOGGLE SWITCH -->
+      <div class="auto-control">
+        <span style="font-weight:800; font-size:10px; color:#fff; text-transform: uppercase; letter-spacing: 0.5px;">Automatic</span>
+        <label class="switch">
+          <input type="checkbox" id="auto-toggle" onchange="toggleAutoMode()">
+          <span class="slider"></span>
+        </label>
       </div>
 
       <!-- Live Interactive Cartelas container Wrapper -->
@@ -642,7 +666,7 @@ input:checked + .slider:before { transform: translateX(16px); }
               <div class="col-h cO">O</div>
             </div>
             <div id="brows1"></div>
-            <div style="text-align:center;font-size:9px;color:#888;margin-top:4px" id="gclbl1">Cartela #1</div>
+            <div style="text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:6px" id="gclbl1">Cartela #1</div>
           </div>
         </div>
 
@@ -888,7 +912,6 @@ function syncActiveGameScreenStructure() {
   const cardWrapper = document.getElementById('game-cards-wrapper');
   
   if (selCard2) {
-    // Add scaler class to prevent scrolling and fit both cards
     cardWrapper.classList.add('two-card-active');
     container2.innerHTML = `
       <div class="card-unit">
@@ -898,7 +921,7 @@ function syncActiveGameScreenStructure() {
           <div class="col-h cO">O</div>
         </div>
         <div id="brows2"></div>
-        <div style="text-align:center;font-size:9px;color:#888;margin-top:4px" id="gclbl2">Cartela #2</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:6px" id="gclbl2">Cartela #2</div>
       </div>`;
   } else {
     cardWrapper.classList.remove('two-card-active');
@@ -956,8 +979,7 @@ function renderGameCard(cardNumber){
     html+='<div class="brow">';
     for(let c=0;c<5;c++){
       const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
-      const letter = LETS[c];
-      const mkClass = mk ? `mk-${letter}` : '';
+      const mkClass = mk ? 'marked-active' : '';
       html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
     }
     html+='</div>';
@@ -1001,7 +1023,7 @@ function startBackgroundEngine(){
   let secondsLeft = selGame.countdown;
   
   document.getElementById('gcir').textContent = "--";
-  document.getElementById('ghist').textContent = "Get ready! Deciding cards...";
+  document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
   
   gint = setInterval(() => {
     secondsLeft--;
@@ -1052,14 +1074,20 @@ function processCycleCall(){
     const el = document.getElementById('gcir');
     if(el) { 
       el.textContent=`${L}-${n}`; 
-      // Apply correct gold calling animation glow
+      el.style.color=`var(--col-${L})`;
       el.style.boxShadow = `0 0 15px var(--col-${L})`;
     }
-    const hEl = document.getElementById('ghist');
-    if(hEl) hEl.textContent=called.slice(-5).reverse().map(num => {
-      const charIndex = num<=15?0:num<=30?1:num<=45?2:num<=60?3:4;
-      return `${LETS[charIndex]}-${num}`;
-    }).join(' · ');
+    
+    const hEl = document.getElementById('ghist-pills');
+    if(hEl) {
+      const recentCalls = called.slice(-5).reverse();
+      hEl.innerHTML = recentCalls.map(num => {
+        const charIndex = num<=15?0:num<=30?1:num<=45?2:num<=60?3:4;
+        const letter = LETS[charIndex];
+        return `<span class="roll-pill col-${letter}">${letter}-${num}</span>`;
+      }).join(' ');
+    }
+    
     const clEl = document.getElementById('gcl');
     if(clEl) clEl.textContent=callCount;
     renderMasterBoard();
@@ -1264,7 +1292,6 @@ function toast(msg){
   setTimeout(()=>el.className='toast',3000);
 }
 
-// Weekly Countdown Timer Logic Loop
 let tsec=6*86400+14*3600+57*60;
 setInterval(()=>{
   tsec=Math.max(0,tsec-1);
@@ -1275,7 +1302,6 @@ setInterval(()=>{
   document.getElementById('ts').textContent=String(s).padStart(2,'0');
 },1000);
 
-// Initialize System 
 renderLobby();
 initLobbyCountdown();
 </script>

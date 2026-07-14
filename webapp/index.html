@@ -376,6 +376,9 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="nav">
     <div class="nav-back" onclick="goTo('lobby')">← Back</div>
     <div class="nav-title">Select Cards</div>
+    <!-- Added Refresh Button in Header -->
+    <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Refresh</div>
+  </div>
     <div></div>
   </div>
   <div class="stats-bar">
@@ -598,13 +601,27 @@ function initLobbyCountdown() {
 
 function joinGame(i){
   selGame = GAMES[i];
+  
+  // If this player is already in this game and it's active, automatically rejoin them
+  const isGameRunning = selGame.status === 'running';
+  const hasActiveCards = selCard1 || selCard2;
+  
+  if (isGameRunning && hasActiveCards) {
+    toast('⚡ Rejoining your active game...');
+    startGame(); // Resume the active loop
+    goTo('game');
+    return;
+  }
+  
   if(walBal < (selGame.bet * 2)){
     alert('❌ Insufficient balance! Playing with 2 Cartelas requires a minimum balance of ' + (selGame.bet * 2) + ' ETB.');
     return;
   }
+  
   document.getElementById('cpw').textContent = walBal;
   document.getElementById('cps').textContent = (selGame.bet * 2);
-  renderCardGrid(); goTo('cards');
+  renderCardGrid(); 
+  goTo('cards');
 }
 
 function renderCardGrid(){
@@ -621,6 +638,12 @@ function renderCardGrid(){
   updateActiveCardCountHUD();
 }
 function selectCard(n){
+  // Block any selection interaction if the game is currently running
+  if (selGame && selGame.status === 'running') {
+    toast('⚠️ A game is currently running! Selection is disabled until it ends.');
+    return;
+  }
+
   if (selCard1 === n) {
     selCard1 = selCard2;
     selCard2 = null;
@@ -647,7 +670,6 @@ function selectCard(n){
   renderCartela(selCard2 ? selCard2 : (selCard1 ? selCard1 : 117));
   updateActiveCardCountHUD();
 }
-
 function updateActiveCardCountHUD() {
   let activeCount = 0;
   if(selCard1) activeCount++;
@@ -667,6 +689,11 @@ function renderCartela(n){
 }
 
 function confirmJoin(){
+  if (selGame && selGame.status === 'running') {
+    alert('⚠️ You cannot join now. Please wait for the current game to finish!');
+    return;
+  }
+
   const gameCost = selGame.bet * 2;
   if (walBal < gameCost) {
     alert('❌ Insufficient balance to start this game!');
@@ -678,17 +705,12 @@ function confirmJoin(){
     return;
   }
 
-  // Transitions to running ONLY right as calling actions fire
   selGame.status = 'running';
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
   marked1=new Set(); marked2=new Set(); called=[];
   startGame(); goTo('game');
 }
-
-const LETS=['B','I','N','G','O'],CCLS={B:'ccB',I:'ccI',N:'ccN',G:'ccG',O:'ccO'};
-const COLOR_MAP={B:'var(--red)',I:'var(--blue)',N:'#38a169',G:'var(--orange)',O:'var(--purple)'};
-
 function toggleAutoMode() {
   isAutoMode = document.getElementById('auto-toggle').checked;
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
@@ -719,11 +741,17 @@ function renderMasterBoard() {
 function renderGameCard(cardNumber){
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   const marked = cardNumber === 1 ? marked1 : marked2;
+  const unitEl = document.getElementById(`brows${cardNumber}`)?.closest('.card-unit');
   
   if(!selCard) {
-    document.getElementById(`brows${cardNumber}`).innerHTML = '<div style="padding:20px; color:#555; text-align:center; font-size:10px;">Disabled</div>';
-    document.getElementById(`gclbl${cardNumber}`).textContent='No Card';
+    if (unitEl) {
+      unitEl.style.display = 'none'; // Completely hide the card unit if not selected
+    }
     return;
+  }
+  
+  if (unitEl) {
+    unitEl.style.display = 'block'; // Show it if there is a card selected
   }
   
   const card=genCard(selCard); let html='';
@@ -738,12 +766,23 @@ function renderGameCard(cardNumber){
   document.getElementById(`brows${cardNumber}`).innerHTML=html;
   document.getElementById(`gclbl${cardNumber}`).textContent=`#${selCard}`;
 }
-
 function refreshGrids(){
-  renderGameCard(1);
-  renderGameCard(2);
+  const gameScreen = document.getElementById('sc-game');
+  const cardsScreen = document.getElementById('sc-cards');
+  
+  if (gameScreen && gameScreen.classList.contains('active')) {
+    // Inside the game: Re-render active cards
+    renderGameCard(1);
+    renderGameCard(2);
+    toast('🔄 Game grids refreshed!');
+  } else if (cardsScreen && cardsScreen.classList.contains('active')) {
+    // Inside selection: Clear selections and re-draw the grid
+    selCard1 = 117;
+    selCard2 = 118;
+    renderCardGrid();
+    toast('🔄 Selection grid refreshed!');
+  }
 }
-
 function markCell(cardNumber,key,c,r){
   if(isAutoMode) return;
   const selCard = cardNumber === 1 ? selCard1 : selCard2;

@@ -110,14 +110,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ccbox{background:var(--card2);border-radius:10px;padding:8px 12px;flex:2;display:flex;align-items:center;justify-content:space-between}
 .circle{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0}
 .ccB{background:var(--red)}.ccI{background:var(--blue)}.ccN{background:#38a169}.ccG{background:var(--orange)}.ccO{background:var(--purple)}
+
 /* COMPACT SCREENSHOT STYLED PREVIEW */
-    .cartela-wrap {
-      margin: 10px auto;
-      background: transparent;
-      padding: 0;
-      max-width: 180px; /* Shrinks the preview block */
-      text-align: center;
-    }
+.cartela-wrap {
+  margin: 10px auto;
+  background: transparent;
+  padding: 0;
+  max-width: 180px; /* Shrinks the preview block */
+  text-align: center;
+}
+
 /* HORIZONTAL SPLIT LAYOUT */
 .game-container {
   display: flex;
@@ -151,16 +153,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px; /* Spaced out further vertically */
+  gap: 5px;
 }
 .board-letter-header {
-  font-size: 15px; /* Larger letter size */
+  font-size: 15px;
   font-weight: 900;
   margin-bottom: 8px;
   text-shadow: 0 0 6px rgba(255,255,255,0.1);
 }
 .board-num-vertical {
-  width: 22px; /* Bigger diameter */
+  width: 22px;
   height: 22px;
   border-radius: 50%;
   background: #1b263b;
@@ -168,7 +170,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px; /* Highly legible */
+  font-size: 10px;
   font-weight: 800;
 }
 .board-num-vertical.called {
@@ -341,7 +343,10 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LOBBY -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
-    <div><div class="nav-title">🎮 Bingo Bot</div><div class="nav-sub" id="usub">18,510 players</div></div>
+    <div>
+      <div class="nav-title">🎮 Bingo Bot</div>
+      <div class="nav-sub" id="usub">18,510 players</div>
+    </div>
     <div style="font-size:11px;color:#555">v1.0</div>
   </div>
   <div class="banner">
@@ -355,14 +360,22 @@ input:checked + .slider:before { transform: translateX(18px); }
         <div class="tbox"><span class="tnum" id="ts">00</span><span class="tlbl">SEC</span></div>
       </div>
     </div>
-    <div style="text-align:right"><div style="font-size:22px">🏆</div><div style="font-size:22px;font-weight:800;color:var(--gold)">20,000</div><div style="font-size:10px;color:#aaa">ETB PRIZE</div></div>
+    <div style="text-align:right">
+      <div style="font-size:22px">🏆</div>
+      <div style="font-size:22px;font-weight:800;color:var(--gold)">20,000</div>
+      <div style="font-size:10px;color:#aaa">ETB PRIZE</div>
+    </div>
   </div>
   <div class="wallet">
-    <div><div style="font-size:12px;color:#888">💳 Wallet Balance</div><div style="font-size:20px;font-weight:700" id="lbal">-- ETB</div></div>
+    <div>
+      <div style="font-size:12px;color:#888">💳 Wallet Balance</div>
+      <div style="font-size:20px;font-weight:700" id="lbal">-- ETB</div>
+    </div>
     <div style="font-size:12px;color:var(--teal);cursor:pointer" onclick="toast('Use /deposit in the bot to add funds')">+ Deposit</div>
   </div>
   <div class="slbl">Choose a game</div>
   <div class="game-list" id="glist"></div>
+  
   <div class="bnav">
     <div class="bni" onclick="toast('Leaderboard coming soon!')"><span style="font-size:20px">🏆</span>Leaderboard</div>
     <div class="bni"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
@@ -375,33 +388,34 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="nav">
     <div class="nav-back" onclick="goTo('lobby')">← Back</div>
     <div class="nav-title">Select Cards</div>
-    <!-- Wrapper added around it -->
-<div id="selection-preview-container">
-  <div class="cartela-wrap">
-    <div id="cart-lbl">Cartela #117</div>
-    <div id="cartela-preview"></div>
-  </div>
-</div>
-    <!-- Added Refresh Button in Header -->
     <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Refresh</div>
   </div>
-    <div></div>
-  </div>
+  
   <div class="stats-bar">
     <div class="chip">Wallet: <b id="cpw">--</b> ETB</div>
     <div class="chip">Stake (2x): <b id="cps">--</b> ETB</div>
     <div class="chip">Active Cards: <b id="cac">2</b></div>
     <div class="chip">Bonus: <b>0</b></div>
   </div>
+
+  <div style="padding: 12px 16px 0;">
     <div class="ch">
       <div class="col-h cB">B</div><div class="col-h cI">I</div>
       <div class="col-h cN">N</div><div class="col-h cG">G</div>
       <div class="col-h cO">O</div>
     </div>
     <div id="cart-rows"></div>
-    <div style="text-align:center;font-size:11px;color:#666;margin-top:4px" id="cart-lbl">Cartela #117</div>
   </div>
-  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 120 cards — select up to two cards</div>
+
+  <!-- CARTELA PREVIEW CARD CONTAINER (Only visible in Selection Screen) -->
+  <div id="selection-preview-container">
+    <div class="cartela-wrap">
+      <div id="cart-lbl">Cartela #117</div>
+      <div id="cartela-preview"></div>
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:#888;padding:4px 16px 8px">All 150 cards — select up to two cards</div>
   <div class="card-grid" id="cgrid"></div>
   <button class="start-btn" onclick="confirmJoin()">✅ Start Game</button>
 </div>
@@ -424,7 +438,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 
   <div class="game-container">
-    <!-- Left Column: Master Caller Board (Vertical Columns B I N G O) -->
+    <!-- Left Column: Master Caller Board -->
     <div class="left-panel">
       <div class="auto-control">
         <span style="font-weight:bold; font-size:9px; color:#fff;">⚡ Auto</span>
@@ -487,7 +501,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- Winner Announcement Popup with Live Grid and Auto-Close Timer -->
+<!-- Winner Announcement Popup -->
 <div id="winner-popup" class="winner-popup-container">
   <div class="winner-card-body">
     <div style="font-size: 35px; margin-bottom: 8px;">👑</div>
@@ -512,7 +526,6 @@ if (TGuser) {
     document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
 }
 
-// Kept only 10, 20, 50, and 100 ETB games
 const GAMES = [
   {bet:10,  win:0, status:'waiting', bonus:false, countdown:40, waitActive:true},
   {bet:20,  win:0, status:'waiting', bonus:true, countdown:40, waitActive:true},
@@ -520,8 +533,12 @@ const GAMES = [
   {bet:100, win:0, status:'waiting', bonus:true, countdown:40, waitActive:true},
 ];
 
+const LETS = ['B', 'I', 'N', 'G', 'O'];
+const CCLS = { B: 'ccB', I: 'ccI', N: 'ccN', G: 'ccG', O: 'ccO' };
+const COLOR_MAP = { B: 'var(--red)', I: 'var(--blue)', N: '#38a169', G: 'var(--orange)', O: 'var(--purple)' };
+
 let selGame = GAMES[0], selCard1 = 117, selCard2 = 118; 
-let hasJoinedActiveGame = false; // Tracks if the player actually started the game
+let hasJoinedActiveGame = false;
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
 let walBal = 250; 
@@ -530,7 +547,7 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let activeLobbyPlayers = 5; // Default player counter for calculation simulation
+let activeLobbyPlayers = 5;
 
 try {
     if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
@@ -556,7 +573,6 @@ function genCard(n){
   card[2][2]=0;cardCache[n]=card;return card;
 }
 
-// Strict calculations based on custom commission ranges
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
     let multiplier = 0;
@@ -564,36 +580,55 @@ function calculateWinningAmounts() {
     else if (g.bet === 20) multiplier = g.bet - 4;
     else if (g.bet === 50) multiplier = g.bet - 6;
     else if (g.bet === 100) multiplier = g.bet - 10;
-    
     g.win = multiplier * activeLobbyPlayers;
   });
 }
 
 function renderLobby() {
-  // Reset any running states if the player is back in the lobby and not in an active session
   if (!hasJoinedActiveGame && selGame) {
     selGame.status = 'waiting';
   }
   
-  // Also loop through all games to ensure they default back to waiting if they got stuck
   GAMES.forEach(game => {
     if (!hasJoinedActiveGame) {
       game.status = 'waiting';
     }
   });
 
-  // ... your existing code to render the lobby list UI ...
+  calculateWinningAmounts();
+  document.getElementById('lbal').textContent = walBal + ' ETB';
+
+  let html = '';
+  GAMES.forEach((g, idx) => {
+    const isRunning = g.status === 'running';
+    const pillClass = isRunning ? 'pill-run' : 'pill-wait';
+    const pillText = isRunning ? 'Running' : `Waiting (${g.countdown}s)`;
+    const bonusTag = g.bonus ? `<div class="bonus-tag">BONUS x3</div>` : '';
+
+    html += `
+    <div class="game-row">
+      ${bonusTag}
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px;font-weight:700">${g.bet} ETB</span>
+          <span class="pill ${pillClass}">${pillText}</span>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:4px">Prize: <span style="color:var(--teal);font-weight:bold">${g.win} ETB</span></div>
+      </div>
+      <button class="join-btn" onclick="joinGame(${idx})">Join Game</button>
+    </div>`;
+  });
+  document.getElementById('glist').innerHTML = html;
 }
-// Automatic 40-second lobby countdown running on load for game boards
+
 function initLobbyCountdown() {
   clearInterval(lobbyTimer);
   lobbyTimer = setInterval(() => {
-    GAMES.forEach((g, idx) => {
+    GAMES.forEach((g) => {
       if (g.status === 'waiting') {
         g.countdown--;
         if (g.countdown <= 0) {
           g.countdown = 40;
-          // Loop and reset
         }
       }
     });
@@ -603,10 +638,8 @@ function initLobbyCountdown() {
 
 function joinGame(i){
   selGame = GAMES[i];
-  
   const isGameRunning = selGame.status === 'running';
   
-  // Only auto-rejoin if they genuinely clicked "Start Game" earlier
   if (isGameRunning && hasJoinedActiveGame) {
     toast('⚡ Rejoining your active game...');
     startGame(); 
@@ -624,6 +657,7 @@ function joinGame(i){
   renderCardGrid(); 
   goTo('cards');
 }
+
 function renderCardGrid(){
   const g=document.getElementById('cgrid'); g.innerHTML='';
   for(let n=1;n<=150;n++){
@@ -634,20 +668,21 @@ function renderCardGrid(){
     d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
   }
   
-  // Show a locked warning if they are viewing cards during a running game
   const isRunning = selGame && selGame.status === 'running';
   const infoLbl = document.getElementById('cart-lbl');
-  if (isRunning) {
-    infoLbl.innerHTML = `Cartela #${selCard2 ? selCard2 : selCard1} <br><span style="color: var(--red); font-weight: bold; font-size: 9px;">⚠️ Game in Progress - Selection Locked</span>`;
-  } else {
-    infoLbl.innerHTML = `Cartela #${selCard2 ? selCard2 : selCard1}`;
+  if (infoLbl) {
+    if (isRunning) {
+      infoLbl.innerHTML = `Cartela #${selCard2 ? selCard2 : selCard1} <br><span style="color: var(--red); font-weight: bold; font-size: 9px;">⚠️ Game in Progress - Selection Locked</span>`;
+    } else {
+      infoLbl.innerHTML = `Cartela #${selCard2 ? selCard2 : selCard1}`;
+    }
   }
   
   renderCartela(selCard2 ? selCard2 : selCard1);
   updateActiveCardCountHUD();
 }
-  function selectCard(n){
-  // Block any selection interaction if the game is currently running
+
+function selectCard(n){
   if (selGame && selGame.status === 'running') {
     toast('⚠️ A game is currently running! Selection is disabled until it ends.');
     return;
@@ -679,6 +714,7 @@ function renderCardGrid(){
   renderCartela(selCard2 ? selCard2 : (selCard1 ? selCard1 : 117));
   updateActiveCardCountHUD();
 }
+
 function updateActiveCardCountHUD() {
   let activeCount = 0;
   if(selCard1) activeCount++;
@@ -694,7 +730,10 @@ function renderCartela(n){
     html+='</div>';
   }
   document.getElementById('cart-rows').innerHTML=html;
-  document.getElementById('cart-lbl').textContent=`Cartela #${n}`;
+  const infoLbl = document.getElementById('cart-lbl');
+  if (infoLbl) {
+    infoLbl.textContent=`Cartela #${n}`;
+  }
 }
 
 function confirmJoin(){
@@ -715,19 +754,19 @@ function confirmJoin(){
   }
 
   selGame.status = 'running';
-  hasJoinedActiveGame = true; // Flag that the player is officially in the live game
+  hasJoinedActiveGame = true; 
   
   const data=JSON.stringify({action:'join_game',bet:selGame.bet,card1:selCard1,card2:selCard2,user_id:TGuser?.id});
   tg.sendData(data);
   marked1=new Set(); marked2=new Set(); called=[];
   startGame(); goTo('game');
 }
-  function toggleAutoMode() {
+
+function toggleAutoMode() {
   isAutoMode = document.getElementById('auto-toggle').checked;
   toast(isAutoMode ? "⚡ Auto-Mark Active" : "🛑 Manual Mark Active");
 }
 
-/* RENDERS COLUMNS VERTICALLY WITH CUSTOM HEADER COLORS */
 function renderMasterBoard() {
   const letters = ['B', 'I', 'N', 'G', 'O'];
   let html = '';
@@ -739,7 +778,6 @@ function renderMasterBoard() {
       const isCalled = called.includes(i);
       numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called' : ''}">${i}</div>`;
     }
-    // Color matching applied directly to header tags
     html += `
       <div class="board-col">
         <span class="board-letter-header" style="color: ${COLOR_MAP[l]}">${l}</span>
@@ -756,13 +794,13 @@ function renderGameCard(cardNumber){
   
   if(!selCard) {
     if (unitEl) {
-      unitEl.style.display = 'none'; // Completely hide the card unit if not selected
+      unitEl.style.display = 'none'; 
     }
     return;
   }
   
   if (unitEl) {
-    unitEl.style.display = 'block'; // Show it if there is a card selected
+    unitEl.style.display = 'block'; 
   }
   
   const card=genCard(selCard); let html='';
@@ -777,23 +815,23 @@ function renderGameCard(cardNumber){
   document.getElementById(`brows${cardNumber}`).innerHTML=html;
   document.getElementById(`gclbl${cardNumber}`).textContent=`#${selCard}`;
 }
+
 function refreshGrids(){
   const gameScreen = document.getElementById('sc-game');
   const cardsScreen = document.getElementById('sc-cards');
   
   if (gameScreen && gameScreen.classList.contains('active')) {
-    // Inside the game: Re-render active cards
     renderGameCard(1);
     renderGameCard(2);
     toast('🔄 Game grids refreshed!');
   } else if (cardsScreen && cardsScreen.classList.contains('active')) {
-    // Inside selection: Clear selections and re-draw the grid
     selCard1 = 117;
     selCard2 = 118;
     renderCardGrid();
     toast('🔄 Selection grid refreshed!');
   }
 }
+
 function markCell(cardNumber,key,c,r){
   if(isAutoMode) return;
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
@@ -807,7 +845,7 @@ function markCell(cardNumber,key,c,r){
   else toast('Number not called yet!');
 }
 
-  let currentBonus = 300; // Tracks the active bonus (starts at 300)
+let currentBonus = 300; 
   
 function startGame(){
   clearInterval(gint);
@@ -817,7 +855,6 @@ function startGame(){
   document.getElementById('gcir').style.background = '#333';
   document.getElementById('ghist').textContent = 'Waiting…';
   
-  // Reset bonus pool to 300 at the start of every new game
   currentBonus = 300; 
   
   const pl = activeLobbyPlayers;
@@ -832,7 +869,6 @@ function startGame(){
   
   callNum();
   
-  // Interval set to 4000ms (4 seconds)
   gint = setInterval(() => {
     callNum();
     if(Math.random() < 0.02 && called.length > 5) {
@@ -840,6 +876,7 @@ function startGame(){
     }
   }, 3000); 
 }
+
 function callNum(){
   const all=Array.from({length:75},(_,i)=>i+1),left=all.filter(n=>!called.includes(n));
   if(!left.length){clearInterval(gint);return;}
@@ -848,14 +885,12 @@ function callNum(){
   
   const callCount = called.length;
   
-  // BONUS LOGIC: Holds at 300 for Calls 1-4, starts dropping by 50 on Call 5
   if (callCount <= 4) {
     currentBonus = 300;
   } else {
     currentBonus = Math.max(0, 300 - ((callCount - 4) * 50));
   }
   
-  // Update the bonus display in the game stats bar dynamically!
   const bonusDisplays = document.querySelectorAll('.gsv');
   if (bonusDisplays && bonusDisplays[5]) {
     bonusDisplays[5].textContent = currentBonus; 
@@ -877,6 +912,7 @@ function callNum(){
     renderGameCard(2);
   }
 }
+
 function autoMarkCard(cardNumber, valCalled) {
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   if (!selCard) return;
@@ -944,7 +980,6 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    // Safe custom margin reward payout calculation applied
     let baseCut = 2;
     if (selGame.bet === 20) baseCut = 4;
     else if (selGame.bet === 50) baseCut = 6;
@@ -966,7 +1001,7 @@ function simulateOpponentWin() {
   clearInterval(gint);
   const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99", "@Yonas_Ke"];
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
-  const randomCard = Math.floor(Math.random() * 150) + 1; // Scaled to 150
+  const randomCard = Math.floor(Math.random() * 150) + 1; 
   
   const types = ['row', 'col', 'diag-back', 'diag-forward'];
   const randomType = types[Math.floor(Math.random() * types.length)];
@@ -974,6 +1009,7 @@ function simulateOpponentWin() {
 
   showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, randomType, randomIndex);
 }
+
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
   document.getElementById('win-head').textContent = headerText;
   document.getElementById('win-sub').textContent = subText;
@@ -1002,7 +1038,6 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   document.getElementById('win-grid').innerHTML = html;
   document.getElementById('winner-popup').classList.add('active');
 
-  // Trigger 8-Second Auto-Close 
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   winnerCountdown = 8;
@@ -1026,61 +1061,46 @@ function closeWinnerModal() {
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   
-  // Instantly drop back to lobby status: waiting countdown state
   selGame.status = 'waiting';
   selGame.countdown = 40;
+  hasJoinedActiveGame = false; 
   
   goTo('lobby');
   renderLobby();
 }
 
 function leaveGame(){
-  clearInterval(gint); // Stop the calling interval loop
+  clearInterval(gint); 
   
   if (selGame) {
     selGame.status = 'waiting';
     selGame.countdown = 40;
   }
   
-  hasJoinedActiveGame = false; // Reset session tracking
+  hasJoinedActiveGame = false; 
   goTo('lobby');
-  renderLobby(); // Re-render lobby to show updated 'waiting' states
+  renderLobby(); 
 }
 
-function closeWinnerModal() {
-  clearTimeout(winnerPopupTimeout);
-  clearInterval(winnerPopupInterval);
-  document.getElementById('winner-popup').classList.remove('active');
-  
-  selGame.status = 'waiting';
-  selGame.countdown = 40;
-  hasJoinedActiveGame = false; // Reset active session
-  
-  goTo('lobby');
-  renderLobby();
-}
 function goTo(n){
-  // 1. Hide all screens
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   
-  // 2. Show the target screen
   const target = document.getElementById('sc-'+n);
   if (target) target.classList.add('active');
   
-  // 3. Scroll to the top
   window.scrollTo(0,0);
 
-  // 4. Toggle the preview container visibility
   const previewContainer = document.getElementById('selection-preview-container');
   if (previewContainer) {
     if (n === 'cards') {
-      previewContainer.style.display = 'block'; // Only show on selection screen
+      previewContainer.style.display = 'block'; 
     } else {
-      previewContainer.style.display = 'none';  // Hide on lobby, game, etc.
+      previewContainer.style.display = 'none';  
     }
   }
 }
-  function toast(msg){
+
+function toast(msg){
   const el=document.getElementById('toast');
   el.textContent=msg; el.className='toast show';
   setTimeout(()=>el.className='toast',3000);
@@ -1096,7 +1116,6 @@ setInterval(()=>{
   document.getElementById('ts').textContent=String(s).padStart(2,'0');
 },1000);
 
-// Add this at the bottom of your script or inside your init/onload function
 GAMES.forEach(game => {
   game.status = 'waiting';
 });

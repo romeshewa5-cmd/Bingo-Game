@@ -470,7 +470,7 @@ input:checked + .slider:before { transform: translateX(16px); }
   
   <div class="gstats">
     <div class="gs"><div class="gsv" id="gg">1</div><div class="gsl">Games</div></div>
-    <div class="gs"><div class="gsv" id="gd">240</div><div class="gsl">Derash</div></div>
+    <div class="gs"><div class="gsv" id="gd">304</div><div class="gsl">Derash</div></div>
     <div class="gs"><div class="gsv" id="gp">38</div><div class="gsl">Players</div></div>
     <div class="gs"><div class="gsv" id="gb">10</div><div class="gsl">Bet</div></div>
     <div class="gs"><div class="gsv" id="gcl">0</div><div class="gsl">Call</div></div>
@@ -561,10 +561,10 @@ if (TGuser) {
 
 // System Core State Model
 const GAMES = [
-  {bet:10,  win:40,  status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
-  {bet:20,  win:80,  status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
-  {bet:50,  win:200, status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
-  {bet:100, win:400, status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
+  {bet:10,  win:304, status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
+  {bet:20,  win:684, status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
+  {bet:50,  win:1824,status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
+  {bet:100, win:3724,status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
 ];
 
 const LETS = ['B', 'I', 'N', 'G', 'O'];
@@ -581,24 +581,8 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let activeLobbyPlayers = 5;
+let activeLobbyPlayers = 38; // Default to a realistic live player list count
 let currentBonus = 300;
-
-// Persistent Storage Checking for Off-line Returns
-window.addEventListener('load', () => {
-  const cachedOfflineWin = localStorage.getItem('offline_bingo_win');
-  if (cachedOfflineWin) {
-    const parsedWin = JSON.parse(cachedOfflineWin);
-    localStorage.removeItem('offline_bingo_win');
-    setTimeout(() => {
-      showGlobalWinnerBanner(
-        "🎉 እንኳን ደስ አለዎት! ያሸነፉት ጨዋታ ተጠናቋል!", 
-        `ካርቴላ #${parsedWin.card} የ ${parsedWin.amount} ETB ሽልማት አግኝቷል።`, 
-        parsedWin.card, 'row', 2
-      );
-    }, 1200);
-  }
-});
 
 function seededRand(s){return()=>{s=(s*1664525+1013904223)&0xFFFFFFFF;return(s>>>0)/0xFFFFFFFF}}
 
@@ -613,10 +597,10 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
+// Strictly Calculates Derash (Winning Amount) using: (Bet - 2) * Players
 function calculateWinningAmounts() {
   GAMES.forEach(g => {
-    let multiplier = g.bet - Math.floor(g.bet * 0.15);
-    g.win = multiplier * activeLobbyPlayers;
+    g.win = (g.bet - 2) * activeLobbyPlayers;
   });
 }
 
@@ -631,7 +615,6 @@ function renderLobby() {
     const pillText = isRunning ? 'Running' : `Waiting (${g.countdown}s)`;
     const bonusTag = g.bonus ? `<div class="bonus-tag">BONUS x3</div>` : '';
     
-    // Action button behaves perfectly under state checks
     let btnActionStyle = `joinGame(${idx})`;
     let btnText = "Join Game";
     if (isRunning && g.isUserActiveGame) {
@@ -646,7 +629,7 @@ function renderLobby() {
           <span style="font-size:16px;font-weight:700">${g.bet} ETB</span>
           <span class="pill ${pillClass}">${pillText}</span>
         </div>
-        <div style="font-size:11px;color:#888;margin-top:4px">Prize: <span style="color:var(--teal);font-weight:bold">${g.win} ETB</span></div>
+        <div style="font-size:11px;color:#888;margin-top:4px">Prize (Derash): <span style="color:var(--teal);font-weight:bold">${g.win} ETB</span></div>
       </div>
       <button class="join-btn" onclick="${btnActionStyle}">${btnText}</button>
     </div>`;
@@ -661,7 +644,7 @@ function initLobbyCountdown() {
       if (g.status === 'waiting') {
         g.countdown--;
         if (g.countdown <= 0) {
-          // Instantly simulates game running for other players in the pool
+          // Triggers actual live calling start if user joins activeGame right on the finish
           g.status = 'running';
           g.countdown = 40;
         }
@@ -674,7 +657,6 @@ function initLobbyCountdown() {
 function joinGame(i){
   const targetedGame = GAMES[i];
   
-  // If game is running and it belongs to this player, perform background recovery
   if (targetedGame.status === 'running' && targetedGame.isUserActiveGame) {
     selGame = targetedGame;
     toast('⚡ Rejoining your active session...');
@@ -733,7 +715,7 @@ function updateSelectionSummary() {
   let count = 0;
   if(selCard1) count++;
   if(selCard2) count++;
-  if(count === 0) { selCard1 = 117; count = 1; } // Fallback safe lock
+  if(count === 0) { selCard1 = 117; count = 1; } 
   
   document.getElementById('cac').textContent = count;
   const currentTotalCost = selGame.bet * count;
@@ -743,7 +725,6 @@ function updateSelectionSummary() {
   const previewNum = selCard2 ? selCard2 : selCard1;
   document.getElementById('cart-lbl').textContent = `Cartela #${previewNum}`;
   
-  // Renders the tiny side-by-side card preview grid
   const card=genCard(previewNum); let html='';
   for(let r=0;r<5;r++){
     html+='<div class="crow">';
@@ -754,7 +735,6 @@ function updateSelectionSummary() {
 }
 
 function confirmJoin(){
-  // Block action if a generic external game is running and player hasn't joined it
   if (selGame.status === 'running' && !selGame.isUserActiveGame) {
     alert("⚠️ Game is running, wait till it end!");
     return;
@@ -770,21 +750,14 @@ function confirmJoin(){
     return;
   }
 
-  // Deduct Stake
   walBal -= gameCost;
   document.getElementById('lbal').textContent = walBal + ' ETB';
 
   selGame.isUserActiveGame = true; 
-  
   marked1 = new Set(); marked2 = new Set(); called = [];
   
-  // Construct layouts
   syncActiveGameScreenStructure();
-  
-  // Transition to the game screen immediately
   goTo('game');
-  
-  // Start countdown delay or immediate game based on state
   startBackgroundEngine(); 
 }
 
@@ -873,13 +846,15 @@ function markCell(cardNumber,key,c,r){
 function startBackgroundEngine(){
   clearInterval(gint);
   
-  const pl = activeLobbyPlayers;
-  document.getElementById('gp').textContent=pl;
-  document.getElementById('gpc').textContent=pl+' players';
-  document.getElementById('gd').textContent=Math.floor(Math.random()*150)+200;
-  document.getElementById('gb').textContent=selGame.bet;
+  // Calculate Derash formula accurately: (Bet - 2) * Players
+  const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
+  
+  document.getElementById('gp').textContent = activeLobbyPlayers;
+  document.getElementById('gpc').textContent = activeLobbyPlayers + ' players';
+  document.getElementById('gd').textContent = currentDerash;
+  document.getElementById('gb').textContent = selGame.bet;
 
-  // Check if countdown is still going
+  // Real-time Countdown Controller
   if (selGame.status === 'waiting' && selGame.countdown > 0) {
     document.getElementById('gcd').textContent = "WAITING";
     document.getElementById('gcall-title').textContent = "Starts In";
@@ -888,32 +863,28 @@ function startBackgroundEngine(){
     document.getElementById('ghist').textContent = "Get ready!";
     
     gint = setInterval(() => {
-      // countdown is already being decremented in lobbyTimer, we just read/sync it here
       if (selGame.countdown > 0) {
         document.getElementById('gcir').textContent = selGame.countdown;
       } else {
-        // Countdown finished, begin actual number calling process
-        selGame.status = 'running';
-        document.getElementById('gcd').textContent = "LIVE";
-        document.getElementById('gcall-title').textContent = "Current Call";
+        // Safe transition to live sequence once counter hits 0
         clearInterval(gint);
-        
-        processCycleCall();
-        gint = setInterval(() => {
-          processCycleCall();
-        }, 3000);
+        startLiveNumberCalling();
       }
-    }, 100);
+    }, 250);
   } else {
-    // If countdown already ended, start calling instantly
-    selGame.status = 'running';
-    document.getElementById('gcd').textContent = "LIVE";
-    document.getElementById('gcall-title').textContent = "Current Call";
-    processCycleCall();
-    gint = setInterval(() => {
-      processCycleCall();
-    }, 3000);
+    startLiveNumberCalling();
   }
+}
+
+function startLiveNumberCalling() {
+  selGame.status = 'running';
+  document.getElementById('gcd').textContent = "LIVE";
+  document.getElementById('gcall-title').textContent = "Current Call";
+  
+  processCycleCall();
+  gint = setInterval(() => {
+    processCycleCall();
+  }, 3000);
 }
 
 function processCycleCall(){
@@ -923,9 +894,7 @@ function processCycleCall(){
   const n=left[Math.floor(Math.random()*left.length)];
   called.push(n);
   
-  // Calculate Dynamic Bonus HUD
   const callCount = called.length;
-  // Flat 300 till the 4th number called, then decline by 50 starting from the 5th called number to be 0 by the 10th
   if (callCount <= 4) {
     currentBonus = 300;
   } else if (callCount >= 10) {
@@ -939,7 +908,6 @@ function processCycleCall(){
 
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
   
-  // Sync screen nodes if active screen is currently matched
   const activeGameScreen = document.getElementById('sc-game').classList.contains('active');
   if (activeGameScreen) {
     const el = document.getElementById('gcir');
@@ -951,7 +919,6 @@ function processCycleCall(){
     renderMasterBoard();
   }
 
-  // Automatic Background Verification Engine
   if (isAutoMode) {
     autoMarkCardBackground(1, n);
     if(selCard2) autoMarkCardBackground(2, n);
@@ -962,7 +929,6 @@ function processCycleCall(){
     }
   }
 
-  // Simulated Opponent check
   if(Math.random() < 0.025 && called.length > 6) {
      triggerOpponentWinSequence();
   }
@@ -986,7 +952,6 @@ function autoMarkCardBackground(cardNumber, valCalled) {
     renderGameCard(cardNumber);
   }
   
-  // Auto-win processing trigger
   checkAutoBingoBackground(cardNumber);
 }
 
@@ -1048,15 +1013,12 @@ function claimBingo(){
 function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
   clearInterval(gint);
   
-  // Complete reward balance update calculations securely
-  const totalPrizePayout = selGame.win;
+  const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
   walBal += totalPrizePayout;
   document.getElementById('lbal').textContent = walBal + ' ETB';
   
-  // Set offline recovery safety check values inside LocalStorage 
   localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
 
-  // Fire WebApp cloud transmission data payloads
   tg.sendData(JSON.stringify({action:'bingo_win', card: winningCardNumber, earnings: totalPrizePayout}));
   
   const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
@@ -1073,7 +1035,6 @@ function triggerOpponentWinSequence() {
 }
 
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
-  // Clear persistent app safety lock storage as view has safely rendered
   localStorage.removeItem('offline_bingo_win');
 
   document.getElementById('win-head').textContent = headerText;

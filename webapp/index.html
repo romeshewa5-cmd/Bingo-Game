@@ -3,9 +3,484 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Bingo Bot</title>
+<title>Dil Bingo</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+/* CSS Reset and Variables */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #090d16;
+  color: #fff;
+  min-height: 100vh;
+  padding-bottom: 75px; /* Leave space for bottom nav bar */
+}
+
+:root {
+  --gold: #ffbd14;
+  --teal: #0fc082; /* Unified marked green */
+  --bg-dark: #090d16;
+  --card: #111726;
+  --card2: #1b2438;
+  --card3: #232f4a;
+  --red: #ff3b30;
+  --nav-gray: #7d8c9e;
+  
+  /* Modern Column Colors matched to Image 2 */
+  --col-B: #2196f3;
+  --col-I: #3f51b5;
+  --col-N: #9c27b0;
+  --col-G: #4caf50;
+  --col-O: #ff9800;
+}
+
+/* Base Screens */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Global Navigation Top Bar */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--bg-dark);
+}
+.nav-title {
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.nav-back {
+  color: var(--teal);
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* Lobby Styling (Image 2 Inspired) */
+.lobby-main-card {
+  background: radial-gradient(circle at top, #141c2d 0%, #0d121f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  margin: 20px 16px;
+  padding: 30px 20px;
+  text-align: center;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+}
+.lobby-heading {
+  font-size: 11px;
+  color: var(--nav-gray);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-bottom: 24px;
+}
+.play-btn {
+  background: var(--teal);
+  color: #fff;
+  font-weight: 800;
+  font-size: 18px;
+  padding: 16px 32px;
+  border-radius: 50px;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(15, 192, 130, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.1s;
+}
+.play-btn:active {
+  transform: scale(0.98);
+}
+.wallet-box-lobby {
+  margin-top: 24px;
+  text-transform: uppercase;
+}
+.wallet-box-lobby .lbl {
+  font-size: 10px;
+  color: var(--nav-gray);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.wallet-box-lobby .val {
+  font-size: 24px;
+  font-weight: 900;
+  color: #fff;
+}
+
+/* Rules Button */
+.rules-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-size: 11px;
+  color: var(--nav-gray);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* History Screen Layout (Image 1 Inspired) */
+.history-header-grid {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px 20px;
+}
+.history-header-card {
+  flex: 1;
+  background: #111522;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+.h-card-lbl {
+  font-size: 10px;
+  color: var(--nav-gray);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.h-card-val {
+  font-size: 20px;
+  font-weight: 800;
+}
+.h-card-sub {
+  font-size: 10px;
+  color: var(--nav-gray);
+}
+.history-list {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.history-row {
+  background: #111522;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+.h-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.h-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #1c2333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--nav-gray);
+}
+.h-details {
+  display: flex;
+  flex-direction: column;
+}
+.h-status {
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+.h-id {
+  background: rgba(255,255,255,0.05);
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  color: var(--nav-gray);
+  font-weight: 700;
+}
+.h-meta {
+  font-size: 11px;
+  color: var(--nav-gray);
+  margin-top: 3px;
+}
+.h-right {
+  text-align: right;
+}
+.h-amount {
+  font-weight: 900;
+  font-size: 15px;
+}
+.h-time {
+  font-size: 10px;
+  color: var(--nav-gray);
+  margin-top: 3px;
+}
+
+/* Wallet Layout (Image 5 Inspired) */
+.wallet-grid {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+}
+.wallet-card {
+  flex: 1;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 85px;
+}
+.wallet-card.main {
+  background: linear-gradient(135deg, #0e2023, #091517);
+  border: 1px solid rgba(15, 192, 130, 0.15);
+}
+.wallet-card.play {
+  background: linear-gradient(135deg, #171228, #0f0b1a);
+  border: 1px solid rgba(156, 39, 176, 0.15);
+}
+.w-card-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.w-card-val {
+  font-size: 18px;
+  font-weight: 900;
+  margin-top: 4px;
+}
+.w-card-desc {
+  font-size: 9px;
+  margin-top: 6px;
+}
+.w-total-strip {
+  background: #111522;
+  margin: 0 16px 16px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.w-total-lbl {
+  font-size: 10px;
+  color: var(--nav-gray);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.w-total-val {
+  font-weight: 900;
+  font-size: 15px;
+  color: #fff;
+}
+.no-activity-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  color: var(--nav-gray);
+}
+.no-activity-icon {
+  font-size: 44px;
+  margin-bottom: 12px;
+  opacity: 0.2;
+}
+
+/* Leaderboard Screen Layout (Image 4 Inspired) */
+.my-rank-banner {
+  background: #622ef3;
+  margin: 16px;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rank-badge-lg {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 900;
+}
+.leaderboard-tabs {
+  background: #111522;
+  border-radius: 14px;
+  margin: 0 16px 20px;
+  padding: 4px;
+  display: flex;
+}
+.l-tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border-radius: 10px;
+  color: var(--nav-gray);
+  cursor: pointer;
+}
+.l-tab.active {
+  background: #232b3f;
+  color: #fff;
+}
+.lb-list {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lb-row {
+  background: #111522;
+  padding: 12px 16px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lb-rank-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 12px;
+}
+.lb-rank-badge.r1 { background: var(--gold); color: #000; }
+.lb-rank-badge.r2 { background: #e2e8f0; color: #000; }
+.lb-rank-badge.r3 { background: #ed8936; color: #000; }
+.lb-rank-badge.rn { background: #232b3f; color: #fff; }
+
+/* Profile Layout (Image 3 Inspired) */
+.profile-main-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 16px 20px;
+}
+.avatar-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 28px;
+  border: 3px solid #622ef3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 12px;
+  background: #111522;
+}
+.prof-badge {
+  font-size: 9px;
+  color: #7f9cf5;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  margin-top: 6px;
+}
+.prof-three-grid {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+.p-stat-box {
+  flex: 1;
+  background: #111522;
+  border-radius: 16px;
+  padding: 12px 6px;
+  text-align: center;
+}
+.p-stat-val {
+  font-size: 16px;
+  font-weight: 900;
+}
+.p-stat-val.win { color: var(--gold); }
+.p-stat-val.invite { color: #3182ce; }
+.p-stat-val.earned { color: var(--teal); }
+
+.p-stat-lbl {
+  font-size: 8px;
+  color: var(--nav-gray);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.pref-row {
+  background: #111522;
+  margin: 8px 16px;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Bottom Navigation Bar styled to match screenshots */
+.bnav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--card2);
+  display: flex;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  z-index: 1000;
+}
+.bni {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  color: var(--nav-gray);
+  font-weight: 700;
+}
+.bni-icon {
+  font-size: 20px;
+  opacity: 0.6;
+}
+.bni.active {
+  color: var(--teal);
+}
+.bni.active .bni-icon {
+  opacity: 1;
+}
+/* Glowing line above active bottom nav icon */
+.bni.active::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  width: 24px;
+  height: 2px;
+  background: var(--teal);
+  box-shadow: 0 0 10px var(--teal);
+}
+
 /* Winner Modal Popup Styling */
 .winner-popup-container {
   position: fixed;
@@ -62,50 +537,6 @@
 .win-cell.free {
   color: var(--teal);
 }
-
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#090d16;color:#fff;min-height:100vh}
-
-:root {
-  --gold: #ffbd14;
-  --teal: #0fc082; /* Unified marked green */
-  --bg-dark: #090d16;
-  --card: #111726;
-  --card2: #1b2438;
-  --card3: #232f4a;
-  --red: #ff3b30;
-  
-  /* Modern Column Colors matched to Image 2 */
-  --col-B: #2196f3; /* Bright Blue */
-  --col-I: #3f51b5; /* Indigo */
-  --col-N: #9c27b0; /* Purple */
-  --col-G: #4caf50; /* Solid Green */
-  --col-O: #ff9800; /* Rich Orange */
-}
-
-.screen{display:none}.screen.active{display:block}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--card2);position:sticky;top:0;z-index:10}
-.nav-title{font-size:17px;font-weight:700}.nav-sub{font-size:11px;color:var(--teal)}
-.nav-back{color:var(--teal);font-size:13px;cursor:pointer}
-.banner{margin:12px;background:linear-gradient(135deg,#0e261f,#144234);border-radius:14px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid #1a5241}
-.timer{display:flex;gap:6px;margin-top:6px}
-.tbox{background:rgba(0,0,0,.3);border-radius:6px;padding:3px 7px;text-align:center}
-.tnum{font-size:14px;font-weight:700;color:var(--teal);display:block}.tlbl{font-size:9px;color:#9ee8cc}
-.wallet{margin:0 12px 10px;background:var(--card);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--card2)}
-.game-list{padding:0 12px;display:flex;flex-direction:column;gap:8px;padding-bottom:90px}
-.game-row{background:var(--card);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--card2);position:relative;overflow:hidden}
-.bonus-tag{position:absolute;top:6px;left:-6px;background:var(--gold);color:#000;font-size:7px;font-weight:800;padding:2px 12px;transform:rotate(-35deg)}
-.join-btn{background:var(--col-O);color:#fff;font-size:12px;font-weight:700;padding:7px 16px;border-radius:20px;border:none;cursor:pointer}
-.join-btn:active{opacity:.8}
-.pill{font-size:10px;padding:2px 8px;border-radius:20px}
-.pill-wait{background:var(--card2);color:#888}.pill-run{background:#691c1c;color:#fc8181}
-.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--card2);display:flex;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
-.bni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px;font-size:10px;color:#666}
-.bni-play{background:var(--gold);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center}
-
-.stats-bar{padding:10px 12px;background:var(--card2);display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--card)}
-.chip{background:var(--card);border-radius:20px;padding:4px 10px;font-size:11px;color:#aaa}
-.chip b{color:var(--teal)}
 
 /* SELECTION AND CARD GRID STYLES */
 .card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px 90px}
@@ -437,7 +868,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 .game-bottom-control-dock {
   display: flex;
   gap: 6px;
-  margin-top: auto; /* Pushes buttons to the bottom of right panel */
+  margin-top: auto;
 }
 .dock-btn {
   flex: 1;
@@ -513,63 +944,187 @@ input:checked + .slider:before { transform: translateX(18px); }
 <body>
 <div class="toast" id="toast"></div>
 
-<!-- LOBBY SCREEN -->
+<!-- LOBBY SCREEN (Image 2 Inspired) -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
-    <div>
-      <div class="nav-title">🎮 Bingo Bot</div>
-      <div class="nav-sub" id="usub">18,510 players</div>
-    </div>
-    <div style="font-size:11px;color:#555">v1.0</div>
+    <div class="nav-title" style="font-weight:900;">Dil Bingo</div>
+    <div class="rules-btn" onclick="toast('Rules: Get 5 cells in a row, column or diagonal called to win.')">Rules</div>
   </div>
   
-  <div class="banner">
-    <div>
-      <div style="font-size:11px;color:#9ee8cc;margin-bottom:4px">🎉 ሳምንታዊ ውድድር</div>
-      <div style="font-size:13px;font-weight:700">Weekly Tournament</div>
-      <div class="timer">
-        <div class="tbox"><span class="tnum" id="td">06</span><span class="tlbl">DAYS</span></div>
-        <div class="tbox"><span class="tnum" id="th">14</span><span class="tlbl">HRS</span></div>
-        <div class="tbox"><span class="tnum" id="tm">57</span><span class="tlbl">MIN</span></div>
-        <div class="tbox"><span class="tnum" id="ts">00</span><span class="tlbl">SEC</span></div>
+  <div class="lobby-main-card">
+    <div class="lobby-heading">Welcome to</div>
+    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">DIL BINGO</div>
+    
+    <div style="font-size: 11px; color: var(--nav-gray); font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase;">Choose Your Stake</div>
+    <button class="play-btn" onclick="joinGame(0)">
+      <span>▶</span> PLAY 10
+    </button>
+    
+    <div class="wallet-box-lobby">
+      <div class="lbl">Wallet Balance</div>
+      <div class="val" id="lobby-wal-bal">10</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCORES / LEADERBOARD SCREEN (Image 4 Inspired) -->
+<div class="screen" id="sc-scores">
+  <div class="nav">
+    <div class="nav-title">Dil Bingo</div>
+  </div>
+  
+  <div class="my-rank-banner">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="rank-badge-lg">-</div>
+      <div>
+        <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8;">My Rank</div>
+        <div style="font-size: 18px; font-weight: 900; margin-top: 2px;">@Misma</div>
+        <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; margin-top: 2px;">Unranked</div>
       </div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:22px">🏆</div>
-      <div style="font-size:22px;font-weight:800;color:var(--gold)">20,000</div>
-      <div style="font-size:10px;color:#aaa">ETB PRIZE</div>
+    <div style="text-align: right;">
+      <div style="font-size: 20px; font-weight: 900;">0</div>
+      <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; margin-top: 2px;">Played</div>
     </div>
   </div>
 
-  <div class="wallet">
+  <div class="leaderboard-tabs">
+    <div class="l-tab active" id="tab-daily" onclick="switchLeaderboard('daily')">Daily</div>
+    <div class="l-tab" id="tab-weekly" onclick="switchLeaderboard('weekly')">Weekly</div>
+  </div>
+
+  <div style="font-size: 10px; color: var(--nav-gray); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 12px;">Top 10 Players</div>
+  <div class="lb-list" id="leaderboard-container"></div>
+</div>
+
+<!-- GAME HISTORY SCREEN (Image 1 Inspired) -->
+<div class="screen" id="sc-history">
+  <div class="nav">
     <div>
-      <div style="font-size:12px;color:#888">💳 Wallet Balance</div>
-      <div style="font-size:20px;font-weight:700" id="lbal">-- ETB</div>
+      <div class="nav-title" style="margin-bottom: 2px;">Game History</div>
+      <div style="font-size: 9px; color: var(--nav-gray); text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px;">Your Recent Sessions</div>
     </div>
-    <div style="font-size:12px;color:var(--teal);cursor:pointer" onclick="toast('Use /deposit in the bot to add funds')">+ Deposit</div>
   </div>
 
-  <div class="slbl">Choose a game</div>
-  <div class="game-list" id="glist"></div>
-  
-  <div class="bnav">
-    <div class="bni" onclick="toast('Leaderboard coming soon!')"><span style="font-size:20px">🏆</span>Leaderboard</div>
-    <div class="bni"><div class="bni-play"><span style="font-size:20px">🏆</span></div><span style="color:var(--gold)">Play</span></div>
-    <div class="bni" onclick="toast('Profile coming soon!')"><span style="font-size:20px">👤</span>Profile</div>
+  <div class="history-header-grid">
+    <div class="history-header-card">
+      <div class="h-card-lbl">Total Played</div>
+      <div class="h-card-val" id="hist-total-played">0</div>
+      <div class="h-card-sub" style="margin-top: 4px;">Games</div>
+    </div>
+    <div class="history-header-card" style="background: linear-gradient(135deg, #1b132e, #110d1f); border: 1px solid rgba(156, 39, 176, 0.15);">
+      <div class="h-card-lbl" style="color: #b38df7;">Total Wins</div>
+      <div class="h-card-val" style="color: #c084fc;" id="hist-total-wins">0</div>
+      <div class="h-card-sub" style="color: #a78bfa; margin-top: 4px;">Bingos</div>
+    </div>
+  </div>
+
+  <div style="font-size: 10px; color: var(--nav-gray); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 12px;">Recent Activity</div>
+  <div class="history-list" id="history-container"></div>
+</div>
+
+<!-- WALLET SCREEN (Image 5 Inspired) -->
+<div class="screen" id="sc-wallet">
+  <div class="nav">
+    <div>
+      <div class="nav-title" style="margin-bottom: 2px;">My Wallet</div>
+      <div style="font-size: 11px; color: var(--nav-gray); font-weight: 700;" id="wallet-tg-id">251960089963</div>
+    </div>
+    <div class="rules-btn" style="color: var(--teal); border-color: rgba(15, 192, 130, 0.2);">Verified</div>
+  </div>
+
+  <div class="wallet-grid">
+    <div class="wallet-card main">
+      <div class="w-card-lbl" style="color: var(--teal);">🏆 Main Wallet</div>
+      <div class="w-card-val" id="wall-main-val">0 ETB</div>
+      <div class="w-card-desc" style="color: #4dc2a4;">Withdrawable</div>
+    </div>
+    <div class="wallet-card play">
+      <div class="w-card-lbl" style="color: #b290ff;">🎮 Play Wallet</div>
+      <div class="w-card-val" id="wall-play-val">10 ETB</div>
+      <div class="w-card-desc" style="color: #a78bfa;">Game Credits</div>
+    </div>
+  </div>
+
+  <div class="w-total-strip">
+    <div class="w-total-lbl">Total Available</div>
+    <div class="w-total-val" id="wall-total-val">10 ETB</div>
+  </div>
+
+  <div style="font-size: 10px; color: var(--nav-gray); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 12px;">Recent Activity</div>
+  <div id="wallet-history-container"></div>
+
+  <div style="text-align: center; padding: 30px 16px; color: var(--nav-gray); font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; margin-top: auto;">
+    Manage your funds in the Telegram bot chat
+  </div>
+</div>
+
+<!-- PROFILE SCREEN (Image 3 Inspired) -->
+<div class="screen" id="sc-profile">
+  <div class="nav">
+    <div class="nav-title">Dil Bingo</div>
+  </div>
+
+  <div class="profile-main-header">
+    <div class="avatar-ring">M</div>
+    <div style="font-size: 24px; font-weight: 900;" id="prof-username">@Misma</div>
+    <div class="prof-badge">Verified Player</div>
+  </div>
+
+  <div class="wallet-grid">
+    <div class="wallet-card main">
+      <div class="w-card-lbl" style="color: var(--teal);">Main Wallet</div>
+      <div class="w-card-val" id="prof-main-val">0 ETB</div>
+      <div class="w-card-desc" style="color: #4dc2a4;">Withdrawable</div>
+    </div>
+    <div class="wallet-card play">
+      <div class="w-card-lbl" style="color: #b290ff;">Play Wallet</div>
+      <div class="w-card-val" id="prof-play-val">10 ETB</div>
+      <div class="w-card-desc" style="color: #a78bfa;">Game Credits</div>
+    </div>
+  </div>
+
+  <div class="prof-three-grid">
+    <div class="p-stat-box">
+      <div class="p-stat-val win" id="prof-total-wins">0</div>
+      <div class="p-stat-lbl">Game Win</div>
+    </div>
+    <div class="p-stat-box">
+      <div class="p-stat-val invite" id="prof-total-invites">0</div>
+      <div class="p-stat-lbl">Total Invite</div>
+    </div>
+    <div class="p-stat-box">
+      <div class="p-stat-val earned" id="prof-total-earned">0</div>
+      <div class="p-stat-lbl">Total Earned</div>
+    </div>
+  </div>
+
+  <div class="pref-row">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 38px; height: 38px; border-radius: 12px; background: #c53030; display: flex; align-items: center; justify-content: center; font-size: 16px;">🔊</div>
+      <div>
+        <div style="font-weight: 800; font-size: 13px;">Sound Effects</div>
+        <div style="font-size: 9px; color: var(--nav-gray); margin-top: 2px;">Toggle game audio</div>
+      </div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" checked onchange="toast('Sound profile updated!')">
+      <span class="slider"></span>
+    </label>
   </div>
 </div>
 
 <!-- CARD PICKER SCREEN -->
 <div class="screen" id="sc-cards">
   <div class="nav">
-    <div class="nav-back" onclick="goTo('lobby')">← Back</div>
+    <div class="nav-back" onclick="cancelRegistrationAndRefund()">← Back</div>
     <div class="nav-title">Select Cards</div>
     <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Reset</div>
   </div>
   
   <div class="stats-bar">
-    <div class="chip">Wallet: <b id="cpw">--</b> ETB</div>
-    <div class="chip">Active Cards: <b id="cac">1</b></div>
+    <div class="chip" style="background: var(--card2); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #aaa;">Wallet: <b id="cpw" style="color: var(--teal)">--</b> ETB</div>
+    <div class="chip" style="background: var(--card2); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #aaa;">Active Cards: <b id="cac" style="color: var(--teal)">1</b></div>
   </div>
 
   <div class="selection-top-panel">
@@ -596,7 +1151,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LIVE BINGO GAME SCREEN -->
 <div class="screen" id="sc-game">
   <div class="nav">
-    <div class="nav-back" onclick="goTo('lobby')">✕ Lobby</div>
+    <div class="nav-back" onclick="cancelActiveGame()">✕ Lobby</div>
     <div class="nav-title">Fast Bingo</div>
     <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
   </div>
@@ -676,7 +1231,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
       <!-- DOCK BUTTON CONTAINER (Leave, Refresh, Action) -->
       <div class="game-bottom-control-dock">
-        <button class="dock-btn leave" onclick="goTo('lobby')">Leave</button>
+        <button class="dock-btn leave" onclick="cancelActiveGame()">Leave</button>
         <button class="dock-btn refresh" onclick="refreshGrids()">Refresh</button>
         <button class="dock-btn dynamic-action" id="main-payout-btn" onclick="claimBingo()">🎉 Bingo!</button>
       </div>
@@ -699,14 +1254,37 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
+<!-- GLOBAL PERSISTENT NAVIGATION BAR -->
+<div class="bnav" id="global-nav-bar">
+  <div class="bni active" id="btn-nav-game" onclick="goTo('lobby')">
+    <span class="bni-icon">🎮</span>Game
+  </div>
+  <div class="bni" id="btn-nav-scores" onclick="goTo('scores')">
+    <span class="bni-icon">🏆</span>Scores
+  </div>
+  <div class="bni" id="btn-nav-history" onclick="goTo('history')">
+    <span class="bni-icon">⏱️</span>History
+  </div>
+  <div class="bni" id="btn-nav-wallet" onclick="goTo('wallet')">
+    <span class="bni-icon">💼</span>Wallet
+  </div>
+  <div class="bni" id="btn-nav-profile" onclick="goTo('profile')">
+    <span class="bni-icon">👤</span>Profile
+  </div>
+</div>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 const TGuser = tg.initDataUnsafe?.user;
 
-if (TGuser) {
-    document.getElementById('usub').textContent = `@${TGuser.username || TGuser.first_name}`;
-}
+// Initialize username details
+const userHandle = TGuser ? `@${TGuser.username || TGuser.first_name}` : "@Misma";
+const userInitials = TGuser ? (TGuser.first_name ? TGuser.first_name.charAt(0).toUpperCase() : "M") : "M";
+
+// Apply to profile assets
+document.getElementById('prof-username').textContent = userHandle;
+document.querySelector('.avatar-ring').textContent = userInitials;
 
 // System Core State Model
 const GAMES = [
@@ -723,12 +1301,58 @@ let selGame = GAMES[0];
 let selCard1 = 117, selCard2 = null; 
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
-let walBal = 250; 
-let lobbyTimer = null;
-let isAutoMode = false;
-let winnerPopupTimeout = null;
-let winnerPopupInterval = null;
-let winnerCountdown = 8;
+
+// Split Wallets (Image 3 & 5 inspired)
+let walletMain = 0;
+let walletPlay = 10;
+let pendingDeductionFromMain = 0; // Temp trackers during Card Picker phases
+let pendingDeductionFromPlay = 0;
+
+// Game stats
+let totalPlayedGames = 14; 
+let totalWinsCount = 0;
+let totalInvitesCount = 0;
+let totalEarnedETB = 0;
+
+// Sessions / Receipts Ledger (Image 1 & 5)
+let playSessions = [
+  { id: "DB0S0S62", stake: 10, won: false, date: "7/13/2026", time: "05:01 PM" },
+  { id: "DBBS2B1R", stake: 10, won: false, date: "7/12/2026", time: "03:20 PM" },
+  { id: "DBYGLNT1", stake: 10, won: false, date: "7/11/2026", time: "04:02 PM" },
+  { id: "DBRSMXFU", stake: 10, won: false, date: "7/10/2026", time: "07:48 PM" },
+  { id: "DBYVCKNE", stake: 10, won: false, date: "7/9/2026", time: "04:25 PM" },
+  { id: "DBYAZ08L", stake: 10, won: false, date: "7/8/2026", time: "09:04 PM" },
+  { id: "DBGCGLUH", stake: 10, won: false, date: "7/6/2026", time: "09:57 AM" }
+];
+
+// Leaderboards data mockup (Image 4)
+const LEADERBOARDS = {
+  daily: [
+    { username: "@WAKATU", games: 236, rank: 1 },
+    { username: "@NEBR", games: 184, rank: 2 },
+    { username: "@A❤️B", games: 177, rank: 3 },
+    { username: "@BROOK", games: 146, rank: 4 },
+    { username: "@TOLOSA", games: 143, rank: 5 },
+    { username: "@TARIKU", games: 142, rank: 6 },
+    { username: "@ALEMU", games: 140, rank: 7 },
+    { username: "@MIKEY", games: 139, rank: 8 },
+    { username: "@YONAS", games: 130, rank: 9 },
+    { username: "@AURA", games: 121, rank: 10 },
+  ],
+  weekly: [
+    { username: "@BROOK", games: 1120, rank: 1 },
+    { username: "@WAKATU", games: 984, rank: 2 },
+    { username: "@NEBR", games: 940, rank: 3 },
+    { username: "@TARIKU", games: 852, rank: 4 },
+    { username: "@TOLOSA", games: 811, rank: 5 },
+    { username: "@ALEMU", games: 799, rank: 6 },
+    { username: "@MIKEY", games: 742, rank: 7 },
+    { username: "@A❤️B", games: 699, rank: 8 },
+    { username: "@DAGM", games: 640, rank: 9 },
+    { username: "@MADI", games: 580, rank: 10 },
+  ]
+};
+
 let activeLobbyPlayers = 38; 
 let currentBonus = 300;
 
@@ -745,80 +1369,147 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
-function calculateWinningAmounts() {
-  GAMES.forEach(g => {
-    g.win = (g.bet - 2) * activeLobbyPlayers;
-  });
+function updateLocalWallets() {
+  const totalBalance = walletMain + walletPlay;
+  
+  // Lobby Screen Metrics
+  document.getElementById('lobby-wal-bal').textContent = totalBalance;
+  
+  // Wallet Screen Metrics
+  document.getElementById('wall-main-val').textContent = walletMain + ' ETB';
+  document.getElementById('wall-play-val').textContent = walletPlay + ' ETB';
+  document.getElementById('wall-total-val').textContent = totalBalance + ' ETB';
+  
+  // Profile Screen Metrics
+  document.getElementById('prof-main-val').textContent = walletMain + ' ETB';
+  document.getElementById('prof-play-val').textContent = walletPlay + ' ETB';
 }
 
-function renderLobby() {
-  calculateWinningAmounts();
-  document.getElementById('lbal').textContent = walBal + ' ETB';
+function updatePersonalStats() {
+  // Game History Screen Metrics
+  document.getElementById('hist-total-played').textContent = totalPlayedGames;
+  document.getElementById('hist-total-wins').textContent = totalWinsCount;
+  
+  // Profile Stats
+  document.getElementById('prof-total-wins').textContent = totalWinsCount;
+  document.getElementById('prof-total-invites').textContent = totalInvitesCount;
+  document.getElementById('prof-total-earned').textContent = totalEarnedETB;
+}
 
+function renderHistory() {
+  const container = document.getElementById('history-container');
   let html = '';
-  GAMES.forEach((g, idx) => {
-    const isRunning = g.status === 'running';
-    const pillClass = isRunning ? 'pill-run' : 'pill-wait';
-    const pillText = isRunning ? 'Running' : `Waiting (${g.countdown}s)`;
-    const bonusTag = g.bonus ? `<div class="bonus-tag">BONUS x3</div>` : '';
+  
+  playSessions.forEach(session => {
+    const payoutText = session.won ? `${session.payout} ETB` : `0 ETB`;
+    const payoutColor = session.won ? 'var(--teal)' : 'var(--nav-gray)';
     
-    let btnActionStyle = `joinGame(${idx})`;
-    let btnText = "Join Game";
-    if (isRunning && g.isUserActiveGame) {
-      btnText = "Rejoin Game";
-    }
-
     html += `
-    <div class="game-row">
-      ${bonusTag}
-      <div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:16px;font-weight:700">${g.bet} ETB</span>
-          <span class="pill ${pillClass}">${pillText}</span>
+    <div class="history-row">
+      <div class="h-left">
+        <div class="h-icon-box">🎲</div>
+        <div class="h-details">
+          <div style="display:flex; align-items:center;">
+            <span class="h-status">GAME FINISHED</span>
+            <span class="h-id">#${session.id}</span>
+          </div>
+          <span class="h-meta">STAKE: ${session.stake} ETB • ${session.date}</span>
         </div>
-        <div style="font-size:11px;color:#888;margin-top:4px">Prize (Derash): <span style="color:var(--teal);font-weight:bold">${g.win} ETB</span></div>
       </div>
-      <button class="join-btn" onclick="${btnActionStyle}">${btnText}</button>
+      <div class="h-right">
+        <span class="h-amount" style="color: ${payoutColor}">${payoutText}</span>
+        <div class="h-time">${session.time}</div>
+      </div>
     </div>`;
   });
-  document.getElementById('glist').innerHTML = html;
+  container.innerHTML = html;
 }
 
-function initLobbyCountdown() {
-  clearInterval(lobbyTimer);
-  lobbyTimer = setInterval(() => {
-    GAMES.forEach((g) => {
-      if (g.status === 'waiting') {
-        g.countdown--;
-        if (g.countdown <= 0) {
-          g.status = 'running';
-          g.countdown = 40;
-        }
-      }
-    });
-    renderLobby();
-  }, 1000);
+function renderWalletHistory() {
+  const walletContainer = document.getElementById('wallet-history-container');
+  const wonSessions = playSessions.filter(s => s.won);
+  
+  if (wonSessions.length === 0) {
+    walletContainer.innerHTML = `
+      <div class="no-activity-container">
+        <div class="no-activity-icon">🔄</div>
+        <div style="font-size: 13px; font-weight: 700; color:#fff; margin-bottom: 4px;">NO ACTIVITY FOUND</div>
+        <div style="font-size: 10px; color: var(--nav-gray); text-transform: uppercase;">0 Total</div>
+      </div>`;
+    return;
+  }
+  
+  // Render winners items if there are any wins
+  let html = '<div class="history-list">';
+  wonSessions.forEach(session => {
+    html += `
+    <div class="history-row">
+      <div class="h-left">
+        <div class="h-icon-box" style="color: var(--teal); background: rgba(15,192,130,0.05)">🏆</div>
+        <div class="h-details">
+          <div style="display:flex; align-items:center;">
+            <span class="h-status" style="color: var(--teal);">BINGO WINNING</span>
+            <span class="h-id">#${session.id}</span>
+          </div>
+          <span class="h-meta">Refunded & Credited to Main • ${session.date}</span>
+        </div>
+      </div>
+      <div class="h-right">
+        <span class="h-amount" style="color: var(--teal)">+${session.payout} ETB</span>
+        <div class="h-time">${session.time}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  walletContainer.innerHTML = html;
+}
+
+function switchLeaderboard(tab) {
+  document.getElementById('tab-daily').classList.remove('active');
+  document.getElementById('tab-weekly').classList.remove('active');
+  
+  document.getElementById('tab-' + tab).classList.add('active');
+  renderLeaderboard(tab);
+}
+
+function renderLeaderboard(tab) {
+  const listContainer = document.getElementById('leaderboard-container');
+  let html = '';
+  
+  const dataset = LEADERBOARDS[tab];
+  dataset.forEach(player => {
+    let badgeClass = 'rn';
+    if (player.rank === 1) badgeClass = 'r1';
+    else if (player.rank === 2) badgeClass = 'r2';
+    else if (player.rank === 3) badgeClass = 'r3';
+    
+    html += `
+    <div class="lb-row">
+      <div style="display: flex; align-items: center; gap:12px;">
+        <div class="lb-rank-badge ${badgeClass}">${player.rank}</div>
+        <div style="font-weight:800; font-size:14px;">${player.username}</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-weight: 900; font-size:15px; color:#fff;">${player.games}</div>
+        <div style="font-size:8px; color: var(--nav-gray); text-transform: uppercase; letter-spacing:0.5px; margin-top:2px;">Games</div>
+      </div>
+    </div>`;
+  });
+  listContainer.innerHTML = html;
 }
 
 function joinGame(i){
   const targetedGame = GAMES[i];
-  
-  if (targetedGame.status === 'running' && targetedGame.isUserActiveGame) {
-    selGame = targetedGame;
-    toast('⚡ Rejoining your active session...');
-    syncActiveGameScreenStructure();
-    goTo('game');
-    return;
-  }
-  
   selGame = targetedGame;
-  document.getElementById('cpw').textContent = walBal;
+  
+  // Seed picker screens
+  document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
 }
 
 function renderCardGrid(){
-  const g=document.getElementById('cgrid'); g.innerHTML='';
+  const g = document.getElementById('cgrid'); g.innerHTML='';
   for(let n=1;n<=150;n++){
     const d=document.createElement('div');
     d.className='cn';
@@ -826,7 +1517,6 @@ function renderCardGrid(){
     else if(n===selCard2) d.classList.add('sel2');
     d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
   }
-  
   updateSelectionSummary();
 }
 
@@ -881,30 +1571,92 @@ function updateSelectionSummary() {
 }
 
 function confirmJoin(){
-  if (selGame.status === 'running' && !selGame.isUserActiveGame) {
-    alert("⚠️ Game is running, wait till it end!");
-    return;
-  }
-
   let count = 0;
   if(selCard1) count++;
   if(selCard2) count++;
   
   const gameCost = selGame.bet * count;
-  if (walBal < gameCost) {
+  const totalFunds = walletMain + walletPlay;
+  
+  if (totalFunds < gameCost) {
     alert(`❌ Insufficient balance! This requires ${gameCost} ETB.`);
     return;
   }
 
-  walBal -= gameCost;
-  document.getElementById('lbal').textContent = walBal + ' ETB';
+  // Dual Wallet Deduction Logic
+  // Deduct from Play Wallet first, overflow remaining to Main Wallet
+  if (walletPlay >= gameCost) {
+    walletPlay -= gameCost;
+    pendingDeductionFromPlay = gameCost;
+    pendingDeductionFromMain = 0;
+  } else {
+    const remainder = gameCost - walletPlay;
+    pendingDeductionFromPlay = walletPlay;
+    walletPlay = 0;
+    walletMain -= remainder;
+    pendingDeductionFromMain = remainder;
+  }
+
+  updateLocalWallets();
 
   selGame.isUserActiveGame = true; 
   marked1 = new Set(); marked2 = new Set(); called = [];
   
   syncActiveGameScreenStructure();
+  
+  // Hide global navigation bar when game screen goes live
+  document.getElementById('global-nav-bar').style.display = 'none';
+  
   goTo('game');
   startBackgroundEngine(); 
+}
+
+/* Back button on Card Selection Refunds the Player */
+function cancelRegistrationAndRefund() {
+  // If player exits card selection back to lobby, restore any pending allocations
+  if (pendingDeductionFromPlay > 0 || pendingDeductionFromMain > 0) {
+    // Return all cancelled buy-ins strictly to Play Wallet as specified
+    walletPlay += (pendingDeductionFromPlay + pendingDeductionFromMain);
+    pendingDeductionFromPlay = 0;
+    pendingDeductionFromMain = 0;
+  }
+  updateLocalWallets();
+  goTo('lobby');
+}
+
+/* Back / Leave button during active live gameplay */
+function cancelActiveGame() {
+  clearInterval(gint);
+  
+  // Game session was abandoned. Play stakes are forfeit (not refunded).
+  pendingDeductionFromPlay = 0;
+  pendingDeductionFromMain = 0;
+  
+  // Create history entry for lost game
+  totalPlayedGames++;
+  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  const today = new Date();
+  const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+  const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  let totalBetCost = selGame.bet;
+  if (selCard2) totalBetCost *= 2;
+  
+  playSessions.unshift({
+    id: uniqueId,
+    stake: totalBetCost,
+    won: false,
+    date: dateStr,
+    time: timeStr
+  });
+  
+  updatePersonalStats();
+  renderHistory();
+  
+  // Return global bottom nav bar
+  document.getElementById('global-nav-bar').style.display = 'flex';
+  
+  goTo('lobby');
 }
 
 function syncActiveGameScreenStructure() {
@@ -1103,6 +1855,7 @@ function processCycleCall(){
     }
   }
 
+  // Dynamic winning simulator triggers
   if(Math.random() < 0.025 && called.length > 6) {
      triggerOpponentWinSequence();
   }
@@ -1188,11 +1941,43 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   clearInterval(gint);
   
   const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
-  walBal += totalPrizePayout;
-  document.getElementById('lbal').textContent = walBal + ' ETB';
   
-  localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
+  // Game winnings always go directly to the Main Wallet as specified
+  walletMain += totalPrizePayout;
+  
+  // Clean up registration escrow accounts
+  pendingDeductionFromPlay = 0;
+  pendingDeductionFromMain = 0;
+  
+  // Stats updates
+  totalPlayedGames++;
+  totalWinsCount++;
+  totalEarnedETB += totalPrizePayout;
+  
+  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  const today = new Date();
+  const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+  const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  let totalBetCost = selGame.bet;
+  if (selCard2) totalBetCost *= 2;
 
+  // Add winner log to ledgers
+  playSessions.unshift({
+    id: uniqueId,
+    stake: totalBetCost,
+    won: true,
+    payout: totalPrizePayout,
+    date: dateStr,
+    time: timeStr
+  });
+  
+  updateLocalWallets();
+  updatePersonalStats();
+  renderHistory();
+  renderWalletHistory();
+
+  localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
   tg.sendData(JSON.stringify({action:'bingo_win', card: winningCardNumber, earnings: totalPrizePayout}));
   
   const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
@@ -1201,6 +1986,31 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
 
 function triggerOpponentWinSequence() {
   clearInterval(gint);
+  
+  // Clean escrow allocations since loss is processed
+  pendingDeductionFromPlay = 0;
+  pendingDeductionFromMain = 0;
+  
+  totalPlayedGames++;
+  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  const today = new Date();
+  const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+  const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  let totalBetCost = selGame.bet;
+  if (selCard2) totalBetCost *= 2;
+  
+  playSessions.unshift({
+    id: uniqueId,
+    stake: totalBetCost,
+    won: false,
+    date: dateStr,
+    time: timeStr
+  });
+  
+  updatePersonalStats();
+  renderHistory();
+  
   const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99", "@Yonas_Ke"];
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 150) + 1; 
@@ -1261,8 +2071,10 @@ function closeWinnerModal() {
     selGame.isUserActiveGame = false;
   }
   
+  // Bring bottom nav bar back
+  document.getElementById('global-nav-bar').style.display = 'flex';
+  
   goTo('lobby');
-  renderLobby();
 }
 
 function refreshGrids(){
@@ -1283,6 +2095,16 @@ function goTo(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('sc-'+n);
   if (target) target.classList.add('active');
+  
+  // Bottom Nav Bar styling sync
+  document.querySelectorAll('.bni').forEach(el => el.classList.remove('active'));
+  const navBtn = document.getElementById('btn-nav-' + n);
+  if (navBtn) navBtn.classList.add('active');
+  if (n === 'lobby') {
+    // Sync default visual "play" highlight to home game route button
+    document.getElementById('btn-nav-game').classList.add('active');
+  }
+  
   window.scrollTo(0,0);
 }
 
@@ -1292,18 +2114,12 @@ function toast(msg){
   setTimeout(()=>el.className='toast',3000);
 }
 
-let tsec=6*86400+14*3600+57*60;
-setInterval(()=>{
-  tsec=Math.max(0,tsec-1);
-  const d=Math.floor(tsec/86400), h=Math.floor(tsec%86400/3600), m=Math.floor(tsec%3600/60), s=tsec%60;
-  document.getElementById('td').textContent=String(d).padStart(2,'0');
-  document.getElementById('th').textContent=String(h).padStart(2,'0');
-  document.getElementById('tm').textContent=String(m).padStart(2,'0');
-  document.getElementById('ts').textContent=String(s).padStart(2,'0');
-},1000);
-
-renderLobby();
-initLobbyCountdown();
+// Global initialization cycles
+updateLocalWallets();
+updatePersonalStats();
+renderHistory();
+renderWalletHistory();
+renderLeaderboard('daily');
 </script>
 </body>
 </html>

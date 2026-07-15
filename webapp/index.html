@@ -31,7 +31,7 @@ body {
   --red: #ff3b30;
   --nav-gray: #7d8c9e;
   
-  /* Modern Column Colors matched to Image 2 */
+  /* Modern Column Colors */
   --col-B: #2196f3;
   --col-I: #3f51b5;
   --col-N: #9c27b0;
@@ -552,7 +552,20 @@ body {
 
 /* SELECTION AND CARD GRID STYLES */
 .card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px 90px}
-.cn{background:var(--card2);border-radius:5px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#888;cursor:pointer;border:1px solid transparent;transition:all .1s}
+.cn {
+  background: var(--card2);
+  border-radius: 5px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all .1s;
+}
 .cn.sel{background:var(--teal);color:#000;border-color:#0d8c6a}
 .cn.sel2{background:var(--gold);color:#000;border-color:#b58514}
 .cn:active{transform:scale(.88)}
@@ -1287,29 +1300,24 @@ const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 
 // ==========================================
-// STEP 6: BACKEND API CONFIGURATION SETUP
+// CONFIGURATION SETUP
 // ==========================================
 const CONFIG = {
-  // Replace this exact placeholder URL string with your live Render app link
   API_BASE_URL: "https://fast-bingo-backend.onrender.com"
 };
 
-// Retrieve Telegram User Profile Data (Dynamic parameters fallback safely)
 const TGuser = tg.initDataUnsafe?.user;
 const userHandle = TGuser ? `@${TGuser.username || TGuser.first_name}` : "@Misma";
 const userInitials = TGuser ? (TGuser.first_name ? TGuser.first_name.charAt(0).toUpperCase() : "M") : "M";
 
-// Apply dynamic profile details across all layout pages
 document.querySelectorAll('.player-handle-val').forEach(el => {
   el.textContent = userHandle;
 });
 document.querySelector('.avatar-ring').textContent = userInitials;
 
-// Formats user phone number safely if present, otherwise outputs default
 const rawPhoneNum = TGuser?.phone_number || "+251960089963";
 document.getElementById('wallet-tg-id').textContent = rawPhoneNum;
 
-// System Core State Model
 const GAMES = [
   {bet:10,  win:304, status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
   {bet:20,  win:684, status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
@@ -1326,26 +1334,22 @@ let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
 let isAutoMode = false;
 
-// Popup management variables
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let lobbyTimerInt = null; // Ticking background queue loop
-let cardSelectionTimerInt = null; // Distinct interval logic for selection loop tracking
+let lobbyTimerInt = null; 
+let cardSelectionTimerInt = null; 
 
-// Split Wallets
 let walletMain = 0;
 let walletPlay = 10;[cite: 2]
 let pendingDeductionFromMain = 0; 
 let pendingDeductionFromPlay = 0;
 
-// Game stats
 let totalPlayedGames = 14; 
 let totalWinsCount = 0;
 let totalInvitesCount = 0;
 let totalEarnedETB = 0;
 
-// Sessions Ledger
 let playSessions = [
   { id: "DB0S0S62", stake: 10, won: false, date: "7/13/2026", time: "05:01 PM" },
   { id: "DBBS2B1R", stake: 10, won: false, date: "7/12/2026", time: "03:20 PM" },
@@ -1356,12 +1360,11 @@ let playSessions = [
   { id: "DBGCGLUH", stake: 10, won: false, date: "7/6/2026", time: "09:57 AM" }
 ];
 
-// Leaderboards data mockup
 const LEADERBOARDS = {
   daily: [
     { username: "@WAKATU", games: 236, rank: 1 },
     { username: "@NEBR", games: 184, rank: 2 },
-    { username: "@A❤️B", games: 177, rank: 3 },
+    { username: "@A\u2764\ufe0fB", games: 177, rank: 3 },
     { username: "@BROOK", games: 146, rank: 4 },
     { username: "@TOLOSA", games: 143, rank: 5 },
     { username: "@TARIKU", games: 142, rank: 6 },
@@ -1378,7 +1381,7 @@ const LEADERBOARDS = {
     { username: "@TOLOSA", games: 811, rank: 5 },
     { username: "@ALEMU", games: 799, rank: 6 },
     { username: "@MIKEY", games: 742, rank: 7 },
-    { username: "@A❤️B", games: 699, rank: 8 },
+    { username: "@A\u2764\ufe0fB", games: 699, rank: 8 },
     { username: "@DAGM", games: 640, rank: 9 },
     { username: "@MADI", games: 580, rank: 10 },
   ]
@@ -1433,7 +1436,7 @@ function renderHistory() {
             <span class="h-status">GAME FINISHED</span>
             <span class="h-id">#${session.id}</span>
           </div>
-          <span class="h-meta">STAKE: ${session.stake} ETB • ${session.date}</span>
+          <span class="h-meta">STAKE: ${session.stake} ETB \u2022 ${session.date}</span>
         </div>
       </div>
       <div class="h-right">
@@ -1468,7 +1471,7 @@ function renderWalletHistory() {
             <span class="h-status" style="color: var(--teal);">BINGO WINNING</span>
             <span class="h-id">#${session.id}</span>
           </div>
-          <span class="h-meta">Refunded & Credited to Main • ${session.date}</span>
+          <span class="h-meta">Refunded & Credited to Main \u2022 ${session.date}</span>
         </div>
       </div>
       <div class="h-right">
@@ -1515,11 +1518,14 @@ function renderLeaderboard(tab) {
 function joinGame(i){
   const targetedGame = GAMES[i];
   selGame = targetedGame;
+  
+  // Clear any existing selections to prevent forcing selection states
+  selCard1 = 117;
+  selCard2 = null;
+  
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
-  
-  // Start the 40-second selection window timer counter loop visually
   startCardSelectionTimer();
 }
 
@@ -1535,7 +1541,7 @@ function startCardSelectionTimer() {
       clearInterval(cardSelectionTimerInt);
       timerDisplay.textContent = "0s";
       toast("⏰ Registration time up! Confirming automatically...");
-      confirmJoin(); // Auto-start the current selection matches into live mode
+      confirmJoin(); 
     } else {
       timerDisplay.textContent = `${selectionTimeRemaining}s`;
     }
@@ -1603,11 +1609,8 @@ function updateSelectionSummary() {
   document.getElementById('cart-rows').innerHTML = html;
 }
 
-// ======================================================
-// STEP 6: CORE CONNECT API ENGINE REQUEST IMPLEMENTATION
-// ======================================================
 function confirmJoin(){
-  clearInterval(cardSelectionTimerInt); // Prevent background cross-ticking once confirmed
+  clearInterval(cardSelectionTimerInt); 
   
   let count = 0;
   if(selCard1) count++;
@@ -1638,7 +1641,6 @@ function confirmJoin(){
   selGame.isUserActiveGame = true; 
   marked1 = new Set(); marked2 = new Set(); called = [];
   
-  // Real HTTP POST endpoint handshake with Render cluster engine
   fetch(`${CONFIG.API_BASE_URL}/api/games/join`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1651,10 +1653,10 @@ function confirmJoin(){
   })
   .then(res => res.json())
   .then(data => {
-    console.log("Successfully synchronized registration session with backend server node:", data);
+    console.log("Synchronized session with backend:", data);
   })
   .catch(err => {
-    console.error("Backend transmission skipped or offline connection handling active:", err.message);
+    console.error("Backend transmission fallback active:", err.message);
   });
 
   syncActiveGameScreenStructure();
@@ -1738,11 +1740,11 @@ function toggleAutoMode() {
   if (isAutoMode) {
     mainBtn.textContent = "AUTOMATIC";
     mainBtn.classList.add('auto-active');
-    toast("⚡ Auto-Mark & Auto-Claim Active");
+    toast("\u26a1 Auto-Mark & Auto-Claim Active");
   } else {
-    mainBtn.textContent = "🎉 Bingo!";
+    mainBtn.textContent = "\ud83c\udf89 Bingo!";
     mainBtn.classList.remove('auto-active');
-    toast("🛑 Manual Mark Active");
+    toast("\ud83d\uded1 Manual Mark Active");
   }
 }
 
@@ -1776,7 +1778,7 @@ function renderGameCard(cardNumber){
     for(let c=0;c<5;c++){
       const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
       const mkClass = mk ? 'marked-active' : '';
-      html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
+      html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'\u2605':v}</div>`;
     }
     html+='</div>';
   }
@@ -1794,17 +1796,20 @@ function markCell(cardNumber,key,c,r){
   
   const v=genCard(selCard)[c][r]; if(v===0)return;
   if(called.includes(v)){
-    marked.has(key)?marked.delete(key):marked.add(key);
+    if(marked.has(key)) {
+      marked.delete(key);
+    } else {
+      marked.add(key);
+    }
     renderGameCard(cardNumber);
   } else {
     toast('Number not called yet!');
   }
 }
 
-// Background engine handles actual user visualization when they join a game
 function startBackgroundEngine(){
   clearInterval(gint);
-  clearInterval(lobbyTimerInt); // Kill the background lobby tracker once user successfully syncs into the live screen
+  clearInterval(lobbyTimerInt); 
   
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
   
@@ -1818,7 +1823,6 @@ function startBackgroundEngine(){
     return;
   }
 
-  // Uses the countdown that is ALREADY ticking down in the background!
   let secondsLeft = selGame.countdown;
   document.getElementById('gcir').textContent = secondsLeft;
   document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
@@ -1935,16 +1939,12 @@ function checkAutoBingoBackground(cardNumber) {
   let won = false;
   let pType = null, pIndex = -1;
   
-  // 1. Check Rows & Columns
   for(let i=0;i<5;i++){
     if([0,1,2,3,4].every(j=>m(j,i))) { won=true; pType='row'; pIndex=i; break; }
     if([0,1,2,3,4].every(j=>m(i,j))) { won=true; pType='col'; pIndex=i; break; }
   }
-  // 2. Check Diagonals
   if(!won && [0,1,2,3,4].every(i=>m(i,i))) { won=true; pType='diag-back'; }
   if(!won && [0,1,2,3,4].every(i=>m(i,4-i))) { won=true; pType='diag-forward'; }
-  
-  // 3. Check Four Corners Pattern
   if(!won && m(0,0) && m(4,0) && m(0,4) && m(4,4)) { won=true; pType='four-corners'; }
 
   if (won) {
@@ -1961,21 +1961,16 @@ function claimBingo(){
     const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
     
     let pType = null, pIndex = -1;
-    // Rows
     for(let i=0; i<5; i++){
       if([0,1,2,3,4].every(j=>m(j,i))) { pType = 'row'; pIndex = i; break; }
     }
-    // Cols
     if(!pType){
       for(let i=0; i<5; i++){
         if([0,1,2,3,4].every(j=>m(i,j))) { pType = 'col'; pIndex = i; break; }
       }
     }
-    // Diagonals
     if(!pType && [0,1,2,3,4].every(i=>m(i,i))) pType = 'diag-back';
     if(!pType && [0,1,2,3,4].every(i=>m(i,4-i))) pType = 'diag-forward';
-    
-    // Four Corners
     if(!pType && m(0,0) && m(4,0) && m(0,4) && m(4,4)) pType = 'four-corners';
 
     if(pType) return { selCard, pType, pIndex };
@@ -1987,13 +1982,12 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
+    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.winningPlay.pIndex, false);
   } else {
-    toast('❌ Invalid Bingo! Keep checking your grids.');
+    toast('\u274c Invalid Bingo! Keep checking your grids.');
   }
 }
 
-// Resets game structures and boots background ticking immediately
 function prepareNextGameQueue() {
   if (selGame) {
     selGame.status = 'waiting';
@@ -2005,14 +1999,12 @@ function prepareNextGameQueue() {
   marked1.clear();
   marked2.clear();
 
-  // Kickstart background timer tick loop immediately
   clearInterval(lobbyTimerInt);
   lobbyTimerInt = setInterval(() => {
     if (selGame && selGame.status === 'waiting') {
       if (selGame.countdown > 0) {
         selGame.countdown--;
       } else {
-        // Safe rollover to simulate live execution cycle
         clearInterval(lobbyTimerInt);
         selGame.status = 'running';
         selGame.countdown = 40;
@@ -2058,7 +2050,6 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
   tg.sendData(JSON.stringify({action:'bingo_win', card: winningCardNumber, earnings: totalPrizePayout}));
   
-  // Real HTTP POST push transaction notifying server database layer of client match victory
   fetch(`${CONFIG.API_BASE_URL}/api/games/win`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -2071,10 +2062,9 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   })
   .catch(err => console.error("Network interface sync handled safely:", err.message));
 
-  // Prepare next queue in the background IMMEDIATELY
   prepareNextGameQueue();
 
-  const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
+  const messagePrefix = isAutoTriggered ? `\u26a1 Auto Bingo! You Won!` : `\ud83c\udf89 Congratulations! You Won!`;
   showGlobalWinnerBanner(messagePrefix, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
 }
 
@@ -2107,10 +2097,8 @@ function triggerOpponentWinSequence() {
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 150) + 1; 
   
-  // Prepare next queue in the background IMMEDIATELY
   prepareNextGameQueue();
-
-  showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
+  showGlobalWinnerBanner(`\ud83c\udfc6 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
 }
 
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
@@ -2132,24 +2120,20 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
       if (patternType === 'diag-forward' && c === (4 - r)) isHighlighted = true;
       if (patternType === 'four-corners' && ((c === 0 && r === 0) || (c === 4 && r === 0) || (c === 0 && r === 4) || (c === 4 && r === 4))) isHighlighted = true;
       
-      html += `<div class="win-cell ${isHighlighted ? 'highlight' : ''} ${val === 0 ? 'free' : ''}">${val === 0 ? '★' : val}</div>`;
+      html += `<div class="win-cell ${isHighlighted ? 'highlight' : ''} ${val === 0 ? 'free' : ''}">${val === 0 ? '\u2605' : val}</div>`;
     }
     html += '</div>';
   }
   
   document.getElementById('win-grid').innerHTML = html;
   
-  // Clear any existing active intervals or countdowns 
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   
   winnerCountdown = 8;
   document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
-  
-  // Slide up window modal
   document.getElementById('winner-popup').classList.add('active');
 
-  // Start visual timer countdown
   winnerPopupInterval = setInterval(() => {
     winnerCountdown--;
     if (winnerCountdown <= 0) {
@@ -2160,7 +2144,6 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
     }
   }, 1000);
 
-  // Hard timeout fallback
   winnerPopupTimeout = setTimeout(() => {
     closeWinnerModal();
   }, 8100);
@@ -2172,16 +2155,15 @@ function closeWinnerModal() {
   
   document.getElementById('winner-popup').classList.remove('active');
   
-  // Clean active session properties but preserve ticking lobby queue count!
   marked1.clear();
   marked2.clear();
 
-  // Route directly to card selection (instead of the lobby screen)
-  document.getElementById('global-nav-bar').style.display = 'none'; // Keep nav hidden during game loop flow
+  // Route securely to cards choice setup instead of home panel
+  document.getElementById('global-nav-bar').style.display = 'none'; 
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
-  startCardSelectionTimer(); // Re-trigger the 40-second selection countdown loop window
+  startCardSelectionTimer(); 
 }
 
 function refreshGrids(){
@@ -2189,12 +2171,12 @@ function refreshGrids(){
   if (isGameActive) {
     renderGameCard(1);
     if(selCard2) renderGameCard(2);
-    toast('🔄 Grids synchronized!');
+    toast('\ud83d\udd04 Grids synchronized!');
   } else {
     selCard1 = 117;
     selCard2 = null;
     renderCardGrid();
-    toast('🔄 Selections reset!');
+    toast('\ud83d\udd04 Selections reset!');
   }
 }
 

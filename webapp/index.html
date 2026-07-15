@@ -1306,6 +1306,7 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
+let lobbyTimerInt = null; // Ticking background queue loop
 
 // Split Wallets
 let walletMain = 0;
@@ -1602,6 +1603,7 @@ function cancelRegistrationAndRefund() {
 
 function cancelActiveGame() {
   clearInterval(gint);
+  clearInterval(lobbyTimerInt);
   pendingDeductionFromPlay = 0;
   pendingDeductionFromMain = 0;
   
@@ -1726,8 +1728,11 @@ function markCell(cardNumber,key,c,r){
   }
 }
 
+// Background engine handles actual user visualization when they join a game
 function startBackgroundEngine(){
   clearInterval(gint);
+  clearInterval(lobbyTimerInt); // Kill the background lobby tracker once user successfully syncs into the live screen
+  
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
   
   document.getElementById('gp').textContent = activeLobbyPlayers;
@@ -1740,8 +1745,9 @@ function startBackgroundEngine(){
     return;
   }
 
+  // Uses the countdown that is ALREADY ticking down in the background!
   let secondsLeft = selGame.countdown;
-  document.getElementById('gcir').textContent = "--";
+  document.getElementById('gcir').textContent = secondsLeft;
   document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
   
   gint = setInterval(() => {
@@ -1865,7 +1871,7 @@ function checkAutoBingoBackground(cardNumber) {
   if(!won && [0,1,2,3,4].every(i=>m(i,i))) { won=true; pType='diag-back'; }
   if(!won && [0,1,2,3,4].every(i=>m(i,4-i))) { won=true; pType='diag-forward'; }
   
-  // 3. Check Four Corners Pattern (Top-Left, Top-Right, Bottom-Left, Bottom-Right)
+  // 3. Check Four Corners Pattern
   if(!won && m(0,0) && m(4,0) && m(0,4) && m(4,4)) { won=true; pType='four-corners'; }
 
   if (won) {
@@ -1914,6 +1920,34 @@ function claimBingo(){
   }
 }
 
+// Resets game structures and boots background ticking immediately
+function prepareNextGameQueue() {
+  if (selGame) {
+    selGame.status = 'waiting';
+    selGame.countdown = 40;
+    selGame.isUserActiveGame = false;
+  }
+  
+  called = [];
+  marked1.clear();
+  marked2.clear();
+
+  // Kickstart background timer tick loop immediately
+  clearInterval(lobbyTimerInt);
+  lobbyTimerInt = setInterval(() => {
+    if (selGame && selGame.status === 'waiting') {
+      if (selGame.countdown > 0) {
+        selGame.countdown--;
+      } else {
+        // Safe rollover to simulate live execution cycle
+        clearInterval(lobbyTimerInt);
+        selGame.status = 'running';
+        selGame.countdown = 40;
+      }
+    }
+  }, 1000);
+}
+
 function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
   clearInterval(gint);
   const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
@@ -1951,6 +1985,9 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
   tg.sendData(JSON.stringify({action:'bingo_win', card: winningCardNumber, earnings: totalPrizePayout}));
   
+  // Prepare next queue in the background IMMEDIATELY
+  prepareNextGameQueue();
+
   const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
   showGlobalWinnerBanner(messagePrefix, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
 }
@@ -1984,6 +2021,9 @@ function triggerOpponentWinSequence() {
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 150) + 1; 
   
+  // Prepare next queue in the background IMMEDIATELY
+  prepareNextGameQueue();
+
   showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
 }
 
@@ -2013,17 +2053,17 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   
   document.getElementById('win-grid').innerHTML = html;
   
-  // Clear previous intervals to avoid multiple overlapping processes running
+  // Clear any existing active intervals or countdowns 
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   
   winnerCountdown = 8;
   document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
   
-  // Open popup modal
+  // Slide up window modal
   document.getElementById('winner-popup').classList.add('active');
 
-  // Start tick countdown
+  // Start visual timer countdown
   winnerPopupInterval = setInterval(() => {
     winnerCountdown--;
     if (winnerCountdown <= 0) {
@@ -2034,7 +2074,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
     }
   }, 1000);
 
-  // Safeguard fallback closer
+  // Hard timeout fallback
   winnerPopupTimeout = setTimeout(() => {
     closeWinnerModal();
   }, 8100);
@@ -2046,14 +2086,7 @@ function closeWinnerModal() {
   
   document.getElementById('winner-popup').classList.remove('active');
   
-  // Clear Active Game Properties completely so user can register for next rounds
-  if (selGame) {
-    selGame.status = 'waiting';
-    selGame.countdown = 40;
-    selGame.isUserActiveGame = false;
-  }
-  
-  called = [];
+  // Clean active session properties but preserve ticking lobby queue count!
   marked1.clear();
   marked2.clear();
 

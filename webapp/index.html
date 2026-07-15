@@ -2057,9 +2057,11 @@ function closeWinnerModal() {
   marked1.clear();
   marked2.clear();
 
-  // Restore navigation and go home
-  document.getElementById('global-nav-bar').style.display = 'flex';
-  goTo('lobby');
+  // Route directly to card selection (instead of the lobby screen)
+  document.getElementById('global-nav-bar').style.display = 'none'; // Keep nav hidden during game loop flow
+  document.getElementById('cpw').textContent = walletMain + walletPlay;
+  renderCardGrid(); 
+  goTo('cards');
 }
 
 function refreshGrids(){

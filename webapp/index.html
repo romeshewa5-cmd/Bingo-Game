@@ -64,7 +64,7 @@ body {
   font-weight: 700;
 }
 
-/* Lobby Styling (Image 2 Inspired) */
+/* Lobby Styling */
 .lobby-main-card {
   background: radial-gradient(circle at top, #141c2d 0%, #0d121f 100%);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -130,7 +130,7 @@ body {
   font-weight: 700;
 }
 
-/* History Screen Layout (Image 1 Inspired) */
+/* History Screen Layout */
 .history-header-grid {
   display: flex;
   gap: 12px;
@@ -225,7 +225,7 @@ body {
   margin-top: 3px;
 }
 
-/* Wallet Layout (Image 5 Inspired) */
+/* Wallet Layout */
 .wallet-grid {
   display: flex;
   gap: 12px;
@@ -300,7 +300,7 @@ body {
   opacity: 0.2;
 }
 
-/* Leaderboard Screen Layout (Image 4 Inspired) */
+/* Leaderboard Screen Layout */
 .my-rank-banner {
   background: #622ef3;
   margin: 16px;
@@ -372,7 +372,7 @@ body {
 .lb-rank-badge.r3 { background: #ed8936; color: #000; }
 .lb-rank-badge.rn { background: #232b3f; color: #fff; }
 
-/* Profile Layout (Image 3 Inspired) */
+/* Profile Layout */
 .profile-main-header {
   display: flex;
   flex-direction: column;
@@ -437,7 +437,7 @@ body {
   justify-content: space-between;
 }
 
-/* Bottom Navigation Bar styled to match screenshots */
+/* Bottom Navigation Bar */
 .bnav {
   position: fixed;
   bottom: 0;
@@ -459,6 +459,7 @@ body {
   font-size: 10px;
   color: var(--nav-gray);
   font-weight: 700;
+  position: relative;
 }
 .bni-icon {
   font-size: 20px;
@@ -470,7 +471,6 @@ body {
 .bni.active .bni-icon {
   opacity: 1;
 }
-/* Glowing line above active bottom nav icon */
 .bni.active::before {
   content: "";
   position: absolute;
@@ -537,6 +537,18 @@ body {
 .win-cell.free {
   color: var(--teal);
 }
+.dismiss-modal-btn {
+  background: var(--teal);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 15px;
+}
 
 /* SELECTION AND CARD GRID STYLES */
 .card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px 90px}
@@ -589,7 +601,7 @@ body {
 .cc{flex:1;background:var(--card);border-radius:4px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
 .cc.free{background:#0b2e24;color:var(--teal)}
 
-/* MODERN STATUS BAR - SIX STACKED BLOCKS (Image 2 Style) */
+/* MODERN STATUS BAR - SIX STACKED BLOCKS */
 .gstats-row-container {
   display: flex;
   justify-content: space-between;
@@ -648,7 +660,7 @@ body {
   gap: 8px;
 }
 
-/* PREMIUM VERTICAL MASTER CALLER BOARD - FULL HEIGHT EXPANSION */
+/* PREMIUM VERTICAL MASTER CALLER BOARD */
 .board-columns-container {
   display: flex;
   justify-content: space-between;
@@ -698,7 +710,7 @@ body {
 .board-num-vertical.called-G { background: var(--col-G) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-G); }
 .board-num-vertical.called-O { background: var(--col-O) !important; color: #fff !important; box-shadow: 0 0 6px var(--col-O); }
 
-/* AUTOMATIC TOGGLE SITUATED RIGHT ABOVE THE CARTELA */
+/* AUTOMATIC TOGGLE */
 .auto-control {
   display: flex;
   align-items: center;
@@ -850,21 +862,18 @@ input:checked + .slider:before { transform: translateX(18px); }
   transition: all .1s;
   user-select: none;
 }
-/* Unified marked state in pure green color (#0fc082) */
 .bcell.marked-active {
   background: var(--teal) !important;
   color: #ffffff !important;
   border-color: var(--teal) !important;
 }
-
-/* Free space star center */
 .bcell.free {
   background: var(--card3) !important;
   color: var(--gold) !important;
   border-color: var(--card3) !important;
 }
 
-/* SMART DOCK ACTIONS (Bottom buttons) */
+/* SMART DOCK ACTIONS */
 .game-bottom-control-dock {
   display: flex;
   gap: 6px;
@@ -932,11 +941,9 @@ input:checked + .slider:before { transform: translateX(18px); }
   0%,100% { opacity: 0 }
   15%,80% { opacity: 1 }
 }
-.slbl {
-  font-size: 11px;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.stats-bar {
+  display: flex;
+  justify-content: space-between;
   padding: 0 16px 8px;
 }
 </style>
@@ -944,11 +951,11 @@ input:checked + .slider:before { transform: translateX(18px); }
 <body>
 <div class="toast" id="toast"></div>
 
-<!-- LOBBY SCREEN (Image 2 Inspired) -->
+<!-- LOBBY SCREEN -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
     <div class="nav-title" style="font-weight:900;">Dil Bingo</div>
-    <div class="rules-btn" onclick="toast('Rules: Get 5 cells in a row, column or diagonal called to win.')">Rules</div>
+    <div class="rules-btn" onclick="toast('Rules: Get 5 cells in a line, diagonal, or all 4 corners to win!')">Rules</div>
   </div>
   
   <div class="lobby-main-card">
@@ -967,7 +974,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- SCORES / LEADERBOARD SCREEN (Image 4 Inspired) -->
+<!-- SCORES / LEADERBOARD SCREEN -->
 <div class="screen" id="sc-scores">
   <div class="nav">
     <div class="nav-title">Dil Bingo</div>
@@ -978,7 +985,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       <div class="rank-badge-lg">-</div>
       <div>
         <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8;">My Rank</div>
-        <div style="font-size: 18px; font-weight: 900; margin-top: 2px;">@Misma</div>
+        <div style="font-size: 18px; font-weight: 900; margin-top: 2px;" class="player-handle-val">@Misma</div>
         <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; margin-top: 2px;">Unranked</div>
       </div>
     </div>
@@ -997,7 +1004,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="lb-list" id="leaderboard-container"></div>
 </div>
 
-<!-- GAME HISTORY SCREEN (Image 1 Inspired) -->
+<!-- GAME HISTORY SCREEN -->
 <div class="screen" id="sc-history">
   <div class="nav">
     <div>
@@ -1023,12 +1030,12 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="history-list" id="history-container"></div>
 </div>
 
-<!-- WALLET SCREEN (Image 5 Inspired) -->
+<!-- WALLET SCREEN -->
 <div class="screen" id="sc-wallet">
   <div class="nav">
     <div>
       <div class="nav-title" style="margin-bottom: 2px;">My Wallet</div>
-      <div style="font-size: 11px; color: var(--nav-gray); font-weight: 700;" id="wallet-tg-id">251960089963</div>
+      <div style="font-size: 11px; color: var(--nav-gray); font-weight: 700;" id="wallet-tg-id">+251 -- --- ----</div>
     </div>
     <div class="rules-btn" style="color: var(--teal); border-color: rgba(15, 192, 130, 0.2);">Verified</div>
   </div>
@@ -1059,7 +1066,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- PROFILE SCREEN (Image 3 Inspired) -->
+<!-- PROFILE SCREEN -->
 <div class="screen" id="sc-profile">
   <div class="nav">
     <div class="nav-title">Dil Bingo</div>
@@ -1067,7 +1074,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
   <div class="profile-main-header">
     <div class="avatar-ring">M</div>
-    <div style="font-size: 24px; font-weight: 900;" id="prof-username">@Misma</div>
+    <div style="font-size: 24px; font-weight: 900;" class="player-handle-val">@Misma</div>
     <div class="prof-badge">Verified Player</div>
   </div>
 
@@ -1128,12 +1135,10 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 
   <div class="selection-top-panel">
-    <!-- Left column: Small Preview Card -->
     <div class="top-preview-box">
       <div id="cart-lbl" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:var(--teal)">Cartela #117</div>
       <div id="cart-rows"></div>
     </div>
-    <!-- Right column: Interactive Totals & Start Game Action -->
     <div class="top-action-box">
       <div>
         <div style="font-size:11px; color:#888;">Selected Cost:</div>
@@ -1156,7 +1161,6 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
   </div>
   
-  <!-- MODERN METRICS PILLS (Image 2 Six Stacked Row Layout) -->
   <div class="gstats-row-container">
     <div class="gstat-block">
       <span class="gstat-lbl">Game ID</span>
@@ -1185,23 +1189,17 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 
   <div class="game-container">
-    <!-- Left Panel: Master Caller Board -->
     <div class="left-panel">
       <div style="font-size:10px; color:#888; text-transform:uppercase; margin-bottom:8px; font-weight:bold; text-align:center; letter-spacing: 0.5px;">Board</div>
       <div id="master-board" class="board-columns-container"></div>
     </div>
 
-    <!-- Right Panel: Playing Cards & Current Call displays -->
     <div class="right-panel">
-      <!-- Centered Display for Current Ball & Previous Rolls -->
       <div class="current-ball-container">
-        <div class="rolls-well-pills" id="ghist-pills">
-          <!-- Latest 5 horizontal rounded pills will load dynamically here -->
-        </div>
+        <div class="rolls-well-pills" id="ghist-pills"></div>
         <div class="live-main-ball-display" id="gcir">--</div>
       </div>
 
-      <!-- AUTOMATIC MODE TOGGLE SWITCH -->
       <div class="auto-control">
         <span style="font-weight:800; font-size:10px; color:#fff; text-transform: uppercase; letter-spacing: 0.5px;">Automatic</span>
         <label class="switch">
@@ -1210,9 +1208,7 @@ input:checked + .slider:before { transform: translateX(18px); }
         </label>
       </div>
 
-      <!-- Live Interactive Cartelas container Wrapper -->
       <div class="cards-wrapper-vertical" id="game-cards-wrapper">
-        <!-- Card 1 Slot -->
         <div id="slot-card1-container">
           <div class="card-unit">
             <div class="bhead-mini">
@@ -1224,12 +1220,9 @@ input:checked + .slider:before { transform: translateX(18px); }
             <div style="text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:6px" id="gclbl1">Cartela #1</div>
           </div>
         </div>
-
-        <!-- Card 2 Slot (Will load automatically) -->
         <div id="slot-card2-container"></div>
       </div>
 
-      <!-- DOCK BUTTON CONTAINER (Leave, Refresh, Action) -->
       <div class="game-bottom-control-dock">
         <button class="dock-btn leave" onclick="cancelActiveGame()">Leave</button>
         <button class="dock-btn refresh" onclick="refreshGrids()">Refresh</button>
@@ -1250,7 +1243,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div id="win-grid" style="display: flex; flex-direction: column; gap: 3px; margin: 0 auto 15px auto; width: fit-content; background: #111; padding: 6px; border-radius: 8px;"></div>
     
     <div id="win-timer" style="font-size: 11px; color: var(--teal); margin-bottom: 12px; font-weight: bold;">Closing in 8s...</div>
-    <button class="join-btn" onclick="closeWinnerModal()" style="width:100%; border-radius:10px;">Dismiss</button>
+    <button class="dismiss-modal-btn" onclick="closeWinnerModal()">Dismiss</button>
   </div>
 </div>
 
@@ -1276,15 +1269,21 @@ input:checked + .slider:before { transform: translateX(18px); }
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
-const TGuser = tg.initDataUnsafe?.user;
 
-// Initialize username details
+// Retrieve Telegram User Profile Data (Dynamic parameters fallback safely)
+const TGuser = tg.initDataUnsafe?.user;
 const userHandle = TGuser ? `@${TGuser.username || TGuser.first_name}` : "@Misma";
 const userInitials = TGuser ? (TGuser.first_name ? TGuser.first_name.charAt(0).toUpperCase() : "M") : "M";
 
-// Apply to profile assets
-document.getElementById('prof-username').textContent = userHandle;
+// Apply dynamic profile details across all layout pages
+document.querySelectorAll('.player-handle-val').forEach(el => {
+  el.textContent = userHandle;
+});
 document.querySelector('.avatar-ring').textContent = userInitials;
+
+// Formats user phone number safely if present, otherwise outputs default
+const rawPhoneNum = TGuser?.phone_number || "+251960089963";
+document.getElementById('wallet-tg-id').textContent = rawPhoneNum;
 
 // System Core State Model
 const GAMES = [
@@ -1301,11 +1300,17 @@ let selGame = GAMES[0];
 let selCard1 = 117, selCard2 = null; 
 let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
+let isAutoMode = false;
 
-// Split Wallets (Image 3 & 5 inspired)
+// Popup management variables
+let winnerPopupTimeout = null;
+let winnerPopupInterval = null;
+let winnerCountdown = 8;
+
+// Split Wallets
 let walletMain = 0;
 let walletPlay = 10;
-let pendingDeductionFromMain = 0; // Temp trackers during Card Picker phases
+let pendingDeductionFromMain = 0; 
 let pendingDeductionFromPlay = 0;
 
 // Game stats
@@ -1314,7 +1319,7 @@ let totalWinsCount = 0;
 let totalInvitesCount = 0;
 let totalEarnedETB = 0;
 
-// Sessions / Receipts Ledger (Image 1 & 5)
+// Sessions Ledger
 let playSessions = [
   { id: "DB0S0S62", stake: 10, won: false, date: "7/13/2026", time: "05:01 PM" },
   { id: "DBBS2B1R", stake: 10, won: false, date: "7/12/2026", time: "03:20 PM" },
@@ -1325,7 +1330,7 @@ let playSessions = [
   { id: "DBGCGLUH", stake: 10, won: false, date: "7/6/2026", time: "09:57 AM" }
 ];
 
-// Leaderboards data mockup (Image 4)
+// Leaderboards data mockup
 const LEADERBOARDS = {
   daily: [
     { username: "@WAKATU", games: 236, rank: 1 },
@@ -1371,26 +1376,17 @@ function genCard(n){
 
 function updateLocalWallets() {
   const totalBalance = walletMain + walletPlay;
-  
-  // Lobby Screen Metrics
   document.getElementById('lobby-wal-bal').textContent = totalBalance;
-  
-  // Wallet Screen Metrics
   document.getElementById('wall-main-val').textContent = walletMain + ' ETB';
   document.getElementById('wall-play-val').textContent = walletPlay + ' ETB';
   document.getElementById('wall-total-val').textContent = totalBalance + ' ETB';
-  
-  // Profile Screen Metrics
   document.getElementById('prof-main-val').textContent = walletMain + ' ETB';
   document.getElementById('prof-play-val').textContent = walletPlay + ' ETB';
 }
 
 function updatePersonalStats() {
-  // Game History Screen Metrics
   document.getElementById('hist-total-played').textContent = totalPlayedGames;
   document.getElementById('hist-total-wins').textContent = totalWinsCount;
-  
-  // Profile Stats
   document.getElementById('prof-total-wins').textContent = totalWinsCount;
   document.getElementById('prof-total-invites').textContent = totalInvitesCount;
   document.getElementById('prof-total-earned').textContent = totalEarnedETB;
@@ -1399,11 +1395,9 @@ function updatePersonalStats() {
 function renderHistory() {
   const container = document.getElementById('history-container');
   let html = '';
-  
   playSessions.forEach(session => {
     const payoutText = session.won ? `${session.payout} ETB` : `0 ETB`;
     const payoutColor = session.won ? 'var(--teal)' : 'var(--nav-gray)';
-    
     html += `
     <div class="history-row">
       <div class="h-left">
@@ -1428,7 +1422,6 @@ function renderHistory() {
 function renderWalletHistory() {
   const walletContainer = document.getElementById('wallet-history-container');
   const wonSessions = playSessions.filter(s => s.won);
-  
   if (wonSessions.length === 0) {
     walletContainer.innerHTML = `
       <div class="no-activity-container">
@@ -1438,8 +1431,6 @@ function renderWalletHistory() {
       </div>`;
     return;
   }
-  
-  // Render winners items if there are any wins
   let html = '<div class="history-list">';
   wonSessions.forEach(session => {
     html += `
@@ -1467,7 +1458,6 @@ function renderWalletHistory() {
 function switchLeaderboard(tab) {
   document.getElementById('tab-daily').classList.remove('active');
   document.getElementById('tab-weekly').classList.remove('active');
-  
   document.getElementById('tab-' + tab).classList.add('active');
   renderLeaderboard(tab);
 }
@@ -1475,14 +1465,12 @@ function switchLeaderboard(tab) {
 function renderLeaderboard(tab) {
   const listContainer = document.getElementById('leaderboard-container');
   let html = '';
-  
   const dataset = LEADERBOARDS[tab];
   dataset.forEach(player => {
     let badgeClass = 'rn';
     if (player.rank === 1) badgeClass = 'r1';
     else if (player.rank === 2) badgeClass = 'r2';
     else if (player.rank === 3) badgeClass = 'r3';
-    
     html += `
     <div class="lb-row">
       <div style="display: flex; align-items: center; gap:12px;">
@@ -1501,8 +1489,6 @@ function renderLeaderboard(tab) {
 function joinGame(i){
   const targetedGame = GAMES[i];
   selGame = targetedGame;
-  
-  // Seed picker screens
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
@@ -1543,7 +1529,6 @@ function selectCard(n){
     if (cardNum === selCard1) el.classList.add('sel');
     else if (cardNum === selCard2) el.classList.add('sel2');
   });
-
   updateSelectionSummary();
 }
 
@@ -1583,8 +1568,6 @@ function confirmJoin(){
     return;
   }
 
-  // Dual Wallet Deduction Logic
-  // Deduct from Play Wallet first, overflow remaining to Main Wallet
   if (walletPlay >= gameCost) {
     walletPlay -= gameCost;
     pendingDeductionFromPlay = gameCost;
@@ -1598,24 +1581,17 @@ function confirmJoin(){
   }
 
   updateLocalWallets();
-
   selGame.isUserActiveGame = true; 
   marked1 = new Set(); marked2 = new Set(); called = [];
   
   syncActiveGameScreenStructure();
-  
-  // Hide global navigation bar when game screen goes live
   document.getElementById('global-nav-bar').style.display = 'none';
-  
   goTo('game');
   startBackgroundEngine(); 
 }
 
-/* Back button on Card Selection Refunds the Player */
 function cancelRegistrationAndRefund() {
-  // If player exits card selection back to lobby, restore any pending allocations
   if (pendingDeductionFromPlay > 0 || pendingDeductionFromMain > 0) {
-    // Return all cancelled buy-ins strictly to Play Wallet as specified
     walletPlay += (pendingDeductionFromPlay + pendingDeductionFromMain);
     pendingDeductionFromPlay = 0;
     pendingDeductionFromMain = 0;
@@ -1624,15 +1600,11 @@ function cancelRegistrationAndRefund() {
   goTo('lobby');
 }
 
-/* Back / Leave button during active live gameplay */
 function cancelActiveGame() {
   clearInterval(gint);
-  
-  // Game session was abandoned. Play stakes are forfeit (not refunded).
   pendingDeductionFromPlay = 0;
   pendingDeductionFromMain = 0;
   
-  // Create history entry for lost game
   totalPlayedGames++;
   const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
   const today = new Date();
@@ -1652,10 +1624,7 @@ function cancelActiveGame() {
   
   updatePersonalStats();
   renderHistory();
-  
-  // Return global bottom nav bar
   document.getElementById('global-nav-bar').style.display = 'flex';
-  
   goTo('lobby');
 }
 
@@ -1759,7 +1728,6 @@ function markCell(cardNumber,key,c,r){
 
 function startBackgroundEngine(){
   clearInterval(gint);
-  
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
   
   document.getElementById('gp').textContent = activeLobbyPlayers;
@@ -1773,7 +1741,6 @@ function startBackgroundEngine(){
   }
 
   let secondsLeft = selGame.countdown;
-  
   document.getElementById('gcir').textContent = "--";
   document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
   
@@ -1855,7 +1822,6 @@ function processCycleCall(){
     }
   }
 
-  // Dynamic winning simulator triggers
   if(Math.random() < 0.025 && called.length > 6) {
      triggerOpponentWinSequence();
   }
@@ -1878,7 +1844,6 @@ function autoMarkCardBackground(cardNumber, valCalled) {
   if (document.getElementById('sc-game').classList.contains('active')) {
     renderGameCard(cardNumber);
   }
-  
   checkAutoBingoBackground(cardNumber);
 }
 
@@ -1890,12 +1855,18 @@ function checkAutoBingoBackground(cardNumber) {
   
   let won = false;
   let pType = null, pIndex = -1;
+  
+  // 1. Check Rows & Columns
   for(let i=0;i<5;i++){
     if([0,1,2,3,4].every(j=>m(j,i))) { won=true; pType='row'; pIndex=i; break; }
     if([0,1,2,3,4].every(j=>m(i,j))) { won=true; pType='col'; pIndex=i; break; }
   }
+  // 2. Check Diagonals
   if(!won && [0,1,2,3,4].every(i=>m(i,i))) { won=true; pType='diag-back'; }
   if(!won && [0,1,2,3,4].every(i=>m(i,4-i))) { won=true; pType='diag-forward'; }
+  
+  // 3. Check Four Corners Pattern (Top-Left, Top-Right, Bottom-Left, Bottom-Right)
+  if(!won && m(0,0) && m(4,0) && m(0,4) && m(4,4)) { won=true; pType='four-corners'; }
 
   if (won) {
     executePayoutAndWinBanner(selCard, pType, pIndex, true);
@@ -1911,16 +1882,22 @@ function claimBingo(){
     const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
     
     let pType = null, pIndex = -1;
+    // Rows
     for(let i=0; i<5; i++){
       if([0,1,2,3,4].every(j=>m(j,i))) { pType = 'row'; pIndex = i; break; }
     }
+    // Cols
     if(!pType){
       for(let i=0; i<5; i++){
         if([0,1,2,3,4].every(j=>m(i,j))) { pType = 'col'; pIndex = i; break; }
       }
     }
+    // Diagonals
     if(!pType && [0,1,2,3,4].every(i=>m(i,i))) pType = 'diag-back';
     if(!pType && [0,1,2,3,4].every(i=>m(i,4-i))) pType = 'diag-forward';
+    
+    // Four Corners
+    if(!pType && m(0,0) && m(4,0) && m(0,4) && m(4,4)) pType = 'four-corners';
 
     if(pType) return { selCard, pType, pIndex };
     return null;
@@ -1933,23 +1910,18 @@ function claimBingo(){
   if(winningPlay){
     executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
   } else {
-    toast('❌ Invalid Bingo line! Keep checking your grids.');
+    toast('❌ Invalid Bingo! Keep checking your grids.');
   }
 }
 
 function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
   clearInterval(gint);
-  
   const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
   
-  // Game winnings always go directly to the Main Wallet as specified
   walletMain += totalPrizePayout;
-  
-  // Clean up registration escrow accounts
   pendingDeductionFromPlay = 0;
   pendingDeductionFromMain = 0;
   
-  // Stats updates
   totalPlayedGames++;
   totalWinsCount++;
   totalEarnedETB += totalPrizePayout;
@@ -1962,7 +1934,6 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   let totalBetCost = selGame.bet;
   if (selCard2) totalBetCost *= 2;
 
-  // Add winner log to ledgers
   playSessions.unshift({
     id: uniqueId,
     stake: totalBetCost,
@@ -1986,8 +1957,6 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
 
 function triggerOpponentWinSequence() {
   clearInterval(gint);
-  
-  // Clean escrow allocations since loss is processed
   pendingDeductionFromPlay = 0;
   pendingDeductionFromMain = 0;
   
@@ -2035,6 +2004,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
       if (patternType === 'col' && c === patternIndex) isHighlighted = true;
       if (patternType === 'diag-back' && c === r) isHighlighted = true;
       if (patternType === 'diag-forward' && c === (4 - r)) isHighlighted = true;
+      if (patternType === 'four-corners' && ((c === 0 && r === 0) || (c === 4 && r === 0) || (c === 0 && r === 4) || (c === 4 && r === 4))) isHighlighted = true;
       
       html += `<div class="win-cell ${isHighlighted ? 'highlight' : ''} ${val === 0 ? 'free' : ''}">${val === 0 ? '★' : val}</div>`;
     }
@@ -2042,38 +2012,53 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   }
   
   document.getElementById('win-grid').innerHTML = html;
-  document.getElementById('winner-popup').classList.add('active');
-
+  
+  // Clear previous intervals to avoid multiple overlapping processes running
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
+  
   winnerCountdown = 8;
   document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
+  
+  // Open popup modal
+  document.getElementById('winner-popup').classList.add('active');
 
+  // Start tick countdown
   winnerPopupInterval = setInterval(() => {
     winnerCountdown--;
-    document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
-    if(winnerCountdown <= 0) clearInterval(winnerPopupInterval);
+    if (winnerCountdown <= 0) {
+      clearInterval(winnerPopupInterval);
+      closeWinnerModal();
+    } else {
+      document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
+    }
   }, 1000);
 
+  // Safeguard fallback closer
   winnerPopupTimeout = setTimeout(() => {
     closeWinnerModal();
-  }, 8000);
+  }, 8100);
 }
 
 function closeWinnerModal() {
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
+  
   document.getElementById('winner-popup').classList.remove('active');
   
-  if(selGame) {
+  // Clear Active Game Properties completely so user can register for next rounds
+  if (selGame) {
     selGame.status = 'waiting';
     selGame.countdown = 40;
     selGame.isUserActiveGame = false;
   }
   
-  // Bring bottom nav bar back
+  called = [];
+  marked1.clear();
+  marked2.clear();
+
+  // Restore navigation and go home
   document.getElementById('global-nav-bar').style.display = 'flex';
-  
   goTo('lobby');
 }
 
@@ -2096,15 +2081,12 @@ function goTo(n){
   const target = document.getElementById('sc-'+n);
   if (target) target.classList.add('active');
   
-  // Bottom Nav Bar styling sync
   document.querySelectorAll('.bni').forEach(el => el.classList.remove('active'));
   const navBtn = document.getElementById('btn-nav-' + n);
   if (navBtn) navBtn.classList.add('active');
   if (n === 'lobby') {
-    // Sync default visual "play" highlight to home game route button
     document.getElementById('btn-nav-game').classList.add('active');
   }
-  
   window.scrollTo(0,0);
 }
 

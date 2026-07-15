@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>fast Bingo</title>
+<title>Dil Bingo</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 /* CSS Reset and Variables */
@@ -31,7 +31,7 @@ body {
   --red: #ff3b30;
   --nav-gray: #7d8c9e;
   
-  /* Modern Column Colors */
+  /* Modern Column Colors matched to Image 2 */
   --col-B: #2196f3;
   --col-I: #3f51b5;
   --col-N: #9c27b0;
@@ -553,18 +553,18 @@ body {
 /* SELECTION AND CARD GRID STYLES */
 .card-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;padding:0 12px 90px}
 .cn {
-  background: var(--card2);
-  border-radius: 5px;
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: #888;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all .1s;
+  background:var(--card2);
+  border-radius:5px;
+  aspect-ratio:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  font-weight:600;
+  color:#888;
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:all .1s;
 }
 .cn.sel{background:var(--teal);color:#000;border-color:#0d8c6a}
 .cn.sel2{background:var(--gold);color:#000;border-color:#b58514}
@@ -608,20 +608,6 @@ body {
   width: 100%;
 }
 .mini-start-btn:active { opacity: 0.9; }
-
-/* Selection Timer Widget Styling */
-.selection-timer-chip {
-  background: #ff3b30;
-  color: #fff;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 11px;
-  font-weight: 800;
-  box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 
 /* COMPACT MINI LOBBY ROW CHIP VIEWER */
 .crow{display:flex;gap:2px;margin-bottom:2px}
@@ -972,7 +958,6 @@ input:checked + .slider:before { transform: translateX(18px); }
   display: flex;
   justify-content: space-between;
   padding: 0 16px 8px;
-  align-items: center;
 }
 </style>
 </head>
@@ -982,22 +967,22 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LOBBY SCREEN -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
-    <div class="nav-title" style="font-weight:900;">Dil Bingo[cite: 2]</div>
+    <div class="nav-title" style="font-weight:900;">Dil Bingo</div>
     <div class="rules-btn" onclick="toast('Rules: Get 5 cells in a line, diagonal, or all 4 corners to win!')">Rules</div>
   </div>
   
   <div class="lobby-main-card">
     <div class="lobby-heading">Welcome to</div>
-    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">DIL BINGO[cite: 2]</div>
+    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">DIL BINGO</div>
     
     <div style="font-size: 11px; color: var(--nav-gray); font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase;">Choose Your Stake</div>
     <button class="play-btn" onclick="joinGame(0)">
-      <span>▶</span> PLAY 10[cite: 2]
+      <span>▶</span> PLAY 10
     </button>
     
     <div class="wallet-box-lobby">
       <div class="lbl">Wallet Balance</div>
-      <div class="val" id="lobby-wal-bal">10[cite: 2]</div>
+      <div class="val" id="lobby-wal-bal">10</div>
     </div>
   </div>
 </div>
@@ -1005,7 +990,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- SCORES / LEADERBOARD SCREEN -->
 <div class="screen" id="sc-scores">
   <div class="nav">
-    <div class="nav-title">Dil Bingo[cite: 2]</div>
+    <div class="nav-title">Dil Bingo</div>
   </div>
   
   <div class="my-rank-banner">
@@ -1076,14 +1061,14 @@ input:checked + .slider:before { transform: translateX(18px); }
     </div>
     <div class="wallet-card play">
       <div class="w-card-lbl" style="color: #b290ff;">🎮 Play Wallet</div>
-      <div class="w-card-val" id="wall-play-val">10 ETB[cite: 2]</div>
+      <div class="w-card-val" id="wall-play-val">10 ETB</div>
       <div class="w-card-desc" style="color: #a78bfa;">Game Credits</div>
     </div>
   </div>
 
   <div class="w-total-strip">
     <div class="w-total-lbl">Total Available</div>
-    <div class="w-total-val" id="wall-total-val">10 ETB[cite: 2]</div>
+    <div class="w-total-val" id="wall-total-val">10 ETB</div>
   </div>
 
   <div style="font-size: 10px; color: var(--nav-gray); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 12px;">Recent Activity</div>
@@ -1097,7 +1082,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- PROFILE SCREEN -->
 <div class="screen" id="sc-profile">
   <div class="nav">
-    <div class="nav-title">Dil Bingo[cite: 2]</div>
+    <div class="nav-title">Dil Bingo</div>
   </div>
 
   <div class="profile-main-header">
@@ -1114,7 +1099,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     </div>
     <div class="wallet-card play">
       <div class="w-card-lbl" style="color: #b290ff;">Play Wallet</div>
-      <div class="w-card-val" id="prof-play-val">10 ETB[cite: 2]</div>
+      <div class="w-card-val" id="prof-play-val">10 ETB</div>
       <div class="w-card-desc" style="color: #a78bfa;">Game Credits</div>
     </div>
   </div>
@@ -1153,26 +1138,25 @@ input:checked + .slider:before { transform: translateX(18px); }
 <div class="screen" id="sc-cards">
   <div class="nav">
     <div class="nav-back" onclick="cancelRegistrationAndRefund()">← Back</div>
-    <div class="nav-title">Select Cards[cite: 2]</div>
+    <div class="nav-title">Select Cards</div>
     <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Reset</div>
   </div>
   
   <div class="stats-bar">
     <div class="chip" style="background: var(--card2); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #aaa;">Wallet: <b id="cpw" style="color: var(--teal)">--</b> ETB</div>
-    <div class="selection-timer-chip">⏱️ <span id="selection-countdown">40s</span></div>
     <div class="chip" style="background: var(--card2); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #aaa;">Active Cards: <b id="cac" style="color: var(--teal)">1</b></div>
   </div>
 
   <div class="selection-top-panel">
     <div class="top-preview-box">
-      <div id="cart-lbl" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:var(--teal)">Cartela #117[cite: 2]</div>
+      <div id="cart-lbl" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:var(--teal)">Cartela #117</div>
       <div id="cart-rows"></div>
     </div>
     <div class="top-action-box">
       <div>
         <div style="font-size:11px; color:#888;">Selected Cost:</div>
-        <div style="font-size:22px; font-weight:800; color:var(--gold); margin-bottom:2px;"><span id="cps">10</span> ETB[cite: 2]</div>
-        <div style="font-size:9px; color:#aaa;" id="preview-calc-lbl">1 Cartela x 10 ETB[cite: 2]</div>
+        <div style="font-size:22px; font-weight:800; color:var(--gold); margin-bottom:2px;"><span id="cps">10</span> ETB</div>
+        <div style="font-size:9px; color:#aaa;" id="preview-calc-lbl">1 Cartela x 10 ETB</div>
       </div>
       <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
     </div>
@@ -1296,28 +1280,45 @@ input:checked + .slider:before { transform: translateX(18px); }
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
-tg.ready(); tg.expand();
+// Backend Event Dispatcher Class (Telegram Mini App Mock Webhook Protocol)
+class TelegramBackendLink {
+  constructor() {
+    this.tg = window.Telegram?.WebApp;
+    if (this.tg) {
+      this.tg.ready();
+      this.tg.expand();
+    }
+  }
 
-// ==========================================
-// CONFIGURATION SETUP
-// ==========================================
-const CONFIG = {
-  API_BASE_URL: "https://fast-bingo-backend.onrender.com"
-};
+  getUserProfile() {
+    const fallback = { username: "@Misma", initials: "M", phone: "+251960089963" };
+    if (!this.tg?.initDataUnsafe?.user) return fallback;
+    const u = this.tg.initDataUnsafe.user;
+    return {
+      username: u.username ? `@${u.username}` : `@${u.first_name || 'Player'}`,
+      initials: u.first_name ? u.first_name.charAt(0).toUpperCase() : "M",
+      phone: u.phone_number || "+251960089963"
+    };
+  }
 
-const TGuser = tg.initDataUnsafe?.user;
-const userHandle = TGuser ? `@${TGuser.username || TGuser.first_name}` : "@Misma";
-const userInitials = TGuser ? (TGuser.first_name ? TGuser.first_name.charAt(0).toUpperCase() : "M") : "M";
+  sendWinPayload(card, profit) {
+    const payload = JSON.stringify({ event: "bingo_victory", cartela: card, netPayout: profit, timestamp: Date.now() });
+    localStorage.setItem("dil_bingo_last_payout", payload);
+    if (this.tg?.sendData) {
+      this.tg.sendData(payload);
+    }
+  }
+}
 
-document.querySelectorAll('.player-handle-val').forEach(el => {
-  el.textContent = userHandle;
-});
-document.querySelector('.avatar-ring').textContent = userInitials;
+const network = new TelegramBackendLink();
+const profile = network.getUserProfile();
 
-const rawPhoneNum = TGuser?.phone_number || "+251960089963";
-document.getElementById('wallet-tg-id').textContent = rawPhoneNum;
+// Dynamic configurations matching view handles
+document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = profile.username);
+document.querySelector('.avatar-ring').textContent = profile.initials;
+document.getElementById('wallet-tg-id').textContent = profile.phone;
 
+// System Core State Model
 const GAMES = [
   {bet:10,  win:304, status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
   {bet:20,  win:684, status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
@@ -1326,8 +1327,6 @@ const GAMES = [
 ];
 
 const LETS = ['B', 'I', 'N', 'G', 'O'];
-const COLOR_CLASSES = { B: 'called-B', I: 'called-I', N: 'called-N', G: 'called-G', O: 'called-O' };
-
 let selGame = GAMES[0];
 let selCard1 = 117, selCard2 = null; 
 let marked1 = new Set(), marked2 = new Set();
@@ -1337,11 +1336,10 @@ let isAutoMode = false;
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let lobbyTimerInt = null; 
-let cardSelectionTimerInt = null; 
+let lobbyTimerInt = null;
 
 let walletMain = 0;
-let walletPlay = 10;[cite: 2]
+let walletPlay = 10;
 let pendingDeductionFromMain = 0; 
 let pendingDeductionFromPlay = 0;
 
@@ -1364,26 +1362,14 @@ const LEADERBOARDS = {
   daily: [
     { username: "@WAKATU", games: 236, rank: 1 },
     { username: "@NEBR", games: 184, rank: 2 },
-    { username: "@A\u2764\ufe0fB", games: 177, rank: 3 },
+    { username: "@A❤️B", games: 177, rank: 3 },
     { username: "@BROOK", games: 146, rank: 4 },
     { username: "@TOLOSA", games: 143, rank: 5 },
-    { username: "@TARIKU", games: 142, rank: 6 },
-    { username: "@ALEMU", games: 140, rank: 7 },
-    { username: "@MIKEY", games: 139, rank: 8 },
-    { username: "@YONAS", games: 130, rank: 9 },
-    { username: "@AURA", games: 121, rank: 10 },
   ],
   weekly: [
     { username: "@BROOK", games: 1120, rank: 1 },
     { username: "@WAKATU", games: 984, rank: 2 },
     { username: "@NEBR", games: 940, rank: 3 },
-    { username: "@TARIKU", games: 852, rank: 4 },
-    { username: "@TOLOSA", games: 811, rank: 5 },
-    { username: "@ALEMU", games: 799, rank: 6 },
-    { username: "@MIKEY", games: 742, rank: 7 },
-    { username: "@A\u2764\ufe0fB", games: 699, rank: 8 },
-    { username: "@DAGM", games: 640, rank: 9 },
-    { username: "@MADI", games: 580, rank: 10 },
   ]
 };
 
@@ -1436,7 +1422,7 @@ function renderHistory() {
             <span class="h-status">GAME FINISHED</span>
             <span class="h-id">#${session.id}</span>
           </div>
-          <span class="h-meta">STAKE: ${session.stake} ETB \u2022 ${session.date}</span>
+          <span class="h-meta">STAKE: ${session.stake} ETB • ${session.date}</span>
         </div>
       </div>
       <div class="h-right">
@@ -1456,7 +1442,6 @@ function renderWalletHistory() {
       <div class="no-activity-container">
         <div class="no-activity-icon">🔄</div>
         <div style="font-size: 13px; font-weight: 700; color:#fff; margin-bottom: 4px;">NO ACTIVITY FOUND</div>
-        <div style="font-size: 10px; color: var(--nav-gray); text-transform: uppercase;">0 Total</div>
       </div>`;
     return;
   }
@@ -1471,7 +1456,7 @@ function renderWalletHistory() {
             <span class="h-status" style="color: var(--teal);">BINGO WINNING</span>
             <span class="h-id">#${session.id}</span>
           </div>
-          <span class="h-meta">Refunded & Credited to Main \u2022 ${session.date}</span>
+          <span class="h-meta">Refunded & Credited • ${session.date}</span>
         </div>
       </div>
       <div class="h-right">
@@ -1508,7 +1493,6 @@ function renderLeaderboard(tab) {
       </div>
       <div style="text-align: right;">
         <div style="font-weight: 900; font-size:15px; color:#fff;">${player.games}</div>
-        <div style="font-size:8px; color: var(--nav-gray); text-transform: uppercase; letter-spacing:0.5px; margin-top:2px;">Games</div>
       </div>
     </div>`;
   });
@@ -1516,36 +1500,10 @@ function renderLeaderboard(tab) {
 }
 
 function joinGame(i){
-  const targetedGame = GAMES[i];
-  selGame = targetedGame;
-  
-  // Clear any existing selections to prevent forcing selection states
-  selCard1 = 117;
-  selCard2 = null;
-  
+  selGame = GAMES[i];
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
-  startCardSelectionTimer();
-}
-
-function startCardSelectionTimer() {
-  clearInterval(cardSelectionTimerInt);
-  let selectionTimeRemaining = 40;[cite: 2]
-  const timerDisplay = document.getElementById('selection-countdown');
-  timerDisplay.textContent = `${selectionTimeRemaining}s`;
-
-  cardSelectionTimerInt = setInterval(() => {
-    selectionTimeRemaining--;
-    if (selectionTimeRemaining <= 0) {
-      clearInterval(cardSelectionTimerInt);
-      timerDisplay.textContent = "0s";
-      toast("⏰ Registration time up! Confirming automatically...");
-      confirmJoin(); 
-    } else {
-      timerDisplay.textContent = `${selectionTimeRemaining}s`;
-    }
-  }, 1000);
 }
 
 function renderCardGrid(){
@@ -1576,7 +1534,10 @@ function selectCard(n){
       selCard2 = n;
     }
   }
+  renderCardGridUpdateOnly();
+}
 
+function renderCardGridUpdateOnly() {
   document.querySelectorAll('.cn').forEach((el, i) => {
     const cardNum = i + 1;
     el.classList.remove('sel', 'sel2');
@@ -1610,8 +1571,6 @@ function updateSelectionSummary() {
 }
 
 function confirmJoin(){
-  clearInterval(cardSelectionTimerInt); 
-  
   let count = 0;
   if(selCard1) count++;
   if(selCard2) count++;
@@ -1621,7 +1580,6 @@ function confirmJoin(){
   
   if (totalFunds < gameCost) {
     alert(`❌ Insufficient balance! This requires ${gameCost} ETB.`);
-    goTo('lobby');
     return;
   }
 
@@ -1641,24 +1599,6 @@ function confirmJoin(){
   selGame.isUserActiveGame = true; 
   marked1 = new Set(); marked2 = new Set(); called = [];
   
-  fetch(`${CONFIG.API_BASE_URL}/api/games/join`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: userHandle,
-      telegramId: TGuser?.id || "offline_dev",
-      stakeAmount: selGame.bet,
-      selectedCards: [selCard1, selCard2].filter(Boolean)
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    console.log("Synchronized session with backend:", data);
-  })
-  .catch(err => {
-    console.error("Backend transmission fallback active:", err.message);
-  });
-
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
@@ -1666,7 +1606,6 @@ function confirmJoin(){
 }
 
 function cancelRegistrationAndRefund() {
-  clearInterval(cardSelectionTimerInt);
   if (pendingDeductionFromPlay > 0 || pendingDeductionFromMain > 0) {
     walletPlay += (pendingDeductionFromPlay + pendingDeductionFromMain);
     pendingDeductionFromPlay = 0;
@@ -1691,13 +1630,7 @@ function cancelActiveGame() {
   let totalBetCost = selGame.bet;
   if (selCard2) totalBetCost *= 2;
   
-  playSessions.unshift({
-    id: uniqueId,
-    stake: totalBetCost,
-    won: false,
-    date: dateStr,
-    time: timeStr
-  });
+  playSessions.unshift({ id: uniqueId, stake: totalBetCost, won: false, date: dateStr, time: timeStr });
   
   updatePersonalStats();
   renderHistory();
@@ -1723,10 +1656,7 @@ function syncActiveGameScreenStructure() {
       </div>`;
   } else {
     cardWrapper.classList.remove('two-card-active');
-    container2.innerHTML = `
-      <div class="empty-placeholder-unit">
-        Slot 2 Empty (1 Card Mode)
-      </div>`;
+    container2.innerHTML = `<div class="empty-placeholder-unit">Slot 2 Empty (1 Card Mode)</div>`;
   }
   renderMasterBoard();
   renderGameCard(1);
@@ -1740,11 +1670,11 @@ function toggleAutoMode() {
   if (isAutoMode) {
     mainBtn.textContent = "AUTOMATIC";
     mainBtn.classList.add('auto-active');
-    toast("\u26a1 Auto-Mark & Auto-Claim Active");
+    toast("⚡ Auto-Mark & Auto-Claim Active");
   } else {
-    mainBtn.textContent = "\ud83c\udf89 Bingo!";
+    mainBtn.textContent = "🎉 Bingo!";
     mainBtn.classList.remove('auto-active');
-    toast("\ud83d\uded1 Manual Mark Active");
+    toast("🛑 Manual Mark Active");
   }
 }
 
@@ -1758,11 +1688,7 @@ function renderMasterBoard() {
       const callClass = isCalled ? `called-${l}` : '';
       numbersHtml += `<div class="board-num-vertical ${callClass}">${i}</div>`;
     }
-    html += `
-      <div class="board-col">
-        <span class="board-letter-header h-${l}">${l}</span>
-        ${numbersHtml}
-      </div>`;
+    html += `<div class="board-col"><span class="board-letter-header h-${l}">${l}</span>${numbersHtml}</div>`;
   });
   document.getElementById('master-board').innerHTML = html;
 }
@@ -1778,15 +1704,12 @@ function renderGameCard(cardNumber){
     for(let c=0;c<5;c++){
       const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
       const mkClass = mk ? 'marked-active' : '';
-      html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'\u2605':v}</div>`;
+      html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
     }
     html+='</div>';
   }
   const targetGrid = document.getElementById(`brows${cardNumber}`);
   if(targetGrid) targetGrid.innerHTML = html;
-  
-  const targetLabel = document.getElementById(`gclbl${cardNumber}`);
-  if(targetLabel) targetLabel.textContent = `Cartela #${selCard}`;
 }
 
 function markCell(cardNumber,key,c,r){
@@ -1796,11 +1719,7 @@ function markCell(cardNumber,key,c,r){
   
   const v=genCard(selCard)[c][r]; if(v===0)return;
   if(called.includes(v)){
-    if(marked.has(key)) {
-      marked.delete(key);
-    } else {
-      marked.add(key);
-    }
+    marked.has(key)?marked.delete(key):marked.add(key);
     renderGameCard(cardNumber);
   } else {
     toast('Number not called yet!');
@@ -1809,45 +1728,34 @@ function markCell(cardNumber,key,c,r){
 
 function startBackgroundEngine(){
   clearInterval(gint);
-  clearInterval(lobbyTimerInt); 
+  clearInterval(lobbyTimerInt);
   
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
-  
   document.getElementById('gp').textContent = activeLobbyPlayers;
   document.getElementById('gpc').textContent = activeLobbyPlayers + ' players';
   document.getElementById('gd').textContent = currentDerash;
   document.getElementById('gb').textContent = selGame.bet;
 
-  if (selGame.status === 'running') {
-    startLiveNumberCalling();
-    return;
-  }
-
-  let secondsLeft = selGame.countdown;
+  let secondsLeft = 5; 
   document.getElementById('gcir').textContent = secondsLeft;
   document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
   
   gint = setInterval(() => {
     secondsLeft--;
-    selGame.countdown = secondsLeft;
-    
     if (secondsLeft > 0) {
       document.getElementById('gcir').textContent = secondsLeft;
     } else {
       clearInterval(gint);
-      selGame.status = 'running';
-      selGame.countdown = 40;
       startLiveNumberCalling();
     }
   }, 1000);
 }
 
 function startLiveNumberCalling() {
-  selGame.status = 'running';
   processCycleCall();
   gint = setInterval(() => {
     processCycleCall();
-  }, 3000);
+  }, 2000);
 }
 
 function processCycleCall(){
@@ -1858,20 +1766,14 @@ function processCycleCall(){
   called.push(n);
   
   const callCount = called.length;
-  if (callCount <= 4) {
-    currentBonus = 300;
-  } else if (callCount >= 10) {
-    currentBonus = 0;
-  } else {
-    currentBonus = 300 - ((callCount - 4) * 50);
-  }
+  currentBonus = callCount <= 4 ? 300 : Math.max(0, 300 - ((callCount - 4) * 50));
   
   const bonusDisplay = document.getElementById('gbonus');
   if (bonusDisplay) bonusDisplay.textContent = currentBonus;
 
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
-  
   const activeGameScreen = document.getElementById('sc-game').classList.contains('active');
+  
   if (activeGameScreen) {
     const el = document.getElementById('gcir');
     if(el) { 
@@ -1889,9 +1791,7 @@ function processCycleCall(){
         return `<span class="roll-pill col-${letter}">${letter}-${num}</span>`;
       }).join(' ');
     }
-    
-    const clEl = document.getElementById('gcl');
-    if(clEl) clEl.textContent=callCount;
+    document.getElementById('gcl').textContent = callCount;
     renderMasterBoard();
   }
 
@@ -1905,7 +1805,7 @@ function processCycleCall(){
     }
   }
 
-  if(Math.random() < 0.025 && called.length > 6) {
+  if(Math.random() < 0.035 && called.length > 8) {
      triggerOpponentWinSequence();
   }
 }
@@ -1982,35 +1882,16 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.winningPlay.pIndex, false);
+    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.winningPlay, false);
   } else {
-    toast('\u274c Invalid Bingo! Keep checking your grids.');
+    toast('❌ Invalid Bingo! Keep checking your grids.');
   }
 }
 
 function prepareNextGameQueue() {
-  if (selGame) {
-    selGame.status = 'waiting';
-    selGame.countdown = 40;
-    selGame.isUserActiveGame = false;
-  }
-  
   called = [];
   marked1.clear();
   marked2.clear();
-
-  clearInterval(lobbyTimerInt);
-  lobbyTimerInt = setInterval(() => {
-    if (selGame && selGame.status === 'waiting') {
-      if (selGame.countdown > 0) {
-        selGame.countdown--;
-      } else {
-        clearInterval(lobbyTimerInt);
-        selGame.status = 'running';
-        selGame.countdown = 40;
-      }
-    }
-  }, 1000);
 }
 
 function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
@@ -2033,38 +1914,17 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   let totalBetCost = selGame.bet;
   if (selCard2) totalBetCost *= 2;
 
-  playSessions.unshift({
-    id: uniqueId,
-    stake: totalBetCost,
-    won: true,
-    payout: totalPrizePayout,
-    date: dateStr,
-    time: timeStr
-  });
+  playSessions.unshift({ id: uniqueId, stake: totalBetCost, won: true, payout: totalPrizePayout, date: dateStr, time: timeStr });
   
   updateLocalWallets();
   updatePersonalStats();
   renderHistory();
   renderWalletHistory();
 
-  localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
-  tg.sendData(JSON.stringify({action:'bingo_win', card: winningCardNumber, earnings: totalPrizePayout}));
-  
-  fetch(`${CONFIG.API_BASE_URL}/api/games/win`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      username: userHandle,
-      telegramId: TGuser?.id || "offline_dev",
-      winningCard: winningCardNumber,
-      prizeWon: totalPrizePayout
-    })
-  })
-  .catch(err => console.error("Network interface sync handled safely:", err.message));
-
+  network.sendWinPayload(winningCardNumber, totalPrizePayout);
   prepareNextGameQueue();
 
-  const messagePrefix = isAutoTriggered ? `\u26a1 Auto Bingo! You Won!` : `\ud83c\udf89 Congratulations! You Won!`;
+  const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
   showGlobalWinnerBanner(messagePrefix, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
 }
 
@@ -2082,28 +1942,20 @@ function triggerOpponentWinSequence() {
   let totalBetCost = selGame.bet;
   if (selCard2) totalBetCost *= 2;
   
-  playSessions.unshift({
-    id: uniqueId,
-    stake: totalBetCost,
-    won: false,
-    date: dateStr,
-    time: timeStr
-  });
+  playSessions.unshift({ id: uniqueId, stake: totalBetCost, won: false, date: dateStr, time: timeStr });
   
   updatePersonalStats();
   renderHistory();
   
-  const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99", "@Yonas_Ke"];
+  const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99"];
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 150) + 1; 
   
   prepareNextGameQueue();
-  showGlobalWinnerBanner(`\ud83c\udfc6 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
+  showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
 }
 
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
-  localStorage.removeItem('offline_bingo_win');
-
   document.getElementById('win-head').textContent = headerText;
   document.getElementById('win-sub').textContent = subText;
   
@@ -2120,7 +1972,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
       if (patternType === 'diag-forward' && c === (4 - r)) isHighlighted = true;
       if (patternType === 'four-corners' && ((c === 0 && r === 0) || (c === 4 && r === 0) || (c === 0 && r === 4) || (c === 4 && r === 4))) isHighlighted = true;
       
-      html += `<div class="win-cell ${isHighlighted ? 'highlight' : ''} ${val === 0 ? 'free' : ''}">${val === 0 ? '\u2605' : val}</div>`;
+      html += `<div class="win-cell ${isHighlighted ? 'highlight' : ''} ${val === 0 ? 'free' : ''}">${val === 0 ? '★' : val}</div>`;
     }
     html += '</div>';
   }
@@ -2143,27 +1995,14 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
       document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
     }
   }, 1000);
-
-  winnerPopupTimeout = setTimeout(() => {
-    closeWinnerModal();
-  }, 8100);
 }
 
 function closeWinnerModal() {
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
-  
   document.getElementById('winner-popup').classList.remove('active');
-  
-  marked1.clear();
-  marked2.clear();
-
-  // Route securely to cards choice setup instead of home panel
-  document.getElementById('global-nav-bar').style.display = 'none'; 
-  document.getElementById('cpw').textContent = walletMain + walletPlay;
-  renderCardGrid(); 
-  goTo('cards');
-  startCardSelectionTimer(); 
+  goTo('lobby');
+  document.getElementById('global-nav-bar').style.display = 'flex';
 }
 
 function refreshGrids(){
@@ -2171,12 +2010,12 @@ function refreshGrids(){
   if (isGameActive) {
     renderGameCard(1);
     if(selCard2) renderGameCard(2);
-    toast('\ud83d\udd04 Grids synchronized!');
+    toast('🔄 Grids synchronized!');
   } else {
     selCard1 = 117;
     selCard2 = null;
     renderCardGrid();
-    toast('\ud83d\udd04 Selections reset!');
+    toast('🔄 Selections reset!');
   }
 }
 
@@ -2188,9 +2027,6 @@ function goTo(n){
   document.querySelectorAll('.bni').forEach(el => el.classList.remove('active'));
   const navBtn = document.getElementById('btn-nav-' + n);
   if (navBtn) navBtn.classList.add('active');
-  if (n === 'lobby') {
-    document.getElementById('btn-nav-game').classList.add('active');
-  }
   window.scrollTo(0,0);
 }
 

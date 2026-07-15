@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Dil Bingo</title>
+<title>Fast Bingo</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 /* CSS Reset and Variables */
@@ -82,15 +82,21 @@ body {
   letter-spacing: 1.5px;
   margin-bottom: 24px;
 }
+.play-btn-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
 .play-btn {
   background: var(--teal);
   color: #fff;
   font-weight: 800;
   font-size: 18px;
-  padding: 16px 32px;
+  padding: 16px 24px;
   border-radius: 50px;
   border: none;
-  width: 100%;
+  flex: 1;
   cursor: pointer;
   box-shadow: 0 0 15px rgba(15, 192, 130, 0.3);
   display: flex;
@@ -102,6 +108,30 @@ body {
 .play-btn:active {
   transform: scale(0.98);
 }
+.lobby-status-pill {
+  padding: 10px 16px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lobby-status-pill.waiting {
+  background: rgba(15, 192, 130, 0.15);
+  border: 1px solid var(--teal);
+  color: var(--teal);
+}
+.lobby-status-pill.playing {
+  background: rgba(255, 59, 48, 0.15);
+  border: 1px solid var(--red);
+  color: var(--red);
+}
+
 .wallet-box-lobby {
   margin-top: 24px;
   text-transform: uppercase;
@@ -959,6 +989,21 @@ input:checked + .slider:before { transform: translateX(18px); }
   justify-content: space-between;
   padding: 0 16px 8px;
 }
+
+/* CUSTOM TIMER COMPONENT BADGES FOR CARD PANEL */
+.mini-countdown-timer-pill {
+  background: rgba(255, 189, 20, 0.12);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -967,18 +1012,22 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LOBBY SCREEN -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
-    <div class="nav-title" style="font-weight:900;">Dil Bingo</div>
+    <div class="nav-title" style="font-weight:900;">Fast Bingo</div>
     <div class="rules-btn" onclick="toast('Rules: Get 5 cells in a line, diagonal, or all 4 corners to win!')">Rules</div>
   </div>
   
   <div class="lobby-main-card">
     <div class="lobby-heading">Welcome to</div>
-    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">DIL BINGO</div>
+    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">FAST BINGO</div>
     
     <div style="font-size: 11px; color: var(--nav-gray); font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase;">Choose Your Stake</div>
-    <button class="play-btn" onclick="joinGame(0)">
-      <span>▶</span> PLAY 10
-    </button>
+    
+    <div class="play-btn-container">
+      <button class="play-btn" onclick="joinGame(0)">
+        <span>▶</span> PLAY 10
+      </button>
+      <div id="lobby-status-indicator" class="lobby-status-pill waiting">Waiting (40s)</div>
+    </div>
     
     <div class="wallet-box-lobby">
       <div class="lbl">Wallet Balance</div>
@@ -990,7 +1039,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- SCORES / LEADERBOARD SCREEN -->
 <div class="screen" id="sc-scores">
   <div class="nav">
-    <div class="nav-title">Dil Bingo</div>
+    <div class="nav-title">Fast Bingo</div>
   </div>
   
   <div class="my-rank-banner">
@@ -1082,7 +1131,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- PROFILE SCREEN -->
 <div class="screen" id="sc-profile">
   <div class="nav">
-    <div class="nav-title">Dil Bingo</div>
+    <div class="nav-title">Fast Bingo</div>
   </div>
 
   <div class="profile-main-header">
@@ -1158,7 +1207,10 @@ input:checked + .slider:before { transform: translateX(18px); }
         <div style="font-size:22px; font-weight:800; color:var(--gold); margin-bottom:2px;"><span id="cps">10</span> ETB</div>
         <div style="font-size:9px; color:#aaa;" id="preview-calc-lbl">1 Cartela x 10 ETB</div>
       </div>
-      <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
+        <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting (40s)</div>
+      </div>
     </div>
   </div>
 
@@ -1310,8 +1362,47 @@ class TelegramBackendLink {
   }
 }
 
+// ------------------------------------------------------------------------
+// Q2: REAL-TIME MULTIPLAYER countdown server simulation.
+// Runs independently and broadcasts its countdown ticks, matching state machine:
+// "Waiting" (40s countdown) -> "Playing" (live number sequence calling).
+// ------------------------------------------------------------------------
+class MultiplayerServerConnection {
+  constructor() {
+    this.gameState = "waiting"; // "waiting" | "playing"
+    this.timeRemaining = 40;
+    this.callbacks = [];
+    this.startServerLoop();
+  }
+
+  onTick(cb) {
+    this.callbacks.push(cb);
+  }
+
+  startServerLoop() {
+    setInterval(() => {
+      this.timeRemaining--;
+      if (this.timeRemaining <= 0) {
+        if (this.gameState === "waiting") {
+          this.gameState = "playing";
+          this.timeRemaining = 120; // Assume standard game takes ~120s max.
+        } else {
+          this.gameState = "waiting";
+          this.timeRemaining = 40;
+        }
+      }
+      this.broadcast();
+    }, 1000);
+  }
+
+  broadcast() {
+    this.callbacks.forEach(cb => cb(this.gameState, this.timeRemaining));
+  }
+}
+
 const network = new TelegramBackendLink();
 const profile = network.getUserProfile();
+const multiplayerServer = new MultiplayerServerConnection();
 
 // Dynamic configurations matching view handles
 document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = profile.username);
@@ -1375,6 +1466,35 @@ const LEADERBOARDS = {
 
 let activeLobbyPlayers = 38; 
 let currentBonus = 300;
+
+// Wire up multiplayer system status to UI components globally
+multiplayerServer.onTick((state, timeRemaining) => {
+  const lobbyPill = document.getElementById('lobby-status-indicator');
+  const cartelaPill = document.getElementById('cartela-countdown');
+  
+  if (state === "waiting") {
+    const text = `Waiting (${timeRemaining}s)`;
+    
+    // Update lobby screen status
+    lobbyPill.textContent = text;
+    lobbyPill.className = "lobby-status-pill waiting";
+    
+    // Update cartela selection countdown badge
+    cartelaPill.textContent = text;
+    cartelaPill.style.borderColor = "var(--gold)";
+    cartelaPill.style.color = "var(--gold)";
+    cartelaPill.style.background = "rgba(255, 189, 20, 0.12)";
+  } else {
+    // Game currently active on server
+    lobbyPill.textContent = "Playing";
+    lobbyPill.className = "lobby-status-pill playing";
+    
+    cartelaPill.textContent = "Playing";
+    cartelaPill.style.borderColor = "var(--red)";
+    cartelaPill.style.color = "var(--red)";
+    cartelaPill.style.background = "rgba(255, 59, 48, 0.15)";
+  }
+});
 
 function seededRand(s){return()=>{s=(s*1664525+1013904223)&0xFFFFFFFF;return(s>>>0)/0xFFFFFFFF}}
 
@@ -1997,11 +2117,19 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   }, 1000);
 }
 
+// ------------------------------------------------------------------------
+// Q3: Redirect straight back to the Cartela Selection screen ('goTo("cards")')
+// ------------------------------------------------------------------------
 function closeWinnerModal() {
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
-  goTo('lobby');
+  
+  // Set up values for Cartela Picker UI and send player directly there
+  document.getElementById('cpw').textContent = walletMain + walletPlay;
+  renderCardGrid();
+  goTo('cards');
+  
   document.getElementById('global-nav-bar').style.display = 'flex';
 }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Dil Bingo</title>
+<title>fast Bingo</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 /* CSS Reset and Variables */
@@ -596,6 +596,20 @@ body {
 }
 .mini-start-btn:active { opacity: 0.9; }
 
+/* Selection Timer Widget Styling */
+.selection-timer-chip {
+  background: #ff3b30;
+  color: #fff;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* COMPACT MINI LOBBY ROW CHIP VIEWER */
 .crow{display:flex;gap:2px;margin-bottom:2px}
 .cc{flex:1;background:var(--card);border-radius:4px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#ccc;border:1px solid var(--card2)}
@@ -945,6 +959,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   display: flex;
   justify-content: space-between;
   padding: 0 16px 8px;
+  align-items: center;
 }
 </style>
 </head>
@@ -954,22 +969,22 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LOBBY SCREEN -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
-    <div class="nav-title" style="font-weight:900;">Dil Bingo</div>
+    <div class="nav-title" style="font-weight:900;">Dil Bingo[cite: 2]</div>
     <div class="rules-btn" onclick="toast('Rules: Get 5 cells in a line, diagonal, or all 4 corners to win!')">Rules</div>
   </div>
   
   <div class="lobby-main-card">
     <div class="lobby-heading">Welcome to</div>
-    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">DIL BINGO</div>
+    <div style="font-size: 38px; font-weight: 900; color: var(--gold); text-shadow: 0 4px 10px rgba(255, 189, 20, 0.2); margin-bottom: 30px;">DIL BINGO[cite: 2]</div>
     
     <div style="font-size: 11px; color: var(--nav-gray); font-weight: 800; letter-spacing: 1px; margin-bottom: 12px; text-transform: uppercase;">Choose Your Stake</div>
     <button class="play-btn" onclick="joinGame(0)">
-      <span>▶</span> PLAY 10
+      <span>▶</span> PLAY 10[cite: 2]
     </button>
     
     <div class="wallet-box-lobby">
       <div class="lbl">Wallet Balance</div>
-      <div class="val" id="lobby-wal-bal">10</div>
+      <div class="val" id="lobby-wal-bal">10[cite: 2]</div>
     </div>
   </div>
 </div>
@@ -977,7 +992,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- SCORES / LEADERBOARD SCREEN -->
 <div class="screen" id="sc-scores">
   <div class="nav">
-    <div class="nav-title">Dil Bingo</div>
+    <div class="nav-title">Dil Bingo[cite: 2]</div>
   </div>
   
   <div class="my-rank-banner">
@@ -1048,14 +1063,14 @@ input:checked + .slider:before { transform: translateX(18px); }
     </div>
     <div class="wallet-card play">
       <div class="w-card-lbl" style="color: #b290ff;">🎮 Play Wallet</div>
-      <div class="w-card-val" id="wall-play-val">10 ETB</div>
+      <div class="w-card-val" id="wall-play-val">10 ETB[cite: 2]</div>
       <div class="w-card-desc" style="color: #a78bfa;">Game Credits</div>
     </div>
   </div>
 
   <div class="w-total-strip">
     <div class="w-total-lbl">Total Available</div>
-    <div class="w-total-val" id="wall-total-val">10 ETB</div>
+    <div class="w-total-val" id="wall-total-val">10 ETB[cite: 2]</div>
   </div>
 
   <div style="font-size: 10px; color: var(--nav-gray); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; padding: 0 16px 12px;">Recent Activity</div>
@@ -1069,7 +1084,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- PROFILE SCREEN -->
 <div class="screen" id="sc-profile">
   <div class="nav">
-    <div class="nav-title">Dil Bingo</div>
+    <div class="nav-title">Dil Bingo[cite: 2]</div>
   </div>
 
   <div class="profile-main-header">
@@ -1086,7 +1101,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     </div>
     <div class="wallet-card play">
       <div class="w-card-lbl" style="color: #b290ff;">Play Wallet</div>
-      <div class="w-card-val" id="prof-play-val">10 ETB</div>
+      <div class="w-card-val" id="prof-play-val">10 ETB[cite: 2]</div>
       <div class="w-card-desc" style="color: #a78bfa;">Game Credits</div>
     </div>
   </div>
@@ -1125,25 +1140,26 @@ input:checked + .slider:before { transform: translateX(18px); }
 <div class="screen" id="sc-cards">
   <div class="nav">
     <div class="nav-back" onclick="cancelRegistrationAndRefund()">← Back</div>
-    <div class="nav-title">Select Cards</div>
+    <div class="nav-title">Select Cards[cite: 2]</div>
     <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Reset</div>
   </div>
   
   <div class="stats-bar">
     <div class="chip" style="background: var(--card2); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #aaa;">Wallet: <b id="cpw" style="color: var(--teal)">--</b> ETB</div>
+    <div class="selection-timer-chip">⏱️ <span id="selection-countdown">40s</span></div>
     <div class="chip" style="background: var(--card2); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #aaa;">Active Cards: <b id="cac" style="color: var(--teal)">1</b></div>
   </div>
 
   <div class="selection-top-panel">
     <div class="top-preview-box">
-      <div id="cart-lbl" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:var(--teal)">Cartela #117</div>
+      <div id="cart-lbl" style="font-size:10px; font-weight:bold; text-align:center; margin-bottom:4px; color:var(--teal)">Cartela #117[cite: 2]</div>
       <div id="cart-rows"></div>
     </div>
     <div class="top-action-box">
       <div>
         <div style="font-size:11px; color:#888;">Selected Cost:</div>
-        <div style="font-size:22px; font-weight:800; color:var(--gold); margin-bottom:2px;"><span id="cps">10</span> ETB</div>
-        <div style="font-size:9px; color:#aaa;" id="preview-calc-lbl">1 Cartela x 10 ETB</div>
+        <div style="font-size:22px; font-weight:800; color:var(--gold); margin-bottom:2px;"><span id="cps">10</span> ETB[cite: 2]</div>
+        <div style="font-size:9px; color:#aaa;" id="preview-calc-lbl">1 Cartela x 10 ETB[cite: 2]</div>
       </div>
       <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
     </div>
@@ -1270,6 +1286,14 @@ input:checked + .slider:before { transform: translateX(18px); }
 const tg = window.Telegram.WebApp;
 tg.ready(); tg.expand();
 
+// ==========================================
+// STEP 6: BACKEND API CONFIGURATION SETUP
+// ==========================================
+const CONFIG = {
+  // Replace this exact placeholder URL string with your live Render app link
+  API_BASE_URL: "https://fast-bingo-backend.onrender.com"
+};
+
 // Retrieve Telegram User Profile Data (Dynamic parameters fallback safely)
 const TGuser = tg.initDataUnsafe?.user;
 const userHandle = TGuser ? `@${TGuser.username || TGuser.first_name}` : "@Misma";
@@ -1307,10 +1331,11 @@ let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
 let lobbyTimerInt = null; // Ticking background queue loop
+let cardSelectionTimerInt = null; // Distinct interval logic for selection loop tracking
 
 // Split Wallets
 let walletMain = 0;
-let walletPlay = 10;
+let walletPlay = 10;[cite: 2]
 let pendingDeductionFromMain = 0; 
 let pendingDeductionFromPlay = 0;
 
@@ -1493,6 +1518,28 @@ function joinGame(i){
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
+  
+  // Start the 40-second selection window timer counter loop visually
+  startCardSelectionTimer();
+}
+
+function startCardSelectionTimer() {
+  clearInterval(cardSelectionTimerInt);
+  let selectionTimeRemaining = 40;[cite: 2]
+  const timerDisplay = document.getElementById('selection-countdown');
+  timerDisplay.textContent = `${selectionTimeRemaining}s`;
+
+  cardSelectionTimerInt = setInterval(() => {
+    selectionTimeRemaining--;
+    if (selectionTimeRemaining <= 0) {
+      clearInterval(cardSelectionTimerInt);
+      timerDisplay.textContent = "0s";
+      toast("⏰ Registration time up! Confirming automatically...");
+      confirmJoin(); // Auto-start the current selection matches into live mode
+    } else {
+      timerDisplay.textContent = `${selectionTimeRemaining}s`;
+    }
+  }, 1000);
 }
 
 function renderCardGrid(){
@@ -1556,7 +1603,12 @@ function updateSelectionSummary() {
   document.getElementById('cart-rows').innerHTML = html;
 }
 
+// ======================================================
+// STEP 6: CORE CONNECT API ENGINE REQUEST IMPLEMENTATION
+// ======================================================
 function confirmJoin(){
+  clearInterval(cardSelectionTimerInt); // Prevent background cross-ticking once confirmed
+  
   let count = 0;
   if(selCard1) count++;
   if(selCard2) count++;
@@ -1566,6 +1618,7 @@ function confirmJoin(){
   
   if (totalFunds < gameCost) {
     alert(`❌ Insufficient balance! This requires ${gameCost} ETB.`);
+    goTo('lobby');
     return;
   }
 
@@ -1585,6 +1638,25 @@ function confirmJoin(){
   selGame.isUserActiveGame = true; 
   marked1 = new Set(); marked2 = new Set(); called = [];
   
+  // Real HTTP POST endpoint handshake with Render cluster engine
+  fetch(`${CONFIG.API_BASE_URL}/api/games/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: userHandle,
+      telegramId: TGuser?.id || "offline_dev",
+      stakeAmount: selGame.bet,
+      selectedCards: [selCard1, selCard2].filter(Boolean)
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log("Successfully synchronized registration session with backend server node:", data);
+  })
+  .catch(err => {
+    console.error("Backend transmission skipped or offline connection handling active:", err.message);
+  });
+
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
@@ -1592,6 +1664,7 @@ function confirmJoin(){
 }
 
 function cancelRegistrationAndRefund() {
+  clearInterval(cardSelectionTimerInt);
   if (pendingDeductionFromPlay > 0 || pendingDeductionFromMain > 0) {
     walletPlay += (pendingDeductionFromPlay + pendingDeductionFromMain);
     pendingDeductionFromPlay = 0;
@@ -1985,6 +2058,19 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   localStorage.setItem('offline_bingo_win', JSON.stringify({card: winningCardNumber, amount: totalPrizePayout}));
   tg.sendData(JSON.stringify({action:'bingo_win', card: winningCardNumber, earnings: totalPrizePayout}));
   
+  // Real HTTP POST push transaction notifying server database layer of client match victory
+  fetch(`${CONFIG.API_BASE_URL}/api/games/win`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: userHandle,
+      telegramId: TGuser?.id || "offline_dev",
+      winningCard: winningCardNumber,
+      prizeWon: totalPrizePayout
+    })
+  })
+  .catch(err => console.error("Network interface sync handled safely:", err.message));
+
   // Prepare next queue in the background IMMEDIATELY
   prepareNextGameQueue();
 
@@ -2095,6 +2181,7 @@ function closeWinnerModal() {
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
   goTo('cards');
+  startCardSelectionTimer(); // Re-trigger the 40-second selection countdown loop window
 }
 
 function refreshGrids(){

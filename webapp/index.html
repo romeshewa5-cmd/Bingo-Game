@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 <title>Fast Bingo</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- SUPABASE CDN SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* CSS Reset and Variables */
 * {
@@ -62,6 +64,56 @@ body {
   font-size: 14px;
   cursor: pointer;
   font-weight: 700;
+}
+
+/* SUPABASE AUTH MODAL */
+.auth-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(9, 13, 22, 0.98);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20000;
+}
+.auth-card {
+  background: #111726;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  width: 90%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.auth-input {
+  width: 100%;
+  background: #1b2438;
+  border: 1px solid #232f4a;
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  margin-top: 12px;
+  outline: none;
+}
+.auth-input::placeholder {
+  color: #5d6b7c;
+}
+.auth-btn {
+  background: var(--teal);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
+}
+.auth-btn:active {
+  transform: scale(0.98);
 }
 
 /* Lobby Styling */
@@ -1011,6 +1063,18 @@ input:checked + .slider:before { transform: translateX(18px); }
 <body>
 <div class="toast" id="toast"></div>
 
+<!-- SUPABASE AUTH REGISTRATION OVERLAY -->
+<div id="auth-overlay" class="auth-overlay" style="display: none;">
+  <div class="auth-card">
+    <div style="font-size: 32px; margin-bottom: 8px;">🎮</div>
+    <div style="font-size: 20px; font-weight: 900; color: var(--gold); margin-bottom: 4px;">FAST BINGO</div>
+    <div style="font-size: 12px; color: var(--nav-gray); margin-bottom: 18px;">Register to join & save your balance</div>
+    <input type="text" id="auth-username" class="auth-input" placeholder="Enter Nickname (e.g., @Misma)">
+    <input type="tel" id="auth-phone" class="auth-input" placeholder="Enter Phone (e.g., +251...)">
+    <button class="auth-btn" onclick="handleSupabaseRegistration()">Save & Play</button>
+  </div>
+</div>
+
 <!-- LOBBY SCREEN -->
 <div class="screen active" id="sc-lobby">
   <div class="nav">
@@ -1334,6 +1398,12 @@ input:checked + .slider:before { transform: translateX(18px); }
 </div>
 
 <script>
+// SUPABASE CLIENT INITIALIZATION
+const SUPABASE_URL = "https://rsmobdnuyxqyynxtjkyi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzbW9iZG51eXhxeXlueHRqa3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcxMzIsImV4cCI6MjA5OTc4MzEzMn0.uzGvcpDA-wGHR8b5grq-frImawc_6GGEN2L53in_jB4";
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // Backend Event Dispatcher Class (Telegram Mini App Mock Webhook Protocol)
 class TelegramBackendLink {
   constructor() {
@@ -1548,6 +1618,110 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
+// ------------------------------------------------------------------------
+// SUPABASE SYNC AND REGISTRATION FLOW
+// ------------------------------------------------------------------------
+let currentSupabaseUser = null;
+
+async function initSupabaseSession() {
+  const storedUser = localStorage.getItem('supabase_bingo_player');
+  if (storedUser) {
+    currentSupabaseUser = JSON.parse(storedUser);
+    await syncUserDatabaseState();
+  } else {
+    // Fill defaults into auth modal based on Telegram Profile Web App metadata if available
+    document.getElementById('auth-username').value = profile.username;
+    document.getElementById('auth-phone').value = profile.phone;
+    document.getElementById('auth-overlay').style.display = 'flex';
+  }
+}
+
+async function handleSupabaseRegistration() {
+  const usernameInput = document.getElementById('auth-username').value.trim();
+  const phoneInput = document.getElementById('auth-phone').value.trim();
+
+  if (!usernameInput || !phoneInput) {
+    alert("Please fill in both fields to save your credentials.");
+    return;
+  }
+
+  // Attempt to load profile from Database first; if absent, insert a new record
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('phone', phoneInput)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      currentSupabaseUser = data;
+      toast(`Welcome back, ${data.username}!`);
+    } else {
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert([{ username: usernameInput, phone: phoneInput, wallet_main: 0, wallet_play: 10 }])
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      currentSupabaseUser = newProfile;
+      toast("Profile registered successfully!");
+    }
+
+    localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+    document.getElementById('auth-overlay').style.display = 'none';
+    
+    await syncUserDatabaseState();
+  } catch (err) {
+    console.error("Supabase Error during authentication:", err);
+    alert("Database connection error. Proceeding in offline mode.");
+    document.getElementById('auth-overlay').style.display = 'none';
+  }
+}
+
+async function syncUserDatabaseState() {
+  if (!currentSupabaseUser) return;
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentSupabaseUser.id)
+      .single();
+
+    if (error) throw error;
+
+    if (data) {
+      currentSupabaseUser = data;
+      walletMain = data.wallet_main;
+      walletPlay = data.wallet_play;
+      
+      // Update local profile displays directly from Supabase
+      document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = data.username);
+      document.getElementById('wallet-tg-id').textContent = data.phone;
+      
+      updateLocalWallets();
+    }
+  } catch (err) {
+    console.error("Database Fetch Error:", err);
+  }
+}
+
+async function pushBalancesToSupabase() {
+  if (!currentSupabaseUser) return;
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ wallet_main: walletMain, wallet_play: walletPlay })
+      .eq('id', currentSupabaseUser.id);
+
+    if (error) throw error;
+  } catch (err) {
+    console.error("Database Balance Push Error:", err);
+  }
+}
+
 function updateLocalWallets() {
   const totalBalance = walletMain + walletPlay;
   document.getElementById('lobby-wal-bal').textContent = totalBalance;
@@ -1737,7 +1911,7 @@ function updateSelectionSummary() {
   document.getElementById('cart-rows').innerHTML = html;
 }
 
-function confirmJoin(){
+async function confirmJoin(){
   // BLOCK entry if game is running and player was not enrolled
   if (multiplayerServer.gameState === "playing") {
     alert("❌ Live game is currently in progress. Please wait until the current game ends!");
@@ -1769,11 +1943,32 @@ function confirmJoin(){
     pendingDeductionFromMain = remainder;
   }
 
+  // Update backend database with transaction
   updateLocalWallets();
+  await pushBalancesToSupabase();
+
   selGame.isUserActiveGame = true; 
   userJoinedActiveRound = true; // Mark as connected participant
   marked1 = new Set(); marked2 = new Set(); called = [];
   
+  // Log active purchase under unique Game ID to Supabase database
+  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  document.getElementById('gg').textContent = uniqueId;
+  
+  if (currentSupabaseUser) {
+    try {
+      await supabase.from('game_sessions').insert([{
+        player_id: currentSupabaseUser.id,
+        game_id: uniqueId,
+        cards_bought: count,
+        total_cost: gameCost,
+        status: 'pending'
+      }]);
+    } catch (err) {
+      console.error("Database insert error logging game session:", err);
+    }
+  }
+
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
@@ -1783,7 +1978,7 @@ function confirmJoin(){
   document.getElementById('gcir').style.fontSize = "15px";
 }
 
-function cancelRegistrationAndRefund() {
+async function cancelRegistrationAndRefund() {
   if (pendingDeductionFromPlay > 0 || pendingDeductionFromMain > 0) {
     walletPlay += (pendingDeductionFromPlay + pendingDeductionFromMain);
     pendingDeductionFromPlay = 0;
@@ -1791,6 +1986,7 @@ function cancelRegistrationAndRefund() {
   }
   userJoinedActiveRound = false;
   updateLocalWallets();
+  await pushBalancesToSupabase();
   goTo('lobby');
 }
 
@@ -2042,7 +2238,7 @@ function claimBingo(){
   }
 }
 
-function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
+async function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
   clearInterval(gint);
   const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
   
@@ -2054,7 +2250,7 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   totalWinsCount++;
   totalEarnedETB += totalPrizePayout;
   
-  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  const uniqueId = document.getElementById('gg').textContent;
   const today = new Date();
   const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2069,19 +2265,32 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   renderHistory();
   renderWalletHistory();
 
+  // Push the win to database and mark session as won
+  await pushBalancesToSupabase();
+  if (currentSupabaseUser) {
+    try {
+      await supabase
+        .from('game_sessions')
+        .update({ status: 'won', payout: totalPrizePayout })
+        .eq('game_id', uniqueId);
+    } catch (err) {
+      console.error("Database status update error:", err);
+    }
+  }
+
   network.sendWinPayload(winningCardNumber, totalPrizePayout);
 
   const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
   showGlobalWinnerBanner(messagePrefix, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
 }
 
-function triggerOpponentWinSequence() {
+async function triggerOpponentWinSequence() {
   clearInterval(gint);
   pendingDeductionFromPlay = 0;
   pendingDeductionFromMain = 0;
   
   totalPlayedGames++;
-  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
+  const uniqueId = document.getElementById('gg').textContent;
   const today = new Date();
   const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2094,6 +2303,19 @@ function triggerOpponentWinSequence() {
   updatePersonalStats();
   renderHistory();
   
+  // Push the final loss to database and mark session as finished
+  await pushBalancesToSupabase();
+  if (currentSupabaseUser) {
+    try {
+      await supabase
+        .from('game_sessions')
+        .update({ status: 'lost', payout: 0 })
+        .eq('game_id', uniqueId);
+    } catch (err) {
+      console.error("Database status update error:", err);
+    }
+  }
+
   const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99"];
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 150) + 1; 
@@ -2191,6 +2413,7 @@ function toast(msg){
 }
 
 // Global initialization cycles
+initSupabaseSession();
 updateLocalWallets();
 updatePersonalStats();
 renderHistory();

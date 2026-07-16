@@ -823,19 +823,21 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 .live-main-ball-display {
   position: relative;
-  width: 72px;
+  width: 110px;
   height: 72px;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 900;
   color: #090d16;
   background: #ffffff;
   border: 4px solid var(--gold);
   box-shadow: 0 0 14px rgba(255, 189, 20, 0.4);
   flex-shrink: 0;
+  padding: 0 8px;
+  text-align: center;
 }
 
 /* PLAYING CARTELAS DESIGN */
@@ -1221,7 +1223,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LIVE BINGO GAME SCREEN -->
 <div class="screen" id="sc-game">
   <div class="nav">
-    <div class="nav-back" onclick="cancelActiveGame()">✕ Lobby</div>
+    <div class="nav-back" onclick="navigateBackToLobbySafely()">✕ Lobby</div>
     <div class="nav-title">Fast Bingo</div>
     <div style="font-size:11px;color:var(--teal)" id="gpc">38 players</div>
   </div>
@@ -1289,7 +1291,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       </div>
 
       <div class="game-bottom-control-dock">
-        <button class="dock-btn leave" onclick="cancelActiveGame()">Leave</button>
+        <button class="dock-btn leave" onclick="navigateBackToLobbySafely()">Leave</button>
         <button class="dock-btn refresh" onclick="refreshGrids()">Refresh</button>
         <button class="dock-btn dynamic-action" id="main-payout-btn" onclick="claimBingo()">🎉 Bingo!</button>
       </div>
@@ -1363,9 +1365,8 @@ class TelegramBackendLink {
 }
 
 // ------------------------------------------------------------------------
-// Q2: REAL-TIME MULTIPLAYER countdown server simulation.
-// Runs independently and broadcasts its countdown ticks, matching state machine:
-// "Waiting" (40s countdown) -> "Playing" (live number sequence calling).
+// Multiplayer state machine controller. 
+// "waiting" (40s countdown) -> "playing" (active live game rounds).
 // ------------------------------------------------------------------------
 class MultiplayerServerConnection {
   constructor() {
@@ -1382,17 +1383,35 @@ class MultiplayerServerConnection {
   startServerLoop() {
     setInterval(() => {
       this.timeRemaining--;
+      
+      // Keep server clock state broadcast accurate
       if (this.timeRemaining <= 0) {
         if (this.gameState === "waiting") {
           this.gameState = "playing";
-          this.timeRemaining = 120; // Assume standard game takes ~120s max.
+          this.timeRemaining = 120; // Maximum allowed playing run
+          
+          // Trigger the game system live play engine when lobby status flips to playing
+          if (userJoinedActiveRound && !isCurrentlyInGameRound) {
+            startBackgroundEngine();
+          }
         } else {
-          this.gameState = "waiting";
-          this.timeRemaining = 40;
+          this.resetToWaitingState();
         }
       }
       this.broadcast();
     }, 1000);
+  }
+
+  resetToWaitingState() {
+    this.gameState = "waiting";
+    this.timeRemaining = 40;
+    
+    // Clear out active round state models
+    isCurrentlyInGameRound = false;
+    userJoinedActiveRound = false;
+    called = [];
+    marked1.clear();
+    marked2.clear();
   }
 
   broadcast() {
@@ -1424,10 +1443,13 @@ let marked1 = new Set(), marked2 = new Set();
 let called = [], gint = null, cardCache = {};
 let isAutoMode = false;
 
+// Persistent User Tracking State
+let userJoinedActiveRound = false; 
+let isCurrentlyInGameRound = false; 
+
 let winnerPopupTimeout = null;
 let winnerPopupInterval = null;
 let winnerCountdown = 8;
-let lobbyTimerInt = null;
 
 let walletMain = 0;
 let walletPlay = 10;
@@ -1471,28 +1493,45 @@ let currentBonus = 300;
 multiplayerServer.onTick((state, timeRemaining) => {
   const lobbyPill = document.getElementById('lobby-status-indicator');
   const cartelaPill = document.getElementById('cartela-countdown');
+  const insideCircleTimer = document.getElementById('gcir');
   
   if (state === "waiting") {
     const text = `Waiting (${timeRemaining}s)`;
     
     // Update lobby screen status
-    lobbyPill.textContent = text;
-    lobbyPill.className = "lobby-status-pill waiting";
+    if (lobbyPill) {
+      lobbyPill.textContent = text;
+      lobbyPill.className = "lobby-status-pill waiting";
+    }
     
     // Update cartela selection countdown badge
-    cartelaPill.textContent = text;
-    cartelaPill.style.borderColor = "var(--gold)";
-    cartelaPill.style.color = "var(--gold)";
-    cartelaPill.style.background = "rgba(255, 189, 20, 0.12)";
+    if (cartelaPill) {
+      cartelaPill.textContent = text;
+      cartelaPill.style.borderColor = "var(--gold)";
+      cartelaPill.style.color = "var(--gold)";
+      cartelaPill.style.background = "rgba(255, 189, 20, 0.12)";
+    }
+
+    // Inside Game View timer synchronization
+    if (insideCircleTimer && !isCurrentlyInGameRound) {
+      insideCircleTimer.textContent = `WAIT: ${timeRemaining}s`;
+      insideCircleTimer.style.fontSize = "15px";
+      insideCircleTimer.style.color = "var(--gold)";
+      insideCircleTimer.style.boxShadow = "0 0 14px rgba(255, 189, 20, 0.4)";
+    }
   } else {
     // Game currently active on server
-    lobbyPill.textContent = "Playing";
-    lobbyPill.className = "lobby-status-pill playing";
+    if (lobbyPill) {
+      lobbyPill.textContent = "Playing";
+      lobbyPill.className = "lobby-status-pill playing";
+    }
     
-    cartelaPill.textContent = "Playing";
-    cartelaPill.style.borderColor = "var(--red)";
-    cartelaPill.style.color = "var(--red)";
-    cartelaPill.style.background = "rgba(255, 59, 48, 0.15)";
+    if (cartelaPill) {
+      cartelaPill.textContent = "Playing";
+      cartelaPill.style.borderColor = "var(--red)";
+      cartelaPill.style.color = "var(--red)";
+      cartelaPill.style.background = "rgba(255, 59, 48, 0.15)";
+    }
   }
 });
 
@@ -1620,6 +1659,14 @@ function renderLeaderboard(tab) {
 }
 
 function joinGame(i){
+  // Check if player had already joined the active game in progress
+  if (userJoinedActiveRound) {
+    document.getElementById('global-nav-bar').style.display = 'none';
+    syncActiveGameScreenStructure();
+    goTo('game');
+    return;
+  }
+
   selGame = GAMES[i];
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
@@ -1691,6 +1738,13 @@ function updateSelectionSummary() {
 }
 
 function confirmJoin(){
+  // BLOCK entry if game is running and player was not enrolled
+  if (multiplayerServer.gameState === "playing") {
+    alert("❌ Live game is currently in progress. Please wait until the current game ends!");
+    toast("Wait until the current game ends!");
+    return;
+  }
+
   let count = 0;
   if(selCard1) count++;
   if(selCard2) count++;
@@ -1717,12 +1771,16 @@ function confirmJoin(){
 
   updateLocalWallets();
   selGame.isUserActiveGame = true; 
+  userJoinedActiveRound = true; // Mark as connected participant
   marked1 = new Set(); marked2 = new Set(); called = [];
   
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
-  startBackgroundEngine(); 
+  
+  // Display dynamic synchronized lobby timer inside current ball window until server loop triggers calling
+  document.getElementById('gcir').textContent = `WAIT: ${multiplayerServer.timeRemaining}s`;
+  document.getElementById('gcir').style.fontSize = "15px";
 }
 
 function cancelRegistrationAndRefund() {
@@ -1731,31 +1789,16 @@ function cancelRegistrationAndRefund() {
     pendingDeductionFromPlay = 0;
     pendingDeductionFromMain = 0;
   }
+  userJoinedActiveRound = false;
   updateLocalWallets();
   goTo('lobby');
 }
 
-function cancelActiveGame() {
-  clearInterval(gint);
-  clearInterval(lobbyTimerInt);
-  pendingDeductionFromPlay = 0;
-  pendingDeductionFromMain = 0;
-  
-  totalPlayedGames++;
-  const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
-  const today = new Date();
-  const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-  const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  
-  let totalBetCost = selGame.bet;
-  if (selCard2) totalBetCost *= 2;
-  
-  playSessions.unshift({ id: uniqueId, stake: totalBetCost, won: false, date: dateStr, time: timeStr });
-  
-  updatePersonalStats();
-  renderHistory();
+function navigateBackToLobbySafely() {
+  // If player clicks leave, navigate out of game screen but maintain running data if playing
   document.getElementById('global-nav-bar').style.display = 'flex';
   goTo('lobby');
+  toast("Returning to lobby...");
 }
 
 function syncActiveGameScreenStructure() {
@@ -1848,7 +1891,7 @@ function markCell(cardNumber,key,c,r){
 
 function startBackgroundEngine(){
   clearInterval(gint);
-  clearInterval(lobbyTimerInt);
+  isCurrentlyInGameRound = true;
   
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
   document.getElementById('gp').textContent = activeLobbyPlayers;
@@ -1856,19 +1899,10 @@ function startBackgroundEngine(){
   document.getElementById('gd').textContent = currentDerash;
   document.getElementById('gb').textContent = selGame.bet;
 
-  let secondsLeft = 5; 
-  document.getElementById('gcir').textContent = secondsLeft;
+  document.getElementById('gcir').style.fontSize = "24px";
   document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
   
-  gint = setInterval(() => {
-    secondsLeft--;
-    if (secondsLeft > 0) {
-      document.getElementById('gcir').textContent = secondsLeft;
-    } else {
-      clearInterval(gint);
-      startLiveNumberCalling();
-    }
-  }, 1000);
+  startLiveNumberCalling();
 }
 
 function startLiveNumberCalling() {
@@ -2008,12 +2042,6 @@ function claimBingo(){
   }
 }
 
-function prepareNextGameQueue() {
-  called = [];
-  marked1.clear();
-  marked2.clear();
-}
-
 function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
   clearInterval(gint);
   const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
@@ -2042,7 +2070,6 @@ function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTrigg
   renderWalletHistory();
 
   network.sendWinPayload(winningCardNumber, totalPrizePayout);
-  prepareNextGameQueue();
 
   const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
   showGlobalWinnerBanner(messagePrefix, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
@@ -2071,7 +2098,6 @@ function triggerOpponentWinSequence() {
   const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
   const randomCard = Math.floor(Math.random() * 150) + 1; 
   
-  prepareNextGameQueue();
   showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
 }
 
@@ -2117,15 +2143,15 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   }, 1000);
 }
 
-// ------------------------------------------------------------------------
-// Q3: Redirect straight back to the Cartela Selection screen ('goTo("cards")')
-// ------------------------------------------------------------------------
 function closeWinnerModal() {
   clearTimeout(winnerPopupTimeout);
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   
-  // Set up values for Cartela Picker UI and send player directly there
+  // Transition back to waiting state countdown instantly on popup exit
+  multiplayerServer.resetToWaitingState();
+  
+  // Direct player straight back to card picker screen 
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid();
   goTo('cards');

@@ -1402,7 +1402,8 @@ input:checked + .slider:before { transform: translateX(18px); }
 const SUPABASE_URL = "https://rsmobdnuyxqyynxtjkyi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzbW9iZG51eXhxeXlueHRqa3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcxMzIsImV4cCI6MjA5OTc4MzEzMn0.uzGvcpDA-wGHR8b5grq-frImawc_6GGEN2L53in_jB4";
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Renamed instance variable variable to prevent collision with the global library object scope
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Backend Event Dispatcher Class (Telegram Mini App Mock Webhook Protocol)
 class TelegramBackendLink {
@@ -1647,7 +1648,7 @@ async function handleSupabaseRegistration() {
 
   // Attempt to load profile from Database first; if absent, insert a new record
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('profiles')
       .select('*')
       .eq('phone', phoneInput)
@@ -1659,7 +1660,7 @@ async function handleSupabaseRegistration() {
       currentSupabaseUser = data;
       toast(`Welcome back, ${data.username}!`);
     } else {
-      const { data: newProfile, error: insertError } = await supabase
+      const { data: newProfile, error: insertError } = await supabaseClient
         .from('profiles')
         .insert([{ username: usernameInput, phone: phoneInput, wallet_main: 0, wallet_play: 10 }])
         .select()
@@ -1684,7 +1685,7 @@ async function handleSupabaseRegistration() {
 async function syncUserDatabaseState() {
   if (!currentSupabaseUser) return;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('profiles')
       .select('*')
       .eq('id', currentSupabaseUser.id)
@@ -1711,7 +1712,7 @@ async function syncUserDatabaseState() {
 async function pushBalancesToSupabase() {
   if (!currentSupabaseUser) return;
   try {
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('profiles')
       .update({ wallet_main: walletMain, wallet_play: walletPlay })
       .eq('id', currentSupabaseUser.id);
@@ -1957,7 +1958,7 @@ async function confirmJoin(){
   
   if (currentSupabaseUser) {
     try {
-      await supabase.from('game_sessions').insert([{
+      await supabaseClient.from('game_sessions').insert([{
         player_id: currentSupabaseUser.id,
         game_id: uniqueId,
         cards_bought: count,
@@ -2232,7 +2233,8 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.winningPlay, false);
+    // FIXED: Changed winningPlay.winningPlay to winningPlay.pIndex
+    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
   } else {
     toast('❌ Invalid Bingo! Keep checking your grids.');
   }
@@ -2269,7 +2271,7 @@ async function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAut
   await pushBalancesToSupabase();
   if (currentSupabaseUser) {
     try {
-      await supabase
+      await supabaseClient
         .from('game_sessions')
         .update({ status: 'won', payout: totalPrizePayout })
         .eq('game_id', uniqueId);
@@ -2307,7 +2309,7 @@ async function triggerOpponentWinSequence() {
   await pushBalancesToSupabase();
   if (currentSupabaseUser) {
     try {
-      await supabase
+      await supabaseClient
         .from('game_sessions')
         .update({ status: 'lost', payout: 0 })
         .eq('game_id', uniqueId);

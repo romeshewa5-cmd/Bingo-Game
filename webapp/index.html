@@ -7,6 +7,8 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- SUPABASE CDN SCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- SOCKET.IO CLIENT CDN -->
+<script src="https://cdn.jsdelivr.net/npm/socket-io-client@4.7.5/dist/socket.io.min.js"></script>
 <style>
 /* CSS Reset and Variables */
 * {
@@ -1398,11 +1400,34 @@ input:checked + .slider:before { transform: translateX(18px); }
 </div>
 
 <script>
-// SUPABASE CLIENT INITIALIZATION
+// --- ENVIRONMENT CONFIGURATION (STEP B) ---
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000'
+  : 'https://fast-bingo-backend.onrender.com'; // Replace with your live backend Render URL[cite: 5]
+
+// --- SOCKET.IO CLIENT HOOK (STEP C) ---
+const socket = io(BACKEND_URL);
+
+// HEALTH CHECK HANDLER[cite: 5]
+async function checkDatabaseStatus() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/health-check`);
+    const data = await response.json();
+
+    if (data.status === "online" && data.database === "connected") {
+      console.log("🚀 Fast Bingo is ONLINE and connected to Supabase!");
+    } else {
+      console.warn("Backend is up, but Supabase connections are failing.");
+    }
+  } catch (error) {
+    console.error("database connection error. proceeding in offline mode.", error);
+  }
+}
+
+// SUPABASE CLIENT INITIALIZATION[cite: 5]
 const SUPABASE_URL = "https://rsmobdnuyxqyynxtjkyi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzbW9iZG51eXhxeXlueHRqa3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcxMzIsImV4cCI6MjA5OTc4MzEzMn0.uzGvcpDA-wGHR8b5grq-frImawc_6GGEN2L53in_jB4";
 
-// Renamed instance variable variable to prevent collision with the global library object scope
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Backend Event Dispatcher Class (Telegram Mini App Mock Webhook Protocol)
@@ -1428,7 +1453,7 @@ class TelegramBackendLink {
 
   sendWinPayload(card, profit) {
     const payload = JSON.stringify({ event: "bingo_victory", cartela: card, netPayout: profit, timestamp: Date.now() });
-    localStorage.setItem("dil_bingo_last_payout", payload);
+    localStorage.setItem("fast_bingo_last_payout", payload);
     if (this.tg?.sendData) {
       this.tg.sendData(payload);
     }
@@ -1646,37 +1671,25 @@ async function handleSupabaseRegistration() {
     return;
   }
 
-  // Attempt to load profile from Database first; if absent, insert a new record
+  // Sourced security layer checking via API middleware parameters
   try {
-    const { data, error } = await supabaseClient
-      .from('players')
-      .select('*')
-      .eq('phone_number', phoneInput)
-      .maybeSingle();
+    const response = await fetch(`${BACKEND_URL}/api/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: usernameInput, phone_number: phoneInput })
+    });
+    
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Authentication failed");
 
-    if (error) throw error;
-
-    if (data) {
-      currentSupabaseUser = data;
-      toast(`Welcome back, ${data.username}!`);
-    } else {
-      const { data: newProfile, error: insertError } = await supabaseClient
-        .from('players')
-        .insert([{ username: usernameInput, phone_number: phoneInput, wallet_main: 0, wallet_play: 10 }])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-      currentSupabaseUser = newProfile;
-      toast("Profile registered successfully!");
-    }
-
+    currentSupabaseUser = result.user;
+    toast(result.isNew ? "Profile registered successfully!" : `Welcome back, ${currentSupabaseUser.username}!`);
     localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
     document.getElementById('auth-overlay').style.display = 'none';
     
     await syncUserDatabaseState();
   } catch (err) {
-    console.error("Supabase Error during authentication:", err);
+    console.error("Authentication Routing Error:", err);
     alert("Database connection error. Proceeding in offline mode.");
     document.getElementById('auth-overlay').style.display = 'none';
   }
@@ -1685,20 +1698,16 @@ async function handleSupabaseRegistration() {
 async function syncUserDatabaseState() {
   if (!currentSupabaseUser) return;
   try {
-    const { data, error } = await supabaseClient
-      .from('players')
-      .select('*')
-      .eq('id', currentSupabaseUser.id)
-      .single();
-
-    if (error) throw error;
-
+    const response = await fetch(`${BACKEND_URL}/api/player/${currentSupabaseUser.id}`);
+    if (!response.ok) throw new Error("Sync failure");
+    
+    const data = await response.json();
     if (data) {
       currentSupabaseUser = data;
       walletMain = data.wallet_main;
       walletPlay = data.wallet_play;
       
-      // Update local profile displays directly from Supabase
+      // Update local profile displays directly from synced values
       document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = data.username);
       document.getElementById('wallet-tg-id').textContent = data.phone_number || data.phone;
       
@@ -1712,12 +1721,15 @@ async function syncUserDatabaseState() {
 async function pushBalancesToSupabase() {
   if (!currentSupabaseUser) return;
   try {
-    const { error } = await supabaseClient
-      .from('players')
-      .update({ wallet_main: walletMain, wallet_play: walletPlay })
-      .eq('id', currentSupabaseUser.id);
-
-    if (error) throw error;
+    await fetch(`${BACKEND_URL}/api/player/update-balance`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: currentSupabaseUser.id,
+        wallet_main: walletMain,
+        wallet_play: walletPlay
+      })
+    });
   } catch (err) {
     console.error("Database Balance Push Error:", err);
   }
@@ -1913,7 +1925,6 @@ function updateSelectionSummary() {
 }
 
 async function confirmJoin(){
-  // BLOCK entry if game is running and player was not enrolled
   if (multiplayerServer.gameState === "playing") {
     alert("❌ Live game is currently in progress. Please wait until the current game ends!");
     toast("Wait until the current game ends!");
@@ -1944,29 +1955,30 @@ async function confirmJoin(){
     pendingDeductionFromMain = remainder;
   }
 
-  // Update backend database with transaction
   updateLocalWallets();
   await pushBalancesToSupabase();
 
   selGame.isUserActiveGame = true; 
-  userJoinedActiveRound = true; // Mark as connected participant
+  userJoinedActiveRound = true; 
   marked1 = new Set(); marked2 = new Set(); called = [];
   
-  // Log active purchase under unique Game ID to Supabase database
   const uniqueId = "DB" + Math.random().toString(36).substr(2, 6).toUpperCase();
   document.getElementById('gg').textContent = uniqueId;
   
   if (currentSupabaseUser) {
     try {
-      await supabaseClient.from('game_sessions').insert([{
-        player_id: currentSupabaseUser.id,
-        game_id: uniqueId,
-        cards_bought: count,
-        total_cost: gameCost,
-        status: 'pending'
-      }]);
+      await fetch(`${BACKEND_URL}/api/games/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          player_id: currentSupabaseUser.id,
+          game_id: uniqueId,
+          cards_bought: count,
+          total_cost: gameCost
+        })
+      });
     } catch (err) {
-      console.error("Database insert error logging game session:", err);
+      console.error("Database insert logging failure:", err);
     }
   }
 
@@ -1974,7 +1986,6 @@ async function confirmJoin(){
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
   
-  // Display dynamic synchronized lobby timer inside current ball window until server loop triggers calling
   document.getElementById('gcir').textContent = `WAIT: ${multiplayerServer.timeRemaining}s`;
   document.getElementById('gcir').style.fontSize = "15px";
 }
@@ -1992,7 +2003,6 @@ async function cancelRegistrationAndRefund() {
 }
 
 function navigateBackToLobbySafely() {
-  // If player clicks leave, navigate out of game screen but maintain running data if playing
   document.getElementById('global-nav-bar').style.display = 'flex';
   goTo('lobby');
   toast("Returning to lobby...");
@@ -2266,14 +2276,18 @@ async function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAut
   renderHistory();
   renderWalletHistory();
 
-  // Push the win to database and mark session as won
   await pushBalancesToSupabase();
   if (currentSupabaseUser) {
     try {
-      await supabaseClient
-        .from('game_sessions')
-        .update({ status: 'won', payout: totalPrizePayout })
-        .eq('game_id', uniqueId);
+      await fetch(`${BACKEND_URL}/api/games/update-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_id: uniqueId,
+          status: 'won',
+          payout: totalPrizePayout
+        })
+      });
     } catch (err) {
       console.error("Database status update error:", err);
     }
@@ -2304,14 +2318,18 @@ async function triggerOpponentWinSequence() {
   updatePersonalStats();
   renderHistory();
   
-  // Push the final loss to database and mark session as finished
   await pushBalancesToSupabase();
   if (currentSupabaseUser) {
     try {
-      await supabaseClient
-        .from('game_sessions')
-        .update({ status: 'lost', payout: 0 })
-        .eq('game_id', uniqueId);
+      await fetch(`${BACKEND_URL}/api/games/update-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          game_id: uniqueId,
+          status: 'lost',
+          payout: 0
+        })
+      });
     } catch (err) {
       console.error("Database status update error:", err);
     }
@@ -2371,10 +2389,8 @@ function closeWinnerModal() {
   clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   
-  // Transition back to waiting state countdown instantly on popup exit
   multiplayerServer.resetToWaitingState();
   
-  // Direct player straight back to card picker screen 
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid();
   goTo('cards');
@@ -2413,7 +2429,8 @@ function toast(msg){
   setTimeout(()=>el.className='toast',3000);
 }
 
-// Global initialization cycles
+// Global initialization cycles[cite: 5]
+checkDatabaseStatus();
 initSupabaseSession();
 updateLocalWallets();
 updatePersonalStats();

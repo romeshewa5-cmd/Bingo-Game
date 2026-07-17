@@ -1403,12 +1403,17 @@ input:checked + .slider:before { transform: translateX(18px); }
 // --- ENVIRONMENT CONFIGURATION (STEP B) ---
 const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3000'
-  : 'https://fast-bingo-backend.onrender.com'; // Replace with your live backend Render URL[cite: 5]
+  : 'https://fast-bingo-backend.onrender.com'; // Replace with your live backend Render URL
 
 // --- SOCKET.IO CLIENT HOOK (STEP C) ---
-const socket = io(BACKEND_URL);
+let socket;
+if (typeof io !== 'undefined') {
+  socket = io(BACKEND_URL);
+} else {
+  console.error("Socket.io client library failed to load from CDN fallback.");
+}
 
-// HEALTH CHECK HANDLER[cite: 5]
+// HEALTH CHECK HANDLER
 async function checkDatabaseStatus() {
   try {
     const response = await fetch(`${BACKEND_URL}/api/health-check`);
@@ -1424,7 +1429,7 @@ async function checkDatabaseStatus() {
   }
 }
 
-// SUPABASE CLIENT INITIALIZATION[cite: 5]
+// SUPABASE CLIENT INITIALIZATION
 const SUPABASE_URL = "https://rsmobdnuyxqyynxtjkyi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzbW9iZG51eXhxeXlueHRqa3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcxMzIsImV4cCI6MjA5OTc4MzEzMn0.uzGvcpDA-wGHR8b5grq-frImawc_6GGEN2L53in_jB4";
 
@@ -2429,7 +2434,7 @@ function toast(msg){
   setTimeout(()=>el.className='toast',3000);
 }
 
-// Global initialization cycles[cite: 5]
+// Global initialization cycles
 checkDatabaseStatus();
 initSupabaseSession();
 updateLocalWallets();

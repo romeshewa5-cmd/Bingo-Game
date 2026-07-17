@@ -1649,9 +1649,9 @@ async function handleSupabaseRegistration() {
   // Attempt to load profile from Database first; if absent, insert a new record
   try {
     const { data, error } = await supabaseClient
-      .from('profiles')
+      .from('players')
       .select('*')
-      .eq('phone', phoneInput)
+      .eq('phone_number', phoneInput)
       .maybeSingle();
 
     if (error) throw error;
@@ -1661,8 +1661,8 @@ async function handleSupabaseRegistration() {
       toast(`Welcome back, ${data.username}!`);
     } else {
       const { data: newProfile, error: insertError } = await supabaseClient
-        .from('profiles')
-        .insert([{ username: usernameInput, phone: phoneInput, wallet_main: 0, wallet_play: 10 }])
+        .from('players')
+        .insert([{ username: usernameInput, phone_number: phoneInput, wallet_main: 0, wallet_play: 10 }])
         .select()
         .single();
 
@@ -1686,7 +1686,7 @@ async function syncUserDatabaseState() {
   if (!currentSupabaseUser) return;
   try {
     const { data, error } = await supabaseClient
-      .from('profiles')
+      .from('players')
       .select('*')
       .eq('id', currentSupabaseUser.id)
       .single();
@@ -1700,7 +1700,7 @@ async function syncUserDatabaseState() {
       
       // Update local profile displays directly from Supabase
       document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = data.username);
-      document.getElementById('wallet-tg-id').textContent = data.phone;
+      document.getElementById('wallet-tg-id').textContent = data.phone_number || data.phone;
       
       updateLocalWallets();
     }
@@ -1713,7 +1713,7 @@ async function pushBalancesToSupabase() {
   if (!currentSupabaseUser) return;
   try {
     const { error } = await supabaseClient
-      .from('profiles')
+      .from('players')
       .update({ wallet_main: walletMain, wallet_play: walletPlay })
       .eq('id', currentSupabaseUser.id);
 
@@ -2233,7 +2233,6 @@ function claimBingo(){
   const winningPlay = win1 || win2;
 
   if(winningPlay){
-    // FIXED: Changed winningPlay.winningPlay to winningPlay.pIndex
     executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
   } else {
     toast('❌ Invalid Bingo! Keep checking your grids.');

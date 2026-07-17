@@ -35,7 +35,7 @@ body {
   --red: #ff3b30;
   --nav-gray: #7d8c9e;
   
-  /* Modern Column Colors matched to Image 2 */
+  /* Modern Column Colors */
   --col-B: #2196f3;
   --col-I: #3f51b5;
   --col-N: #9c27b0;
@@ -1400,17 +1400,17 @@ input:checked + .slider:before { transform: translateX(18px); }
 </div>
 
 <script>
-// --- ENVIRONMENT CONFIGURATION (STEP B) ---
+// --- ENVIRONMENT CONFIGURATION ---
 const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3000'
-  : 'https://fast-bingo-backend.onrender.com'; // Replace with your live backend Render URL
+  : 'https://fast-bingo-backend.onrender.com';
 
-// --- SOCKET.IO CLIENT HOOK (STEP C) ---
+// --- SOCKET.IO CLIENT HOOK ---
 let socket;
 if (typeof io !== 'undefined') {
   socket = io(BACKEND_URL);
 } else {
-  console.error("Socket.io client library failed to load from CDN fallback.");
+  console.error("Socket.io client library failed to load.");
 }
 
 // HEALTH CHECK HANDLER
@@ -1418,24 +1418,19 @@ async function checkDatabaseStatus() {
   try {
     const response = await fetch(`${BACKEND_URL}/api/health-check`);
     const data = await response.json();
-
     if (data.status === "online" && data.database === "connected") {
-      console.log("🚀 Fast Bingo is ONLINE and connected to Supabase!");
-    } else {
-      console.warn("Backend is up, but Supabase connections are failing.");
+      console.log("🚀 Fast Bingo Backend is fully operational!");
     }
   } catch (error) {
-    console.error("database connection error. proceeding in offline mode.", error);
+    console.error("Database connection error. Proceeding in offline runtime sync.", error);
   }
 }
 
 // SUPABASE CLIENT INITIALIZATION
 const SUPABASE_URL = "https://rsmobdnuyxqyynxtjkyi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzbW9iZG51eXhxeXlueHRqa3lpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMDcxMzIsImV4cCI6MjA5OTc4MzEzMn0.uzGvcpDA-wGHR8b5grq-frImawc_6GGEN2L53in_jB4";
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Backend Event Dispatcher Class (Telegram Mini App Mock Webhook Protocol)
 class TelegramBackendLink {
   constructor() {
     this.tg = window.Telegram?.WebApp;
@@ -1444,7 +1439,6 @@ class TelegramBackendLink {
       this.tg.expand();
     }
   }
-
   getUserProfile() {
     const fallback = { username: "@Misma", initials: "M", phone: "+251960089963" };
     if (!this.tg?.initDataUnsafe?.user) return fallback;
@@ -1455,81 +1449,21 @@ class TelegramBackendLink {
       phone: u.phone_number || "+251960089963"
     };
   }
-
   sendWinPayload(card, profit) {
     const payload = JSON.stringify({ event: "bingo_victory", cartela: card, netPayout: profit, timestamp: Date.now() });
     localStorage.setItem("fast_bingo_last_payout", payload);
-    if (this.tg?.sendData) {
-      this.tg.sendData(payload);
-    }
+    if (this.tg?.sendData) this.tg.sendData(payload);
   }
 }
 
-// ------------------------------------------------------------------------
-// Multiplayer state machine controller. 
-// "waiting" (40s countdown) -> "playing" (active live game rounds).
-// ------------------------------------------------------------------------
-class MultiplayerServerConnection {
-  constructor() {
-    this.gameState = "waiting"; // "waiting" | "playing"
-    this.timeRemaining = 40;
-    this.callbacks = [];
-    this.startServerLoop();
-  }
-
-  onTick(cb) {
-    this.callbacks.push(cb);
-  }
-
-  startServerLoop() {
-    setInterval(() => {
-      this.timeRemaining--;
-      
-      // Keep server clock state broadcast accurate
-      if (this.timeRemaining <= 0) {
-        if (this.gameState === "waiting") {
-          this.gameState = "playing";
-          this.timeRemaining = 120; // Maximum allowed playing run
-          
-          // Trigger the game system live play engine when lobby status flips to playing
-          if (userJoinedActiveRound && !isCurrentlyInGameRound) {
-            startBackgroundEngine();
-          }
-        } else {
-          this.resetToWaitingState();
-        }
-      }
-      this.broadcast();
-    }, 1000);
-  }
-
-  resetToWaitingState() {
-    this.gameState = "waiting";
-    this.timeRemaining = 40;
-    
-    // Clear out active round state models
-    isCurrentlyInGameRound = false;
-    userJoinedActiveRound = false;
-    called = [];
-    marked1.clear();
-    marked2.clear();
-  }
-
-  broadcast() {
-    this.callbacks.forEach(cb => cb(this.gameState, this.timeRemaining));
-  }
-}
-
+// System Core State Model
 const network = new TelegramBackendLink();
 const profile = network.getUserProfile();
-const multiplayerServer = new MultiplayerServerConnection();
 
-// Dynamic configurations matching view handles
 document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = profile.username);
 document.querySelector('.avatar-ring').textContent = profile.initials;
 document.getElementById('wallet-tg-id').textContent = profile.phone;
 
-// System Core State Model
 const GAMES = [
   {bet:10,  win:304, status:'waiting', bonus:false, countdown:40, isUserActiveGame:false},
   {bet:20,  win:684, status:'waiting', bonus:true,  countdown:40, isUserActiveGame:false},
@@ -1541,10 +1475,9 @@ const LETS = ['B', 'I', 'N', 'G', 'O'];
 let selGame = GAMES[0];
 let selCard1 = 117, selCard2 = null; 
 let marked1 = new Set(), marked2 = new Set();
-let called = [], gint = null, cardCache = {};
+let called = [], cardCache = {};
 let isAutoMode = false;
 
-// Persistent User Tracking State
 let userJoinedActiveRound = false; 
 let isCurrentlyInGameRound = false; 
 
@@ -1590,51 +1523,43 @@ const LEADERBOARDS = {
 let activeLobbyPlayers = 38; 
 let currentBonus = 300;
 
-// Wire up multiplayer system status to UI components globally
-multiplayerServer.onTick((state, timeRemaining) => {
-  const lobbyPill = document.getElementById('lobby-status-indicator');
-  const cartelaPill = document.getElementById('cartela-countdown');
-  const insideCircleTimer = document.getElementById('gcir');
-  
-  if (state === "waiting") {
-    const text = `Waiting (${timeRemaining}s)`;
+// Connect Real-Time Socket Events to UI State
+if (socket) {
+  socket.on('room_tick', (data) => {
+    const lobbyPill = document.getElementById('lobby-status-indicator');
+    const cartelaPill = document.getElementById('cartela-countdown');
+    const insideCircleTimer = document.getElementById('gcir');
     
-    // Update lobby screen status
-    if (lobbyPill) {
-      lobbyPill.textContent = text;
-      lobbyPill.className = "lobby-status-pill waiting";
+    if (data.state === "waiting") {
+      const text = `Waiting (${data.timeRemaining}s)`;
+      if (lobbyPill) { lobbyPill.textContent = text; lobbyPill.className = "lobby-status-pill waiting"; }
+      if (cartelaPill) { cartelaPill.textContent = text; cartelaPill.style.color = "var(--gold)"; cartelaPill.style.background = "rgba(255, 189, 20, 0.12)"; }
+      if (insideCircleTimer && !isCurrentlyInGameRound) {
+        insideCircleTimer.textContent = `WAIT: ${data.timeRemaining}s`;
+        insideCircleTimer.style.fontSize = "15px";
+        insideCircleTimer.style.color = "var(--gold)";
+      }
+    } else {
+      if (lobbyPill) { lobbyPill.textContent = "Playing"; lobbyPill.className = "lobby-status-pill playing"; }
+      if (cartelaPill) { cartelaPill.textContent = "Playing"; cartelaPill.style.color = "var(--red)"; cartelaPill.style.background = "rgba(255, 59, 48, 0.15)"; }
+      
+      if (userJoinedActiveRound && !isCurrentlyInGameRound) {
+        isCurrentlyInGameRound = true;
+        startActiveMatchEngine();
+      }
     }
-    
-    // Update cartela selection countdown badge
-    if (cartelaPill) {
-      cartelaPill.textContent = text;
-      cartelaPill.style.borderColor = "var(--gold)";
-      cartelaPill.style.color = "var(--gold)";
-      cartelaPill.style.background = "rgba(255, 189, 20, 0.12)";
-    }
+  });
 
-    // Inside Game View timer synchronization
-    if (insideCircleTimer && !isCurrentlyInGameRound) {
-      insideCircleTimer.textContent = `WAIT: ${timeRemaining}s`;
-      insideCircleTimer.style.fontSize = "15px";
-      insideCircleTimer.style.color = "var(--gold)";
-      insideCircleTimer.style.boxShadow = "0 0 14px rgba(255, 189, 20, 0.4)";
-    }
-  } else {
-    // Game currently active on server
-    if (lobbyPill) {
-      lobbyPill.textContent = "Playing";
-      lobbyPill.className = "lobby-status-pill playing";
-    }
-    
-    if (cartelaPill) {
-      cartelaPill.textContent = "Playing";
-      cartelaPill.style.borderColor = "var(--red)";
-      cartelaPill.style.color = "var(--red)";
-      cartelaPill.style.background = "rgba(255, 59, 48, 0.15)";
-    }
-  }
-});
+  socket.on('ball_drawn', (data) => {
+    if (!isCurrentlyInGameRound) return;
+    processIncomingBallCall(data.number);
+  });
+
+  socket.on('opponent_victory', (data) => {
+    if (!isCurrentlyInGameRound) return;
+    triggerOpponentWinSequence(data.winnerName, data.cardNum);
+  });
+}
 
 function seededRand(s){return()=>{s=(s*1664525+1013904223)&0xFFFFFFFF;return(s>>>0)/0xFFFFFFFF}}
 
@@ -1649,9 +1574,7 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
-// ------------------------------------------------------------------------
 // SUPABASE SYNC AND REGISTRATION FLOW
-// ------------------------------------------------------------------------
 let currentSupabaseUser = null;
 
 async function initSupabaseSession() {
@@ -1660,7 +1583,6 @@ async function initSupabaseSession() {
     currentSupabaseUser = JSON.parse(storedUser);
     await syncUserDatabaseState();
   } else {
-    // Fill defaults into auth modal based on Telegram Profile Web App metadata if available
     document.getElementById('auth-username').value = profile.username;
     document.getElementById('auth-phone').value = profile.phone;
     document.getElementById('auth-overlay').style.display = 'flex';
@@ -1672,11 +1594,10 @@ async function handleSupabaseRegistration() {
   const phoneInput = document.getElementById('auth-phone').value.trim();
 
   if (!usernameInput || !phoneInput) {
-    alert("Please fill in both fields to save your credentials.");
+    alert("Please fill fields completely.");
     return;
   }
 
-  // Sourced security layer checking via API middleware parameters
   try {
     const response = await fetch(`${BACKEND_URL}/api/register`, {
       method: "POST",
@@ -1688,14 +1609,13 @@ async function handleSupabaseRegistration() {
     if (!response.ok) throw new Error(result.error || "Authentication failed");
 
     currentSupabaseUser = result.user;
-    toast(result.isNew ? "Profile registered successfully!" : `Welcome back, ${currentSupabaseUser.username}!`);
+    toast(result.isNew ? "Profile registered!" : `Welcome back ${currentSupabaseUser.username}!`);
     localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
     document.getElementById('auth-overlay').style.display = 'none';
     
     await syncUserDatabaseState();
   } catch (err) {
-    console.error("Authentication Routing Error:", err);
-    alert("Database connection error. Proceeding in offline mode.");
+    console.error("Auth routing sync failure, defaulting to local simulation mode:", err);
     document.getElementById('auth-overlay').style.display = 'none';
   }
 }
@@ -1705,17 +1625,13 @@ async function syncUserDatabaseState() {
   try {
     const response = await fetch(`${BACKEND_URL}/api/player/${currentSupabaseUser.id}`);
     if (!response.ok) throw new Error("Sync failure");
-    
     const data = await response.json();
     if (data) {
       currentSupabaseUser = data;
       walletMain = data.wallet_main;
       walletPlay = data.wallet_play;
-      
-      // Update local profile displays directly from synced values
       document.querySelectorAll('.player-handle-val').forEach(el => el.textContent = data.username);
       document.getElementById('wallet-tg-id').textContent = data.phone_number || data.phone;
-      
       updateLocalWallets();
     }
   } catch (err) {
@@ -1851,14 +1767,12 @@ function renderLeaderboard(tab) {
 }
 
 function joinGame(i){
-  // Check if player had already joined the active game in progress
   if (userJoinedActiveRound) {
     document.getElementById('global-nav-bar').style.display = 'none';
     syncActiveGameScreenStructure();
     goTo('game');
     return;
   }
-
   selGame = GAMES[i];
   document.getElementById('cpw').textContent = walletMain + walletPlay;
   renderCardGrid(); 
@@ -1879,19 +1793,13 @@ function renderCardGrid(){
 
 function selectCard(n){
   if (selCard1 === n) {
-    selCard1 = selCard2;
-    selCard2 = null;
+    selCard1 = selCard2; selCard2 = null;
   } else if (selCard2 === n) {
     selCard2 = null;
   } else {
-    if (!selCard1) {
-      selCard1 = n;
-    } else if (!selCard2) {
-      selCard2 = n;
-    } else {
-      selCard1 = selCard2;
-      selCard2 = n;
-    }
+    if (!selCard1) selCard1 = n;
+    else if (!selCard2) selCard2 = n;
+    else { selCard1 = selCard2; selCard2 = n; }
   }
   renderCardGridUpdateOnly();
 }
@@ -1930,12 +1838,6 @@ function updateSelectionSummary() {
 }
 
 async function confirmJoin(){
-  if (multiplayerServer.gameState === "playing") {
-    alert("❌ Live game is currently in progress. Please wait until the current game ends!");
-    toast("Wait until the current game ends!");
-    return;
-  }
-
   let count = 0;
   if(selCard1) count++;
   if(selCard2) count++;
@@ -1944,20 +1846,16 @@ async function confirmJoin(){
   const totalFunds = walletMain + walletPlay;
   
   if (totalFunds < gameCost) {
-    alert(`❌ Insufficient balance! This requires ${gameCost} ETB.`);
+    alert(`❌ Insufficient balance! Requires ${gameCost} ETB.`);
     return;
   }
 
   if (walletPlay >= gameCost) {
-    walletPlay -= gameCost;
-    pendingDeductionFromPlay = gameCost;
-    pendingDeductionFromMain = 0;
+    walletPlay -= gameCost; pendingDeductionFromPlay = gameCost; pendingDeductionFromMain = 0;
   } else {
     const remainder = gameCost - walletPlay;
-    pendingDeductionFromPlay = walletPlay;
-    walletPlay = 0;
-    walletMain -= remainder;
-    pendingDeductionFromMain = remainder;
+    pendingDeductionFromPlay = walletPlay; walletPlay = 0;
+    walletMain -= remainder; pendingDeductionFromMain = remainder;
   }
 
   updateLocalWallets();
@@ -1975,31 +1873,20 @@ async function confirmJoin(){
       await fetch(`${BACKEND_URL}/api/games/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          player_id: currentSupabaseUser.id,
-          game_id: uniqueId,
-          cards_bought: count,
-          total_cost: gameCost
-        })
+        body: JSON.stringify({ player_id: currentSupabaseUser.id, game_id: uniqueId, cards_bought: count, total_cost: gameCost })
       });
-    } catch (err) {
-      console.error("Database insert logging failure:", err);
-    }
+    } catch (err) { console.error("Database logging failure:", err); }
   }
 
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
-  
-  document.getElementById('gcir').textContent = `WAIT: ${multiplayerServer.timeRemaining}s`;
-  document.getElementById('gcir').style.fontSize = "15px";
 }
 
 async function cancelRegistrationAndRefund() {
   if (pendingDeductionFromPlay > 0 || pendingDeductionFromMain > 0) {
     walletPlay += (pendingDeductionFromPlay + pendingDeductionFromMain);
-    pendingDeductionFromPlay = 0;
-    pendingDeductionFromMain = 0;
+    pendingDeductionFromPlay = 0; pendingDeductionFromMain = 0;
   }
   userJoinedActiveRound = false;
   updateLocalWallets();
@@ -2041,14 +1928,11 @@ function syncActiveGameScreenStructure() {
 function toggleAutoMode() {
   isAutoMode = document.getElementById('auto-toggle').checked;
   const mainBtn = document.getElementById('main-payout-btn');
-  
   if (isAutoMode) {
-    mainBtn.textContent = "AUTOMATIC";
-    mainBtn.classList.add('auto-active');
+    mainBtn.textContent = "AUTOMATIC"; mainBtn.classList.add('auto-active');
     toast("⚡ Auto-Mark & Auto-Claim Active");
   } else {
-    mainBtn.textContent = "🎉 Bingo!";
-    mainBtn.classList.remove('auto-active');
+    mainBtn.textContent = "🎉 Bingo!"; mainBtn.classList.remove('auto-active');
     toast("🛑 Manual Mark Active");
   }
 }
@@ -2060,8 +1944,7 @@ function renderMasterBoard() {
     let numbersHtml = '';
     for (let i = start; i <= start + 14; i++) {
       const isCalled = called.includes(i);
-      const callClass = isCalled ? `called-${l}` : '';
-      numbersHtml += `<div class="board-num-vertical ${callClass}">${i}</div>`;
+      numbersHtml += `<div class="board-num-vertical ${isCalled ? 'called-'+l : ''}">${i}</div>`;
     }
     html += `<div class="board-col"><span class="board-letter-header h-${l}">${l}</span>${numbersHtml}</div>`;
   });
@@ -2078,8 +1961,7 @@ function renderGameCard(cardNumber){
     html+='<div class="brow">';
     for(let c=0;c<5;c++){
       const v=card[c][r],key=`${c}-${r}`,mk=marked.has(key)||v===0;
-      const mkClass = mk ? 'marked-active' : '';
-      html+=`<div class="bcell ${mkClass} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
+      html+=`<div class="bcell ${mk ? 'marked-active' : ''} ${v===0?'free':''}" onclick="markCell(${cardNumber},'${key}',${c},${r})">${v===0?'★':v}</div>`;
     }
     html+='</div>';
   }
@@ -2091,8 +1973,8 @@ function markCell(cardNumber,key,c,r){
   if(isAutoMode) return;
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   const marked = cardNumber === 1 ? marked1 : marked2;
-  
   const v=genCard(selCard)[c][r]; if(v===0)return;
+  
   if(called.includes(v)){
     marked.has(key)?marked.delete(key):marked.add(key);
     renderGameCard(cardNumber);
@@ -2101,60 +1983,34 @@ function markCell(cardNumber,key,c,r){
   }
 }
 
-function startBackgroundEngine(){
-  clearInterval(gint);
-  isCurrentlyInGameRound = true;
-  
+function startActiveMatchEngine(){
   const currentDerash = (selGame.bet - 2) * activeLobbyPlayers;
   document.getElementById('gp').textContent = activeLobbyPlayers;
   document.getElementById('gpc').textContent = activeLobbyPlayers + ' players';
   document.getElementById('gd').textContent = currentDerash;
   document.getElementById('gb').textContent = selGame.bet;
-
   document.getElementById('gcir').style.fontSize = "24px";
-  document.getElementById('ghist-pills').innerHTML = `<span style="font-size:10px;color:#888;">Deciding cards...</span>`;
-  
-  startLiveNumberCalling();
 }
 
-function startLiveNumberCalling() {
-  processCycleCall();
-  gint = setInterval(() => {
-    processCycleCall();
-  }, 2000);
-}
-
-function processCycleCall(){
-  const all=Array.from({length:75},(_,i)=>i+1),left=all.filter(n=>!called.includes(n));
-  if(!left.length){ clearInterval(gint); return; }
-  
-  const n=left[Math.floor(Math.random()*left.length)];
+function processIncomingBallCall(n){
   called.push(n);
-  
   const callCount = called.length;
   currentBonus = callCount <= 4 ? 300 : Math.max(0, 300 - ((callCount - 4) * 50));
   
-  const bonusDisplay = document.getElementById('gbonus');
-  if (bonusDisplay) bonusDisplay.textContent = currentBonus;
-
+  if (document.getElementById('gbonus')) document.getElementById('gbonus').textContent = currentBonus;
+  
   const ci=n<=15?0:n<=30?1:n<=45?2:n<=60?3:4,L=LETS[ci];
   const activeGameScreen = document.getElementById('sc-game').classList.contains('active');
   
   if (activeGameScreen) {
     const el = document.getElementById('gcir');
-    if(el) { 
-      el.textContent=`${L}-${n}`; 
-      el.style.color=`var(--col-${L})`;
-      el.style.boxShadow = `0 0 15px var(--col-${L})`;
-    }
+    if(el) { el.textContent=`${L}-${n}`; el.style.color=`var(--col-${L})`; el.style.boxShadow = `0 0 15px var(--col-${L})`; }
     
     const hEl = document.getElementById('ghist-pills');
     if(hEl) {
-      const recentCalls = called.slice(-5).reverse();
-      hEl.innerHTML = recentCalls.map(num => {
-        const charIndex = num<=15?0:num<=30?1:num<=45?2:num<=60?3:4;
-        const letter = LETS[charIndex];
-        return `<span class="roll-pill col-${letter}">${letter}-${num}</span>`;
+      hEl.innerHTML = called.slice(-5).reverse().map(num => {
+        const charIdx = num<=15?0:num<=30?1:num<=45?2:num<=60?3:4;
+        return `<span class="roll-pill col-${LETS[charIdx]}">${LETS[charIdx]}-${num}</span>`;
       }).join(' ');
     }
     document.getElementById('gcl').textContent = callCount;
@@ -2164,15 +2020,8 @@ function processCycleCall(){
   if (isAutoMode) {
     autoMarkCardBackground(1, n);
     if(selCard2) autoMarkCardBackground(2, n);
-  } else {
-    if (activeGameScreen) {
-      renderGameCard(1);
-      if(selCard2) renderGameCard(2);
-    }
-  }
-
-  if(Math.random() < 0.035 && called.length > 8) {
-     triggerOpponentWinSequence();
+  } else if (activeGameScreen) {
+    renderGameCard(1); if(selCard2) renderGameCard(2);
   }
 }
 
@@ -2184,15 +2033,10 @@ function autoMarkCardBackground(cardNumber, valCalled) {
 
   for (let c = 0; c < 5; c++) {
     for (let r = 0; r < 5; r++) {
-      if (card[c][r] === valCalled) {
-        marked.add(`${c}-${r}`);
-      }
+      if (card[c][r] === valCalled) marked.add(`${c}-${r}`);
     }
   }
-  
-  if (document.getElementById('sc-game').classList.contains('active')) {
-    renderGameCard(cardNumber);
-  }
+  if (document.getElementById('sc-game').classList.contains('active')) renderGameCard(cardNumber);
   checkAutoBingoBackground(cardNumber);
 }
 
@@ -2202,9 +2046,7 @@ function checkAutoBingoBackground(cardNumber) {
   const marked = cardNumber === 1 ? marked1 : marked2;
   const m=(c,r)=>marked.has(`${c}-${r}`)||card[c][r]===0;
   
-  let won = false;
-  let pType = null, pIndex = -1;
-  
+  let won = false; let pType = null, pIndex = -1;
   for(let i=0;i<5;i++){
     if([0,1,2,3,4].every(j=>m(j,i))) { won=true; pType='row'; pIndex=i; break; }
     if([0,1,2,3,4].every(j=>m(i,j))) { won=true; pType='col'; pIndex=i; break; }
@@ -2213,9 +2055,7 @@ function checkAutoBingoBackground(cardNumber) {
   if(!won && [0,1,2,3,4].every(i=>m(i,4-i))) { won=true; pType='diag-forward'; }
   if(!won && m(0,0) && m(4,0) && m(0,4) && m(4,4)) { won=true; pType='four-corners'; }
 
-  if (won) {
-    executePayoutAndWinBanner(selCard, pType, pIndex, true);
-  }
+  if (won) executePayoutAndWinBanner(selCard, pType, pIndex, true);
 }
 
 function claimBingo(){
@@ -2239,112 +2079,71 @@ function claimBingo(){
     if(!pType && [0,1,2,3,4].every(i=>m(i,4-i))) pType = 'diag-forward';
     if(!pType && m(0,0) && m(4,0) && m(0,4) && m(4,4)) pType = 'four-corners';
 
-    if(pType) return { selCard, pType, pIndex };
-    return null;
+    return pType ? { selCard, pType, pIndex } : null;
   };
 
-  const win1 = verifyCard(1);
-  const win2 = verifyCard(2);
-  const winningPlay = win1 || win2;
-
-  if(winningPlay){
-    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
-  } else {
-    toast('❌ Invalid Bingo! Keep checking your grids.');
-  }
+  const winningPlay = verifyCard(1) || verifyCard(2);
+  if(winningPlay) executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
+  else toast('❌ Invalid Bingo! Keep checking your grids.');
 }
 
 async function executePayoutAndWinBanner(winningCardNumber, pType, pIndex, isAutoTriggered) {
-  clearInterval(gint);
   const totalPrizePayout = (selGame.bet - 2) * activeLobbyPlayers;
-  
   walletMain += totalPrizePayout;
-  pendingDeductionFromPlay = 0;
-  pendingDeductionFromMain = 0;
-  
-  totalPlayedGames++;
-  totalWinsCount++;
-  totalEarnedETB += totalPrizePayout;
+  pendingDeductionFromPlay = 0; pendingDeductionFromMain = 0;
+  totalPlayedGames++; totalWinsCount++; totalEarnedETB += totalPrizePayout;
   
   const uniqueId = document.getElementById('gg').textContent;
   const today = new Date();
   const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
-  let totalBetCost = selGame.bet;
-  if (selCard2) totalBetCost *= 2;
-
+  let totalBetCost = selGame.bet * (selCard2 ? 2 : 1);
   playSessions.unshift({ id: uniqueId, stake: totalBetCost, won: true, payout: totalPrizePayout, date: dateStr, time: timeStr });
   
-  updateLocalWallets();
-  updatePersonalStats();
-  renderHistory();
-  renderWalletHistory();
-
+  updateLocalWallets(); updatePersonalStats(); renderHistory(); renderWalletHistory();
   await pushBalancesToSupabase();
+
   if (currentSupabaseUser) {
     try {
       await fetch(`${BACKEND_URL}/api/games/update-status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          game_id: uniqueId,
-          status: 'won',
-          payout: totalPrizePayout
-        })
+        body: JSON.stringify({ game_id: uniqueId, status: 'won', payout: totalPrizePayout })
       });
-    } catch (err) {
-      console.error("Database status update error:", err);
-    }
+    } catch (err) { console.error("Database update error:", err); }
   }
 
   network.sendWinPayload(winningCardNumber, totalPrizePayout);
-
-  const messagePrefix = isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`;
-  showGlobalWinnerBanner(messagePrefix, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
+  showGlobalWinnerBanner(isAutoTriggered ? `⚡ Auto Bingo! You Won!` : `🎉 Congratulations! You Won!`, `Winning Cartela: #${winningCardNumber} (+${totalPrizePayout} ETB)`, winningCardNumber, pType, pIndex);
 }
 
-async function triggerOpponentWinSequence() {
-  clearInterval(gint);
-  pendingDeductionFromPlay = 0;
-  pendingDeductionFromMain = 0;
-  
+async function triggerOpponentWinSequence(winnerName, cardNum) {
+  pendingDeductionFromPlay = 0; pendingDeductionFromMain = 0;
   totalPlayedGames++;
+  
   const uniqueId = document.getElementById('gg').textContent;
   const today = new Date();
   const dateStr = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
   const timeStr = today.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
-  let totalBetCost = selGame.bet;
-  if (selCard2) totalBetCost *= 2;
-  
+  let totalBetCost = selGame.bet * (selCard2 ? 2 : 1);
   playSessions.unshift({ id: uniqueId, stake: totalBetCost, won: false, date: dateStr, time: timeStr });
   
-  updatePersonalStats();
-  renderHistory();
-  
+  updatePersonalStats(); renderHistory();
   await pushBalancesToSupabase();
+
   if (currentSupabaseUser) {
     try {
       await fetch(`${BACKEND_URL}/api/games/update-status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          game_id: uniqueId,
-          status: 'lost',
-          payout: 0
-        })
+        body: JSON.stringify({ game_id: uniqueId, status: 'lost', payout: 0 })
       });
-    } catch (err) {
-      console.error("Database status update error:", err);
-    }
+    } catch (err) { console.error("Database sync error:", err); }
   }
 
-  const oppNames = ["@Dave_Ethio", "@Sami_Tech", "@Selam_B", "@Aster_99"];
-  const randomUser = oppNames[Math.floor(Math.random() * oppNames.length)];
-  const randomCard = Math.floor(Math.random() * 150) + 1; 
-  
-  showGlobalWinnerBanner(`🏆 Round Winner: ${randomUser}`, `Winning Cartela: #${randomCard}`, randomCard, 'row', 2);
+  showGlobalWinnerBanner(`🏆 Round Winner: ${winnerName || '@Opponent'}`, `Winning Cartela: #${cardNum || '72'}`, cardNum || 72, 'row', 2);
 }
 
 function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patternIndex) {
@@ -2371,9 +2170,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   
   document.getElementById('win-grid').innerHTML = html;
   
-  clearTimeout(winnerPopupTimeout);
-  clearInterval(winnerPopupInterval);
-  
+  clearTimeout(winnerPopupTimeout); clearInterval(winnerPopupInterval);
   winnerCountdown = 8;
   document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
   document.getElementById('winner-popup').classList.add('active');
@@ -2381,8 +2178,7 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
   winnerPopupInterval = setInterval(() => {
     winnerCountdown--;
     if (winnerCountdown <= 0) {
-      clearInterval(winnerPopupInterval);
-      closeWinnerModal();
+      clearInterval(winnerPopupInterval); closeWinnerModal();
     } else {
       document.getElementById('win-timer').textContent = `Closing in ${winnerCountdown}s...`;
     }
@@ -2390,29 +2186,23 @@ function showGlobalWinnerBanner(headerText, subText, cardNum, patternType, patte
 }
 
 function closeWinnerModal() {
-  clearTimeout(winnerPopupTimeout);
-  clearInterval(winnerPopupInterval);
+  clearTimeout(winnerPopupTimeout); clearInterval(winnerPopupInterval);
   document.getElementById('winner-popup').classList.remove('active');
   
-  multiplayerServer.resetToWaitingState();
+  isCurrentlyInGameRound = false; userJoinedActiveRound = false;
+  called = []; marked1.clear(); marked2.clear();
   
   document.getElementById('cpw').textContent = walletMain + walletPlay;
-  renderCardGrid();
-  goTo('cards');
-  
+  renderCardGrid(); goTo('cards');
   document.getElementById('global-nav-bar').style.display = 'flex';
 }
 
 function refreshGrids(){
-  const isGameActive = document.getElementById('sc-game').classList.contains('active');
-  if (isGameActive) {
-    renderGameCard(1);
-    if(selCard2) renderGameCard(2);
+  if (document.getElementById('sc-game').classList.contains('active')) {
+    renderGameCard(1); if(selCard2) renderGameCard(2);
     toast('🔄 Grids synchronized!');
   } else {
-    selCard1 = 117;
-    selCard2 = null;
-    renderCardGrid();
+    selCard1 = 117; selCard2 = null; renderCardGrid();
     toast('🔄 Selections reset!');
   }
 }
@@ -2434,7 +2224,6 @@ function toast(msg){
   setTimeout(()=>el.className='toast',3000);
 }
 
-// Global initialization cycles
 checkDatabaseStatus();
 initSupabaseSession();
 updateLocalWallets();

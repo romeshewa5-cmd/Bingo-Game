@@ -87,7 +87,7 @@ body {
   background: var(--card2); color: white; margin-top: 10px; font-size: 14px; text-align: center;
 }
 .auth-btn {
-  background: var(--teal);
+  background: #229ED9;
   color: #fff;
   font-weight: 800;
   font-size: 15px;
@@ -413,8 +413,8 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 .toast {
   position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-  background: var(--teal); color: #fff; font-size: 13px; font-weight: 700;
-  padding: 10px 20px; border-radius: 20px; display: none; z-index: 999;
+  background: var(--red); color: #fff; font-size: 13px; font-weight: 700;
+  padding: 10px 20px; border-radius: 20px; display: none; z-index: 99999;
 }
 .toast.show { display: block; animation: fio 2.8s ease forwards; }
 @keyframes fio { 0%,100% { opacity: 0 } 15%,80% { opacity: 1 } }
@@ -435,7 +435,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <body>
 <div class="toast" id="toast"></div>
 
-<!-- COMPATIBLE MANUAL / SECURE FALLBACK AUTH OVERLAY -->
+<!-- SECURE TELEGRAM AUTH OVERLAY -->
 <div id="auth-overlay" class="auth-overlay" style="display: none;">
   <div class="auth-card">
     <div style="font-size: 32px; margin-bottom: 8px;">🎮</div>
@@ -447,7 +447,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       <input type="tel" id="manual-phone-field" class="auth-input" placeholder="የስልክ ቁጥር ያስገቡ">
     </div>
     
-    <button id="main-auth-submit-btn" class="auth-btn" style="background:#229ED9;" onclick="requestTelegramSecureContact()">ስልክ ቁጥርዎን ያጋሩ</button>
+    <button id="main-auth-submit-btn" class="auth-btn" onclick="requestTelegramSecureContact()">ስልክ ቁጥርዎን ያጋሩ</button>
   </div>
 </div>
 
@@ -466,7 +466,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       <button class="play-btn" onclick="joinGame(0)">
         <span>▶</span> PLAY 10
       </button>
-      <div id="lobby-status-indicator" class="lobby-status-pill waiting">Waiting (40s)[cite: 10]</div>
+      <div id="lobby-status-indicator" class="lobby-status-pill waiting">Waiting (40s)</div>
     </div>
     
     <div class="wallet-box-lobby">
@@ -550,7 +550,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
-        <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting (40s)[cite: 10]</div>
+        <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting (40s)</div>
       </div>
     </div>
   </div>
@@ -577,7 +577,6 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div class="left-panel"><div id="master-board" class="board-columns-container"></div></div>
     <div class="right-panel">
       <div class="current-ball-container">
-        <!-- Rolling historic layout values holder container slot -->
         <div class="rolls-well-pills" id="ghist-pills"></div>
         <div class="live-main-ball-display" id="gcir">--</div>
       </div>
@@ -610,15 +609,13 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- DYNAMIC 7-SECOND VISUAL WINNER MODAL -->
+<!-- WINNER POPUP -->
 <div id="winner-popup" class="winner-popup-container">
   <div class="winner-card-body">
     <div style="font-size: 35px; margin-bottom: 8px;">👑</div>
     <div id="win-head" style="font-weight: 800; font-size: 18px; color: var(--gold); margin-bottom: 5px;">--</div>
     <div id="win-sub" style="font-size: 13px; color: #fff; margin-bottom: 12px;">--</div>
-    
     <div id="win-grid" style="display: flex; flex-direction: column; gap: 4px; margin: 15px auto; width: fit-content; background: #090d16; padding: 10px; border-radius: 12px;"></div>
-    
     <div id="win-timer" style="font-size: 12px; color: var(--teal); margin-top: 10px; font-weight: bold;">Next game starting in 7s...</div>
   </div>
 </div>
@@ -645,6 +642,7 @@ let pendingDeduction = 0;
 let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
+let globalGameStateServer = "waiting"; // Tracks whether the match engine is live
 let called = [];
 let selCard1 = 117, selCard2 = null;
 let marked1 = new Set(), marked2 = new Set();
@@ -679,16 +677,16 @@ function initSupabaseSession() {
     localStorage.removeItem('supabase_bingo_player');
     document.getElementById('auth-overlay').style.display = 'flex';
     
-    // TELEGRAM CLIENT COMPATIBILITY VERSION GUARD
-    const rawVersion = tgApp?.version || "0";
-    const parsedVersion = parseFloat(rawVersion);
-    if (!tgApp || parsedVersion < 6.9) {
-      console.log("Old Telegram API detected (" + rawVersion + "). Enabling text-field registration inputs.");
+    // RESTORED TELEGRAM API DIRECT PHONE CAPABILITY GUARD
+    if (!tgApp) {
+      console.log("No Telegram environment detected. Enabling web fallbacks.");
       hasCustomManualAuthZoneOpen = true;
       document.getElementById('fallback-input-zone').style.display = 'block';
       const actionBtn = document.getElementById('main-auth-submit-btn');
       actionBtn.textContent = "ይመዝገቡ";
       actionBtn.style.background = "var(--teal)";
+    } else {
+      console.log("Telegram API Active. Version: " + tgApp.version);
     }
   }
 }
@@ -708,6 +706,7 @@ function requestTelegramSecureContact() {
   if (tgApp) {
     tgApp.ready();
     try {
+      // Direct call to Telegram contact requester
       tgApp.requestContact((shared) => {
         if (shared && shared.contact) {
           const username = tgApp.initDataUnsafe?.user?.username || tgApp.initDataUnsafe?.user?.first_name || "የቴሌግራም ተጫዋች";
@@ -757,6 +756,7 @@ function setupSocketEngine() {
     const gameTimerHeader = document.getElementById('game-countdown-header-pill');
     
     currentActiveGameRoundId = data.gameId;
+    globalGameStateServer = data.state;
 
     if (data.state === "waiting") {
       const text = `Waiting (${data.timeRemaining}s)`;
@@ -765,6 +765,7 @@ function setupSocketEngine() {
       if (gameTimerHeader) { gameTimerHeader.textContent = `Lobby: ${data.timeRemaining}s`; }
     } else {
       if (lobbyPill) { lobbyPill.textContent = "Playing"; lobbyPill.className = "lobby-status-pill playing"; }
+      if (cartelaPill) { cartelaPill.textContent = "Game In Progress"; }
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
       if (userJoinedActiveRound && !isCurrentlyInGameRound) {
         isCurrentlyInGameRound = true;
@@ -822,11 +823,10 @@ function processIncomingBallCall(n, fullNumbersHistoryArray){
   if(el) { el.textContent = `${L}-${n}`; el.style.color = `var(--col-${L})`; }
   document.getElementById('gcl').textContent = called.length;
   
-  // ROLLING ROLLS-WELL DISPLAY LOGIC
   const historyHolder = document.getElementById('ghist-pills');
   if(historyHolder) {
     historyHolder.innerHTML = '';
-    const sliceRange = called.slice(-6, -1); // Fetches the last 5 balls called above current active ball
+    const sliceRange = called.slice(-6, -1);
     sliceRange.forEach(pastBall => {
       const pastDiv = document.createElement('div');
       pastDiv.className = 'historic-ball-pill';
@@ -897,7 +897,7 @@ function markCell(cardNumber,key,c,r){
   if(called.includes(v)){ marked.has(key)?marked.delete(key):marked.add(key); renderGameCard(cardNumber); }
 }
 
-function claimBingo(){
+function claimBingo()){
   const verifyCard = (cardNumber) => {
     const selCard = cardNumber === 1 ? selCard1 : selCard2; if(!selCard) return null;
     const card=genCard(selCard); const marked = cardNumber === 1 ? marked1 : marked2;
@@ -988,7 +988,6 @@ function closeWinnerModal() {
   document.getElementById('gcl').textContent = '0';
   document.getElementById('ghist-pills').innerHTML = '';
   
-  // TRANSITION STRATEGY: Takes each player back into the card layout room to prep selections
   joinGame(0);
 }
 
@@ -1036,9 +1035,16 @@ function updateSelectionSummary() {
 }
 
 async function confirmJoin(){
+  // RESTORED ENGINE SECURITY GUARD: Blocks late entries if game status is currently active
+  if (globalGameStateServer === "playing") {
+    toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
+    return;
+  }
+
   let count = selCard2 ? 2 : 1;
   const gameCost = selGame.bet * count;
-  if (walletBalance < gameCost) { alert("Insufficient Balance"); return; }
+  if (walletBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
+  
   walletBalance -= gameCost;
   pendingDeduction = gameCost;
   updateLocalWallets();
@@ -1085,7 +1091,6 @@ function syncActiveGameScreenStructure() {
   renderMasterBoard(); renderGameCard(1); if(selCard2) renderGameCard(2);
 }
 
-// REAL FEATURE LOOKUPS
 async function loadLeaderboard() {
   const container = document.getElementById('scores-container-list');
   try {
@@ -1122,13 +1127,20 @@ async function loadHistory() {
 
 function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; }
 function refreshGrids(){ renderGameCard(1); if(selCard2) renderGameCard(2); }
-function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'; setTimeout(()=>el.className='toast',3000); }
+
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='toast show';
+  setTimeout(()=>el.className='toast',2800);
+}
 
 function goTo(n){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('sc-'+n).classList.add('active');
   document.querySelectorAll('.bni').forEach(el => el.classList.remove('active'));
-  document.getElementById('btn-nav-' + n).classList.add('active');
+  const targetNav = document.getElementById('btn-nav-' + n);
+  if(targetNav) targetNav.classList.add('active');
   
   if (n === 'scores') loadLeaderboard();
   if (n === 'history') loadHistory();

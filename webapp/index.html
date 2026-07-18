@@ -626,17 +626,45 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
-// SECURE TELEGRAM FETCH METHOD
+// FORCED CLEAN TELEGRAM SESSION CHECK
 function initSupabaseSession() {
+  // If you want to force test the new contact button, uncomment the line below once to clear old mock accounts:
+  // localStorage.removeItem('supabase_bingo_player');
+
   const storedUser = localStorage.getItem('supabase_bingo_player');
-  if (storedUser) {
+  
+  // Extra safety check: ensure it's a real registration, not an empty manual placeholder
+  if (storedUser && !storedUser.includes('manual_placeholder')) {
     currentSupabaseUser = JSON.parse(storedUser);
     syncUserDatabaseState();
+    // Connect socket explicitly after loading user
+    if(socket) socket.connect();
   } else {
+    // Clear out any broken artifacts and force show the Amharic registration button
+    localStorage.removeItem('supabase_bingo_player');
     document.getElementById('auth-overlay').style.display = 'flex';
   }
 }
 
+function requestTelegramSecureContact() {
+  if (tgApp) {
+    tgApp.ready();
+    // Request contact access directly from Telegram client UI
+    tgApp.requestContact((shared) => {
+      if (shared && shared.contact) {
+        const username = tgApp.initDataUnsafe?.user?.username || tgApp.initDataUnsafe?.user?.first_name || "የቴሌግራም ተጫዋች";
+        const phone = shared.contact.phone_number;
+        registerUserToServer(username, phone);
+      } else {
+        toast("እባክዎ ለመጫወት ስልክ ቁጥርዎን ያጋሩ");
+      }
+    });
+  } else {
+    // Local browser testing configuration fallback
+    console.log("Not in Telegram environment, simulating fallback...");
+    registerUserToServer("DevUser", "+251960089963");
+  }
+}
 function requestTelegramSecureContact() {
   if (tgApp) {
     tgApp.ready();

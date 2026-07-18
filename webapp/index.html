@@ -530,7 +530,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="nav">
     <div class="nav-back" onclick="cancelRegistrationAndRefund()">← Back</div>
     <div class="nav-title">Select Cards</div>
-    <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshGrids()">🔄 Reset</div>
+    <div style="color: var(--teal); font-size: 13px; cursor: pointer;" onclick="refreshCardPickerGrid()">🔄 Reset</div>
   </div>
   
   <div class="stats-bar">
@@ -602,7 +602,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       </div>
       <div class="game-bottom-control-dock">
         <button class="dock-btn leave" onclick="navigateBackToLobbySafely()">Leave</button>
-        <button class="dock-btn refresh" onclick="refreshGrids()">Refresh</button>
+        <button class="dock-btn refresh" onclick="refreshLiveGameGrids()">Refresh</button>
         <button class="dock-btn dynamic-action" id="main-payout-btn" onclick="claimBingo()">🎉 Bingo!</button>
       </div>
     </div>
@@ -986,7 +986,8 @@ function closeWinnerModal() {
   document.getElementById('gcl').textContent = '0';
   document.getElementById('ghist-pills').innerHTML = '';
   
-  joinGame(0);
+  document.getElementById('global-nav-bar').style.display = 'flex';
+  goTo('lobby');
 }
 
 function joinGame(i){
@@ -1123,7 +1124,8 @@ async function loadHistory() {
 }
 
 function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; }
-function refreshGrids(){ renderGameCard(1); if(selCard2) renderGameCard(2); }
+function refreshCardPickerGrid(){ selCard1 = 117; selCard2 = null; renderCardGrid(); }
+function refreshLiveGameGrids(){ renderGameCard(1); if(selCard2) renderGameCard(2); }
 
 function toast(msg){
   const el=document.getElementById('toast');

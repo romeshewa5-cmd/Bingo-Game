@@ -8,7 +8,7 @@
 <!-- SUPABASE CDN SCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- SOCKET.IO CLIENT CDN -->
-<script src="https://cdn.jsdelivr.net/npm/socket-io-client@4.7.5/dist/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
 <style>
 /* CSS Reset and Variables */
 * {
@@ -1525,6 +1525,14 @@ let currentBonus = 300;
 
 // Connect Real-Time Socket Events to UI State
 if (socket) {
+  // Emit baseline parameters to lobby registration array
+  socket.emit('join_lobby', { username: profile.username });
+
+  socket.on('lobby_count_update', (count) => {
+    activeLobbyPlayers = count > 1 ? count + 36 : 38; // Add realistic virtual players
+    if (isCurrentlyInGameRound) startActiveMatchEngine();
+  });
+
   socket.on('room_tick', (data) => {
     const lobbyPill = document.getElementById('lobby-status-indicator');
     const cartelaPill = document.getElementById('cartela-countdown');
@@ -1557,7 +1565,10 @@ if (socket) {
 
   socket.on('opponent_victory', (data) => {
     if (!isCurrentlyInGameRound) return;
-    triggerOpponentWinSequence(data.winnerName, data.cardNum);
+    // Only intercept if someone else won
+    if (data.winnerName !== profile.username) {
+      triggerOpponentWinSequence(data.winnerName, data.cardNum);
+    }
   });
 }
 
@@ -2083,7 +2094,12 @@ function claimBingo(){
   };
 
   const winningPlay = verifyCard(1) || verifyCard(2);
-  if(winningPlay) executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
+  if(winningPlay) {
+    if (socket) {
+      socket.emit('claim_bingo', { username: currentSupabaseUser?.username || profile.username, cardNum: winningPlay.selCard, amount: (selGame.bet - 2) * activeLobbyPlayers });
+    }
+    executePayoutAndWinBanner(winningPlay.selCard, winningPlay.pType, winningPlay.pIndex, false);
+  }
   else toast('❌ Invalid Bingo! Keep checking your grids.');
 }
 

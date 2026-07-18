@@ -642,7 +642,7 @@ let pendingDeduction = 0;
 let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
-let globalGameStateServer = "waiting"; // Tracks whether the match engine is live
+let globalGameStateServer = "waiting"; 
 let called = [];
 let selCard1 = 117, selCard2 = null;
 let marked1 = new Set(), marked2 = new Set();
@@ -677,7 +677,6 @@ function initSupabaseSession() {
     localStorage.removeItem('supabase_bingo_player');
     document.getElementById('auth-overlay').style.display = 'flex';
     
-    // RESTORED TELEGRAM API DIRECT PHONE CAPABILITY GUARD
     if (!tgApp) {
       console.log("No Telegram environment detected. Enabling web fallbacks.");
       hasCustomManualAuthZoneOpen = true;
@@ -706,7 +705,6 @@ function requestTelegramSecureContact() {
   if (tgApp) {
     tgApp.ready();
     try {
-      // Direct call to Telegram contact requester
       tgApp.requestContact((shared) => {
         if (shared && shared.contact) {
           const username = tgApp.initDataUnsafe?.user?.username || tgApp.initDataUnsafe?.user?.first_name || "የቴሌግራም ተጫዋች";
@@ -897,7 +895,7 @@ function markCell(cardNumber,key,c,r){
   if(called.includes(v)){ marked.has(key)?marked.delete(key):marked.add(key); renderGameCard(cardNumber); }
 }
 
-function claimBingo()){
+function claimBingo(){
   const verifyCard = (cardNumber) => {
     const selCard = cardNumber === 1 ? selCard1 : selCard2; if(!selCard) return null;
     const card=genCard(selCard); const marked = cardNumber === 1 ? marked1 : marked2;
@@ -1035,7 +1033,6 @@ function updateSelectionSummary() {
 }
 
 async function confirmJoin(){
-  // RESTORED ENGINE SECURITY GUARD: Blocks late entries if game status is currently active
   if (globalGameStateServer === "playing") {
     toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
     return;

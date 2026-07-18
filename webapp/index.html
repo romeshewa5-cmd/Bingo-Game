@@ -748,6 +748,11 @@ function setupSocketEngine() {
   if (socket) return; 
   socket = io(BACKEND_URL);
 
+  // Harden the client framework engines completely against dynamic MaxListenersExceeded Warning leaks
+  socket.off('room_tick');
+  socket.off('ball_drawn');
+  socket.off('opponent_victory');
+
   socket.on('room_tick', (data) => {
     const lobbyPill = document.getElementById('lobby-status-indicator');
     const cartelaPill = document.getElementById('cartela-countdown');
@@ -1094,7 +1099,7 @@ async function loadLeaderboard() {
   try {
     const res = await fetch(`${BACKEND_URL}/api/leaderboard`);
     const data = await res.json();
-    if(!data.length) { container.innerHTML = `<div class="wallet-card main">No ranks logged yet</div>`; return; }
+    if(!data || !data.length) { container.innerHTML = `<div class="wallet-card main">No ranks logged yet</div>`; return; }
     container.innerHTML = data.map((p, i) => `
       <div class="real-list-item">
         <span><b>#${i+1}</b> ${p.username}</span>
@@ -1106,16 +1111,19 @@ async function loadLeaderboard() {
 
 async function loadHistory() {
   const container = document.getElementById('history-container-list');
-  if(!currentSupabaseUser) return;
+  if(!currentSupabaseUser || !currentSupabaseUser.player_id) {
+    container.innerHTML = `<div class="wallet-card main">No historical cards matches found</div>`;
+    return;
+  }
   try {
     const res = await fetch(`${BACKEND_URL}/api/history/${currentSupabaseUser.player_id}`);
     const data = await res.json();
-    if(!data.length) { container.innerHTML = `<div class="wallet-card main">No historical cards matches found</div>`; return; }
+    if(!data || !data.length) { container.innerHTML = `<div class="wallet-card main">No historical cards matches found</div>`; return; }
     container.innerHTML = data.map(g => `
       <div class="real-list-item">
         <div>
-          <div style="font-size:12px; font-weight:bold;">Match ${g.game_id}</div>
-          <div style="font-size:10px; color:var(--nav-gray);">${g.cards_bought} card(s) bought</div>
+          <div style="font-size:12px; font-weight:bold;">Match ${g.game_id || 'N/A'}</div>
+          <div style="font-size:10px; color:var(--nav-gray);">${g.purchased_cards || 1} card(s) bought</div>
         </div>
         <span style="color:${g.is_winner ? 'var(--teal)' : 'var(--red)'}; font-weight:bold;">${g.is_winner ? 'WON' : 'DONE'}</span>
       </div>

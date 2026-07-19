@@ -631,7 +631,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 <script>
 const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:10000'
+  ? 'http://localhost:3000'
   : 'https://fast-bingo-backend.onrender.com';
 
 let socket = null;
@@ -678,14 +678,11 @@ function initSupabaseSession() {
     document.getElementById('auth-overlay').style.display = 'flex';
     
     if (!tgApp) {
-      console.log("No Telegram environment detected. Enabling web fallbacks.");
       hasCustomManualAuthZoneOpen = true;
       document.getElementById('fallback-input-zone').style.display = 'block';
       const actionBtn = document.getElementById('main-auth-submit-btn');
       actionBtn.textContent = "ይመዝገቡ";
       actionBtn.style.background = "var(--teal)";
-    } else {
-      console.log("Telegram API Active. Version: " + tgApp.version);
     }
   }
 }
@@ -748,7 +745,6 @@ function setupSocketEngine() {
   if (socket) return; 
   socket = io(BACKEND_URL);
 
-  // Harden the client framework engines completely against dynamic MaxListenersExceeded Warning leaks
   socket.off('room_tick');
   socket.off('ball_drawn');
   socket.off('opponent_victory');
@@ -983,16 +979,7 @@ async function triggerOpponentWinSequence(winnerName, cardNum) {
 
 function closeWinnerModal() {
   document.getElementById('winner-popup').classList.remove('active');
-  userJoinedActiveRound = false;
-  called = [];
-  marked1.clear();
-  marked2.clear();
-  document.getElementById('gcir').textContent = '--';
-  document.getElementById('gcl').textContent = '0';
-  document.getElementById('ghist-pills').innerHTML = '';
-  
-  document.getElementById('global-nav-bar').style.display = 'flex';
-  goTo('lobby');
+  navigateBackToLobbySafely();
 }
 
 async function joinGame(i) {
@@ -1001,19 +988,23 @@ async function joinGame(i) {
     return;
   }
 
-  // If the server says a game is active and we think we might have been in it
+  // FIXED: Active Round Checking and Absolute Multi-Card Sync State Restoration
   if (globalGameStateServer === "playing" && currentActiveGameRoundId) {
     try {
       const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${currentActiveGameRoundId}`);
       const status = await res.json();
 
       if (status.registered) {
-        // Dynamic Re-entry!
         userJoinedActiveRound = true;
         isCurrentlyInGameRound = true;
         
-        // Restore card configuration count dynamically based on history
-        selCard2 = (status.cards_bought === 2) ? 118 : null; 
+        // Exact recovery of card values from list array instead of arbitrary hardcoded guessing
+        if(status.cards_list && status.cards_list.length > 0) {
+          selCard1 = status.cards_list[0];
+          selCard2 = status.cards_list.length > 1 ? status.cards_list[1] : null;
+        } else {
+          selCard2 = (status.cards_bought === 2) ? 118 : null; 
+        }
         
         document.getElementById('gg').textContent = currentActiveGameRoundId;
         syncActiveGameScreenStructure();
@@ -1030,7 +1021,6 @@ async function joinGame(i) {
     }
   }
 
-  // Normal flow if no active match is running or if you aren't in it
   document.getElementById('cpw').textContent = walletBalance;
   renderCardGrid();
   goTo('cards');
@@ -1094,7 +1084,12 @@ async function confirmJoin(){
       await fetch(`${BACKEND_URL}/api/games/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player_id: currentSupabaseUser.player_id, game_id: currentActiveGameRoundId, cards_bought: count })
+        body: JSON.stringify({ 
+          player_id: currentSupabaseUser.player_id, 
+          game_id: currentActiveGameRoundId, 
+          cards_bought: count,
+          cards_list: selCard2 ? [selCard1, selCard2] : [selCard1]
+        })
       });
     } catch (err) {}
   }
@@ -1116,12 +1111,6 @@ function navigateBackToLobbySafely() {
   goTo('lobby');
 }
 
-function closeWinnerModal() {
-  document.getElementById('winner-popup').classList.remove('active');
-  
-  // Call the safe cleanup loop to reset all variables identically
-  navigateBackToLobbySafely();
-}
 function syncActiveGameScreenStructure() {
   const container2 = document.getElementById('slot-card2-container');
   if (selCard2) {

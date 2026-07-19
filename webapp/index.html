@@ -772,6 +772,14 @@ function setupSocketEngine() {
       if (cartelaPill) { cartelaPill.textContent = "Game In Progress"; }
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
       
+      // CATCH-UP LOGIC: Sync previously drawn ball historical states if re-joining ongoing rooms
+      if (data.state === "playing" && data.drawnHistory && data.drawnHistory.length > 0) {
+      called = data.drawnHistory;
+      if (drawnHistory.length > 0) {
+        const lastBall = called[called.length - 1];
+        processIncomingBallCall(lastBall, called);
+      }
+    }
       // CRITICAL REJOIN FIX: If the player has already successfully registered to the database session,
       // and they are currently inside the lobby view state, force auto-sync recovery immediately.
       if (userJoinedActiveRound && !isCurrentlyInGameRound) {
@@ -1004,18 +1012,18 @@ async function joinGame(i) {
     return;
   }
 
-  // FIXED: Active Round Checking and Absolute Multi-Card Sync State Restoration
+  // FORCE RE-ENTRY HANDSHAKE CHECK
   if (globalGameStateServer === "playing" && currentActiveGameRoundId) {
     try {
       const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${currentActiveGameRoundId}`);
       const status = await res.json();
 
-      if (status.registered) {
+      if (status && status.registered) {
         userJoinedActiveRound = true;
         isCurrentlyInGameRound = true;
         
-        // Exact recovery of card values from list array instead of arbitrary hardcoded guessing
-        if(status.cards_list && status.cards_list.length > 0) {
+        // Dynamic multi-card preservation extraction
+        if (status.cards_list && status.cards_list.length > 0) {
           selCard1 = status.cards_list[0];
           selCard2 = status.cards_list.length > 1 ? status.cards_list[1] : null;
         } else {
@@ -1027,16 +1035,19 @@ async function joinGame(i) {
         document.getElementById('global-nav-bar').style.display = 'none';
         goTo('game');
         toast("Reconnected to active match!");
-        return;
+        return; // Halt drop down to card selector screen
       } else {
         toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
         return;
       }
     } catch (err) {
       console.error("Error checking game state reconnection:", err);
+      toast("Reconnection handshake failed.");
+      return;
     }
   }
 
+  // Fallback default state path: Game is waiting, safe to pick new cards
   document.getElementById('cpw').textContent = walletBalance;
   renderCardGrid();
   goTo('cards');

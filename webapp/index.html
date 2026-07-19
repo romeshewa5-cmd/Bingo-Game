@@ -1076,10 +1076,31 @@ function cancelRegistrationAndRefund() {
 }
 
 function navigateBackToLobbySafely() {
+  // Completely reset local joining states so the client can register fresh
+  userJoinedActiveRound = false;
+  isCurrentlyInGameRound = false;
+  pendingDeduction = 0;
+  
+  // Clear out any old card marking data so your next game starts clean
+  marked1.clear();
+  marked2.clear();
+  called = [];
+  
+  // Update UI components back to default
+  document.getElementById('gcir').textContent = '--';
+  document.getElementById('gcl').textContent = '0';
+  document.getElementById('ghist-pills').innerHTML = '';
+  
   document.getElementById('global-nav-bar').style.display = 'flex';
   goTo('lobby');
 }
 
+function closeWinnerModal() {
+  document.getElementById('winner-popup').classList.remove('active');
+  
+  // Call the safe cleanup loop to reset all variables identically
+  navigateBackToLobbySafely();
+}
 function syncActiveGameScreenStructure() {
   const container2 = document.getElementById('slot-card2-container');
   if (selCard2) {

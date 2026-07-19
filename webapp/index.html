@@ -652,9 +652,12 @@ let currentActiveGameRoundId = null;
 let winnerPopupInterval = null;
 let hasCustomManualAuthZoneOpen = false;
 
-// Track sync statuses mapped explicitly for button handling state metrics
-let currentServerGameId = "";
-let currentServerState = "waiting";
+// Key used to remember which round a player registered for, so it survives
+// clicking "Leave", closing the app/Telegram webview, or reloading the page.
+const PENDING_ROUND_KEY = 'fastbingo_pending_round';
+function setPendingRound(gameId){ if(gameId) localStorage.setItem(PENDING_ROUND_KEY, gameId); }
+function getPendingRound(){ return localStorage.getItem(PENDING_ROUND_KEY); }
+function clearPendingRound(){ localStorage.removeItem(PENDING_ROUND_KEY); }
 
 const LETS = ['B', 'I', 'N', 'G', 'O'];
 let selGame = { bet: 10 };
@@ -747,11 +750,13 @@ async function registerUserToServer(username, phone) {
 
 function setupSocketEngine() {
   if (socket) {
+    // If socket already exists, do not re-bind or recreate listeners to prevent leaks
     return; 
   } 
   
   socket = io(BACKEND_URL);
 
+  // Fallback explicit listener clean to guarantee clean pipelines
   socket.off('room_tick');
   socket.off('ball_drawn');
   socket.off('opponent_victory');
@@ -763,10 +768,6 @@ function setupSocketEngine() {
     
     currentActiveGameRoundId = data.gameId;
     globalGameStateServer = data.state;
-    
-    // Wire up the Button Sync Logic variables seamlessly here [source: 14]
-    currentServerGameId = data.gameId;
-    currentServerState = data.state;
 
     if (data.state === "waiting") {
       const text = `Waiting (${data.timeRemaining}s)`;
@@ -778,14 +779,16 @@ function setupSocketEngine() {
       if (cartelaPill) { cartelaPill.textContent = "Game In Progress"; }
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
       
+      // CATCH-UP LOGIC: Sync previously drawn ball historical states if re-joining ongoing rooms
       if (data.state === "playing" && data.drawnHistory && data.drawnHistory.length > 0) {
-        called = data.drawnHistory;
-        if (called.length > 0) {
-          const lastBall = called[called.length - 1];
-          processIncomingBallCall(lastBall, called);
-        }
+      called = data.drawnHistory;
+      if (called.length > 0) {
+        const lastBall = called[called.length - 1];
+        processIncomingBallCall(lastBall, called);
       }
-
+    }
+      // CRITICAL REJOIN FIX: If the player has already successfully registered to the database session,
+      // and they are currently inside the lobby view state, force auto-sync recovery immediately.
       if (userJoinedActiveRound && !isCurrentlyInGameRound) {
         isCurrentlyInGameRound = true;
         document.getElementById('gg').textContent = currentActiveGameRoundId;
@@ -964,7 +967,8 @@ function buildVisualWinnerMatrixGrid(cardNum) {
 }
 
 async function triggerOpponentWinSequence(winnerName, cardNum) {
-  isCurrentlyInGameRound = false; 
+  isCurrentlyInGameRound = false;
+  clearPendingRound();
   if (currentSupabaseUser && currentActiveGameRoundId) {
     const isMe = (winnerName === currentSupabaseUser.username);
     if (isMe) {
@@ -1000,57 +1004,113 @@ async function triggerOpponentWinSequence(winnerName, cardNum) {
   }, 1000);
 }
 
+function showPastRoundResultPopup(isWinner) {
+  document.getElementById('win-head').textContent = isWinner ? "🏆 You Won!" : "Round Over";
+  document.getElementById('win-sub').textContent = isWinner
+    ? "That round finished while you were away — you won! Your balance has already been updated."
+    : "That round finished while you were away. Better luck in the next one!";
+  document.getElementById('win-grid').innerHTML = '';
+
+  const timerLabel = document.getElementById('win-timer');
+  timerLabel.textContent = "Tap Play 10 to join the next round";
+
+  document.getElementById('winner-popup').classList.add('active');
+
+  if (winnerPopupInterval) clearInterval(winnerPopupInterval);
+  winnerPopupInterval = setTimeout(() => {
+    document.getElementById('winner-popup').classList.remove('active');
+  }, 4500);
+}
+
 function closeWinnerModal() {
   document.getElementById('winner-popup').classList.remove('active');
+  
+  // Hard reset before going back
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false;
+  
   navigateBackToLobbySafely();
 }
 
-/* ENHANCED PLAY 10 HANDLER (joinGame Function) [source: 14] */
+async function reconnectToRound(gameId, status) {
+  userJoinedActiveRound = true;
+  isCurrentlyInGameRound = true;
+
+  // Dynamic multi-card preservation extraction
+  if (status.cards_list && status.cards_list.length > 0) {
+    selCard1 = status.cards_list[0];
+    selCard2 = status.cards_list.length > 1 ? status.cards_list[1] : null;
+  } else {
+    selCard2 = (status.cards_bought === 2) ? 118 : null;
+  }
+
+  setPendingRound(gameId);
+  document.getElementById('gg').textContent = currentActiveGameRoundId;
+  syncActiveGameScreenStructure();
+  document.getElementById('global-nav-bar').style.display = 'none';
+  goTo('game');
+  toast("Reconnected to your match!");
+}
+
 async function joinGame(i) {
   if (!currentSupabaseUser) {
     toast("Please log in first");
     return;
   }
 
-  // STEP 2: Conditional Re-entry / Ongoing Interception Logic
-  if (currentServerState === "playing" && currentServerGameId) {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${currentServerGameId}`);
-      const checkData = await response.json();
+  const pendingRoundId = getPendingRound();
 
-      if (checkData && checkData.registered) {
-        console.log("Active registration found. Restoring match environment...", checkData);
-        userJoinedActiveRound = true;
-        isCurrentlyInGameRound = true;
-        
-        // Multi-card preservation sync
-        if (checkData.cards_list && checkData.cards_list.length > 0) {
-          selCard1 = checkData.cards_list[0];
-          selCard2 = checkData.cards_list.length > 1 ? checkData.cards_list[1] : null;
-        } else {
-          selCard2 = (checkData.cards_bought === 2) ? 118 : null; 
+  // STEP 1: If we remember a round the player registered for, resolve it first.
+  if (pendingRoundId) {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${pendingRoundId}`);
+      const status = await res.json();
+
+      if (pendingRoundId === currentActiveGameRoundId) {
+        // Same round still exists on the server (waiting or playing) -> take them back to it.
+        if (status && status.registered) {
+          await reconnectToRound(pendingRoundId, status);
+          return;
         }
-        
-        document.getElementById('gg').textContent = currentServerGameId;
-        syncActiveGameScreenStructure();
-        document.getElementById('global-nav-bar').style.display = 'none';
-        goTo('game');
-        toast("Reconnected to active match!");
-        return; 
+        // Server has no record of it (shouldn't normally happen) - drop the stale memory.
+        clearPendingRound();
+      } else {
+        // The server has already moved on to a new round -> the remembered round is over.
+        clearPendingRound();
+        if (status && status.registered) {
+          showPastRoundResultPopup(status.is_winner);
+          return; // Let the player view the result, then tap Play again to join the next round.
+        }
+      }
+    } catch (err) {
+      console.error("Error resolving pending round:", err);
+      clearPendingRound();
+    }
+  }
+
+  // STEP 2: No unresolved round left to show. If a round is currently live and we
+  // somehow aren't registered for it locally, double-check with the server in case
+  // this device lost its memory (e.g. storage cleared) but the account is still in it.
+  if (globalGameStateServer === "playing" && currentActiveGameRoundId) {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${currentActiveGameRoundId}`);
+      const status = await res.json();
+
+      if (status && status.registered) {
+        await reconnectToRound(currentActiveGameRoundId, status);
+        return;
       } else {
         toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
         return;
       }
     } catch (err) {
-      console.error("Re-entry authorization handshake failed:", err);
+      console.error("Error checking game state reconnection:", err);
       toast("Reconnection handshake failed.");
       return;
     }
   }
 
-  // STANDARD REGISTRATION LOGIC (Runs if match room is waiting)
+  // Fallback default state path: Game is waiting, safe to pick new cards
   document.getElementById('cpw').textContent = walletBalance;
   renderCardGrid();
   goTo('cards');
@@ -1108,6 +1168,7 @@ async function confirmJoin(){
   updateLocalWallets();
   await pushBalancesToSupabase();
   userJoinedActiveRound = true;
+  setPendingRound(currentActiveGameRoundId);
   
   if (currentSupabaseUser && currentActiveGameRoundId) {
     try {
@@ -1136,13 +1197,16 @@ function cancelRegistrationAndRefund() {
 }
 
 function navigateBackToLobbySafely() {
+  // 1. Reset all state hooks so the background tick stops pulling you back in
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false; 
   pendingDeduction = 0;
 
+  // 2. Restore the navigation bar layout
   const globalNav = document.getElementById('global-nav-bar');
   if (globalNav) globalNav.style.display = 'flex';
 
+  // 3. Navigate smoothly back to the lobby screen
   goTo('lobby');
 }
 

@@ -742,9 +742,14 @@ async function registerUserToServer(username, phone) {
 }
 
 function setupSocketEngine() {
-  if (socket) return; 
+  if (socket) {
+    // If socket already exists, do not re-bind or recreate listeners to prevent leaks
+    return; 
+  } 
+  
   socket = io(BACKEND_URL);
 
+  // Fallback explicit listener clean to guarantee clean pipelines
   socket.off('room_tick');
   socket.off('ball_drawn');
   socket.off('opponent_victory');
@@ -766,9 +771,15 @@ function setupSocketEngine() {
       if (lobbyPill) { lobbyPill.textContent = "Playing"; lobbyPill.className = "lobby-status-pill playing"; }
       if (cartelaPill) { cartelaPill.textContent = "Game In Progress"; }
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
+      
+      // CRITICAL REJOIN FIX: If the player has already successfully registered to the database session,
+      // and they are currently inside the lobby view state, force auto-sync recovery immediately.
       if (userJoinedActiveRound && !isCurrentlyInGameRound) {
         isCurrentlyInGameRound = true;
         document.getElementById('gg').textContent = currentActiveGameRoundId;
+        syncActiveGameScreenStructure();
+        document.getElementById('global-nav-bar').style.display = 'none';
+        goTo('game');
       }
     }
   });

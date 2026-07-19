@@ -990,6 +990,11 @@ async function triggerOpponentWinSequence(winnerName, cardNum) {
 
 function closeWinnerModal() {
   document.getElementById('winner-popup').classList.remove('active');
+  
+  // Hard reset before going back
+  isCurrentlyInGameRound = false;
+  userJoinedActiveRound = false;
+  
   navigateBackToLobbySafely();
 }
 
@@ -1117,8 +1122,16 @@ function cancelRegistrationAndRefund() {
 }
 
 function navigateBackToLobbySafely() {
+  // 1. Reset all state hooks so the background tick stops pulling you back in
   isCurrentlyInGameRound = false;
-  document.getElementById('global-nav-bar').style.display = 'flex';
+  userJoinedActiveRound = false; 
+  pendingDeduction = 0;
+
+  // 2. Restore the navigation bar layout
+  const globalNav = document.getElementById('global-nav-bar');
+  if (globalNav) globalNav.style.display = 'flex';
+
+  // 3. Navigate smoothly back to the lobby screen
   goTo('lobby');
 }
 

@@ -442,12 +442,16 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div style="font-size: 20px; font-weight: 900; color: var(--gold); margin-bottom: 4px;">FAST BINGO</div>
     <div style="font-size: 13px; color: var(--nav-gray); margin-bottom: 12px;">ይግቡ እና ጨዋታውን ይቀላቀሉ</div>
     
-    <div id="fallback-input-zone" style="display:none; margin-bottom: 12px;">
-      <input type="text" id="manual-user-field" class="auth-input" placeholder="ስም ያስገቡ">
-      <input type="tel" id="manual-phone-field" class="auth-input" placeholder="የስልክ ቁጥር ያስገቡ">
-    </div>
-    
     <button id="main-auth-submit-btn" class="auth-btn" onclick="requestTelegramSecureContact()">ስልክ ቁጥርዎን ያጋሩ</button>
+  </div>
+</div>
+
+<!-- SHOWN ONLY WHEN THE APP IS OPENED OUTSIDE TELEGRAM -->
+<div id="telegram-only-overlay" class="auth-overlay" style="display: none;">
+  <div class="auth-card">
+    <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
+    <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">Please open this game inside Telegram</div>
+    <div style="font-size: 13px; color: var(--nav-gray);">Fast Bingo only works inside the Telegram app so we can verify your account.</div>
   </div>
 </div>
 
@@ -650,7 +654,6 @@ let cardCache = {};
 let isAutoMode = false;
 let currentActiveGameRoundId = null;
 let winnerPopupInterval = null;
-let hasCustomManualAuthZoneOpen = false;
 
 // Key used to remember which round a player registered for, so it survives
 // clicking "Leave", closing the app/Telegram webview, or reloading the page.
@@ -676,57 +679,44 @@ function genCard(n){
 
 function initSupabaseSession() {
   const storedUser = localStorage.getItem('supabase_bingo_player');
-  if (storedUser && !storedUser.includes('manual_placeholder')) {
+  if (storedUser) {
     currentSupabaseUser = JSON.parse(storedUser);
     syncUserDatabaseState();
     setupSocketEngine();
-  } else {
-    localStorage.removeItem('supabase_bingo_player');
-    document.getElementById('auth-overlay').style.display = 'flex';
-    
-    if (!tgApp) {
-      hasCustomManualAuthZoneOpen = true;
-      document.getElementById('fallback-input-zone').style.display = 'block';
-      const actionBtn = document.getElementById('main-auth-submit-btn');
-      actionBtn.textContent = "ይመዝገቡ";
-      actionBtn.style.background = "var(--teal)";
-    }
-  }
-}
-
-function requestTelegramSecureContact() {
-  if (hasCustomManualAuthZoneOpen) {
-    const fallbackUsername = document.getElementById('manual-user-field').value.trim();
-    const fallbackPhone = document.getElementById('manual-phone-field').value.trim();
-    if (!fallbackUsername || !fallbackPhone) {
-      toast("እባክዎ ሁሉንም መስኮች በትክክል ይሙሉ");
-      return;
-    }
-    registerUserToServer(fallbackUsername, fallbackPhone);
     return;
   }
 
-  if (tgApp) {
-    tgApp.ready();
-    try {
-      tgApp.requestContact((shared) => {
-        if (shared && shared.contact) {
-          const username = tgApp.initDataUnsafe?.user?.username || tgApp.initDataUnsafe?.user?.first_name || "የቴሌግራም ተጫዋች";
-          const phone = shared.contact.phone_number;
-          registerUserToServer(username, phone);
-        } else {
-          toast("እባክዎ ለመጫወት ስልክ ቁጥርዎን ያጋሩ");
-        }
-      });
-    } catch(e) {
-      document.getElementById('fallback-input-zone').style.display = 'block';
-      hasCustomManualAuthZoneOpen = true;
-      const btn = document.getElementById('main-auth-submit-btn');
-      btn.textContent = "ይመዝገቡ";
-      btn.style.background = "var(--teal)";
-    }
-  } else {
-    registerUserToServer("DevUser", "+251960089963");
+  const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
+  if (!hasTelegramIdentity) {
+    document.getElementById('telegram-only-overlay').style.display = 'flex';
+    return;
+  }
+
+  tgApp.ready();
+  document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function requestTelegramSecureContact() {
+  const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
+  if (!hasTelegramIdentity) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('telegram-only-overlay').style.display = 'flex';
+    return;
+  }
+
+  try {
+    tgApp.requestContact((shared) => {
+      if (shared && shared.contact) {
+        const tgUser = tgApp.initDataUnsafe.user;
+        const username = tgUser.username || tgUser.first_name || `tg_${tgUser.id}`;
+        const phone = shared.contact.phone_number;
+        registerUserToServer(username, phone);
+      } else {
+        toast("እባክዎ ለመጫወት ስልክ ቁጥርዎን ያጋሩ");
+      }
+    });
+  } catch (e) {
+    toast("Telegram contact request failed. Please try again.");
   }
 }
 
@@ -805,7 +795,7 @@ function setupSocketEngine() {
   });
 
   socket.on('opponent_victory', (data) => {
-    triggerOpponentWinSequence(data.winnerName, data.cardNum);
+    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId);
   });
 }
 
@@ -933,8 +923,8 @@ function claimBingo(){
     return null;
   };
   const winningPlay = verifyCard(1) || verifyCard(2);
-  if(winningPlay && socket) {
-    socket.emit('claim_bingo', { username: currentSupabaseUser?.username || "You", cardNum: winningPlay.selCard });
+  if(winningPlay && socket && currentSupabaseUser?.player_id) {
+    socket.emit('claim_bingo', { player_id: currentSupabaseUser.player_id, cardNum: winningPlay.selCard });
   }
 }
 
@@ -966,28 +956,33 @@ function buildVisualWinnerMatrixGrid(cardNum) {
   }
 }
 
-async function triggerOpponentWinSequence(winnerName, cardNum) {
+async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId) {
   isCurrentlyInGameRound = false;
   clearPendingRound();
-  if (currentSupabaseUser && currentActiveGameRoundId) {
-    const isMe = (winnerName === currentSupabaseUser.username);
-    if (isMe) {
-      walletBalance += 304; updateLocalWallets(); pushBalancesToSupabase();
-    }
-    try {
-      await fetch(`${BACKEND_URL}/api/games/update-status`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ game_id: currentActiveGameRoundId, player_id: currentSupabaseUser.player_id, status: 'finished', is_winner: isMe })
-      });
-    } catch (err) {}
+
+  const isMe = !!(winnerPlayerId && currentSupabaseUser && String(winnerPlayerId) === String(currentSupabaseUser.player_id));
+  if (isMe) {
+    walletBalance += 304; updateLocalWallets(); pushBalancesToSupabase();
+  }
+
+  if (!winnerPlayerId) {
+    // Draw - all 75 numbers were called with no valid winner.
+    document.getElementById('win-head').textContent = "No Winner This Round";
+    document.getElementById('win-sub').textContent = "All 75 numbers were called with no bingo.";
+    document.getElementById('win-grid').innerHTML = '';
+  } else {
+    document.getElementById('win-head').textContent = isMe ? "🏆 You Won!" : "👑 Winner Declared!";
+    document.getElementById('win-sub').textContent = `${winnerName} (Cartela #${cardNum})`;
+    buildVisualWinnerMatrixGrid(cardNum);
   }
   
-  document.getElementById('win-head').textContent = winnerName === currentSupabaseUser?.username ? "🏆 You Won!" : "👑 Winner Declared!";
-  document.getElementById('win-sub').textContent = `${winnerName} (Cartela #${cardNum})`;
-  buildVisualWinnerMatrixGrid(cardNum);
-  
   document.getElementById('winner-popup').classList.add('active');
+
+  // Round is fully over now - clear the previous cartela/marks so the next
+  // card-picker screen and game screen both start clean.
+  selCard1 = 117; selCard2 = null;
+  marked1 = new Set(); marked2 = new Set();
+  called = [];
   
   let remainingTime = 7;
   const timerLabel = document.getElementById('win-timer');
@@ -1005,6 +1000,13 @@ async function triggerOpponentWinSequence(winnerName, cardNum) {
 }
 
 function showPastRoundResultPopup(isWinner) {
+  if (isWinner) {
+    // They won but weren't connected live to receive the broadcast - pay out now.
+    walletBalance += 304;
+    updateLocalWallets();
+    pushBalancesToSupabase();
+  }
+
   document.getElementById('win-head').textContent = isWinner ? "🏆 You Won!" : "Round Over";
   document.getElementById('win-sub').textContent = isWinner
     ? "That round finished while you were away — you won! Your balance has already been updated."
@@ -1015,6 +1017,11 @@ function showPastRoundResultPopup(isWinner) {
   timerLabel.textContent = "Tap Play 10 to join the next round";
 
   document.getElementById('winner-popup').classList.add('active');
+
+  // Clear out the cartela/marks from the round that just concluded.
+  selCard1 = 117; selCard2 = null;
+  marked1 = new Set(); marked2 = new Set();
+  called = [];
 
   if (winnerPopupInterval) clearInterval(winnerPopupInterval);
   winnerPopupInterval = setTimeout(() => {
@@ -1159,9 +1166,39 @@ async function confirmJoin(){
     return;
   }
 
+  if (!currentSupabaseUser || !currentActiveGameRoundId) {
+    toast("Something went wrong, please try again.");
+    return;
+  }
+
   let count = selCard2 ? 2 : 1;
   const gameCost = selGame.bet * count;
   if (walletBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
+
+  // Register the participant FIRST and confirm it actually succeeded before
+  // taking any money or entering the game screen.
+  let registrationOk = false;
+  try {
+    const createRes = await fetch(`${BACKEND_URL}/api/games/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        player_id: currentSupabaseUser.player_id, 
+        game_id: currentActiveGameRoundId, 
+        cards_bought: count,
+        cards_list: selCard2 ? [selCard1, selCard2] : [selCard1]
+      })
+    });
+    const createResult = await createRes.json();
+    registrationOk = !!(createRes.ok && createResult && createResult.success);
+  } catch (err) {
+    registrationOk = false;
+  }
+
+  if (!registrationOk) {
+    toast("Couldn't join the round, please try again.");
+    return;
+  }
   
   walletBalance -= gameCost;
   pendingDeduction = gameCost;
@@ -1169,21 +1206,7 @@ async function confirmJoin(){
   await pushBalancesToSupabase();
   userJoinedActiveRound = true;
   setPendingRound(currentActiveGameRoundId);
-  
-  if (currentSupabaseUser && currentActiveGameRoundId) {
-    try {
-      await fetch(`${BACKEND_URL}/api/games/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          player_id: currentSupabaseUser.player_id, 
-          game_id: currentActiveGameRoundId, 
-          cards_bought: count,
-          cards_list: selCard2 ? [selCard1, selCard2] : [selCard1]
-        })
-      });
-    } catch (err) {}
-  }
+
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');

@@ -642,7 +642,6 @@ let socket = null;
 const tgApp = window.Telegram?.WebApp;
 
 let walletBalance = 10;
-let pendingDeduction = 0;
 let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
@@ -812,17 +811,6 @@ async function syncUserDatabaseState() {
   } catch (err) {}
 }
 
-async function pushBalancesToSupabase() {
-  if (!currentSupabaseUser) return;
-  try {
-    await fetch(`${BACKEND_URL}/api/player/update-balance`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: currentSupabaseUser.player_id, balance: walletBalance })
-    });
-  } catch (err) {}
-}
-
 function updateLocalWallets() {
   document.getElementById('lobby-wal-bal').textContent = walletBalance;
   document.getElementById('wall-main-val').textContent = walletBalance + ' ETB';
@@ -962,7 +950,9 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId) {
 
   const isMe = !!(winnerPlayerId && currentSupabaseUser && String(winnerPlayerId) === String(currentSupabaseUser.player_id));
   if (isMe) {
-    walletBalance += 304; updateLocalWallets(); pushBalancesToSupabase();
+    // The server already credited the payout the moment it validated the win claim -
+    // just pull the authoritative balance rather than adding to it ourselves.
+    await syncUserDatabaseState();
   }
 
   if (!winnerPlayerId) {
@@ -999,12 +989,11 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId) {
   }, 1000);
 }
 
-function showPastRoundResultPopup(isWinner) {
+async function showPastRoundResultPopup(isWinner) {
   if (isWinner) {
-    // They won but weren't connected live to receive the broadcast - pay out now.
-    walletBalance += 304;
-    updateLocalWallets();
-    pushBalancesToSupabase();
+    // The server already credited the payout when it validated the win claim -
+    // just pull the authoritative balance instead of crediting it again here.
+    await syncUserDatabaseState();
   }
 
   document.getElementById('win-head').textContent = isWinner ? "🏆 You Won!" : "Round Over";
@@ -1175,9 +1164,10 @@ async function confirmJoin(){
   const gameCost = selGame.bet * count;
   if (walletBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
 
-  // Register the participant FIRST and confirm it actually succeeded before
-  // taking any money or entering the game screen.
-  let registrationOk = false;
+  // Register the participant server-side FIRST - the server validates the balance,
+  // deducts the entry fee itself, and confirms the round before we take any local
+  // action or enter the game screen. The client never decides or pushes a balance here.
+  let createResult = null;
   try {
     const createRes = await fetch(`${BACKEND_URL}/api/games/create`, {
       method: "POST",
@@ -1189,21 +1179,23 @@ async function confirmJoin(){
         cards_list: selCard2 ? [selCard1, selCard2] : [selCard1]
       })
     });
-    const createResult = await createRes.json();
-    registrationOk = !!(createRes.ok && createResult && createResult.success);
+    createResult = await createRes.json();
   } catch (err) {
-    registrationOk = false;
+    createResult = null;
   }
 
-  if (!registrationOk) {
-    toast("Couldn't join the round, please try again.");
+  if (!createResult || !createResult.success) {
+    if (createResult && createResult.error === "insufficient_balance") {
+      toast("የሂሳብ መጠንዎ በቂ አይደለም!");
+    } else {
+      toast("Couldn't join the round, please try again.");
+    }
     return;
   }
-  
-  walletBalance -= gameCost;
-  pendingDeduction = gameCost;
+
+  // Server already deducted the entry fee - just sync the real number it returned.
+  walletBalance = createResult.balance;
   updateLocalWallets();
-  await pushBalancesToSupabase();
   userJoinedActiveRound = true;
   setPendingRound(currentActiveGameRoundId);
 
@@ -1213,17 +1205,16 @@ async function confirmJoin(){
 }
 
 function cancelRegistrationAndRefund() {
-  if (pendingDeduction > 0) { walletBalance += pendingDeduction; pendingDeduction = 0; }
+  // No entry fee has been taken yet at this point (that only happens once
+  // Start Game is confirmed), so there's nothing to refund - just back out.
   userJoinedActiveRound = false;
-  updateLocalWallets();
   goTo('lobby');
 }
 
 function navigateBackToLobbySafely() {
   // 1. Reset all state hooks so the background tick stops pulling you back in
   isCurrentlyInGameRound = false;
-  userJoinedActiveRound = false; 
-  pendingDeduction = 0;
+  userJoinedActiveRound = false;
 
   // 2. Restore the navigation bar layout
   const globalNav = document.getElementById('global-nav-bar');

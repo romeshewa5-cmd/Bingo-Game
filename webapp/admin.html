@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fast Bingo - Admin</title>
+<style>
+:root {
+  --gold: #ffbd14; --teal: #0fc082; --bg-dark: #090d16; --card: #111726;
+  --card2: #1b2438; --card3: #232f4a; --red: #ff3b30; --nav-gray: #7d8c9e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-dark); color: #fff; min-height: 100vh; padding: 20px;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 22px; font-weight: 900; color: var(--gold); margin-bottom: 4px; }
+.sub { color: var(--nav-gray); font-size: 13px; margin-bottom: 20px; }
+.login-card {
+  max-width: 360px; margin: 80px auto; background: var(--card); border: 1px solid var(--card2);
+  border-radius: 16px; padding: 24px; text-align: center;
+}
+.login-card input {
+  width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card3);
+  background: var(--card2); color: #fff; margin-top: 12px; font-size: 14px;
+}
+button {
+  background: var(--teal); color: #fff; font-weight: 700; font-size: 13px; border: none;
+  border-radius: 8px; padding: 9px 16px; cursor: pointer;
+}
+button.secondary { background: var(--card3); color: #cbd5e1; }
+button.danger { background: var(--red); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--card2); border-radius: 12px; padding: 14px; }
+.stat-lbl { font-size: 10px; text-transform: uppercase; color: var(--nav-gray); font-weight: 700; letter-spacing: 0.5px; }
+.stat-val { font-size: 20px; font-weight: 900; margin-top: 6px; }
+section { background: var(--card); border: 1px solid var(--card2); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+section h2 { font-size: 15px; margin-bottom: 12px; color: var(--gold); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { text-align: left; color: var(--nav-gray); font-weight: 700; padding: 8px 6px; border-bottom: 1px solid var(--card2); text-transform: uppercase; font-size: 10px; }
+td { padding: 8px 6px; border-bottom: 1px solid var(--card2); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+.pill { padding: 3px 8px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.pill.pending { background: rgba(255,189,20,0.15); color: var(--gold); }
+.pill.approved, .pill.won { background: rgba(15,192,130,0.15); color: var(--teal); }
+.pill.rejected, .pill.banned { background: rgba(255,59,48,0.15); color: var(--red); }
+.row-actions { display: flex; gap: 6px; }
+.credit-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.credit-form input {
+  padding: 9px; border-radius: 8px; border: 1px solid var(--card3); background: var(--card2); color: #fff; font-size: 13px;
+}
+.search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.search-row input {
+  flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--card3); background: var(--card2); color: #fff; font-size: 13px;
+}
+.empty { color: var(--nav-gray); font-size: 12px; padding: 10px 0; }
+.refresh-note { font-size: 11px; color: var(--nav-gray); margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login-card">
+  <div style="font-size:28px; margin-bottom:8px;">🔐</div>
+  <div style="font-weight:900; font-size:18px; color:var(--gold);">Fast Bingo Admin</div>
+  <input type="password" id="admin-secret-input" placeholder="Admin secret">
+  <button style="width:100%; margin-top:14px;" onclick="login()">Sign in</button>
+  <div id="login-error" style="color:var(--red); font-size:12px; margin-top:10px;"></div>
+</div>
+
+<div id="dashboard" class="wrap" style="display:none;">
+  <h1>Fast Bingo Admin</h1>
+  <div class="sub">Live round status, players, transactions, and withdrawal approvals.</div>
+
+  <div class="grid" id="overview-grid"></div>
+
+  <section>
+    <h2>Withdrawal Requests</h2>
+    <div class="refresh-note">Approve only after you've actually sent the player their money outside the app.</div>
+    <div id="withdrawals-table"></div>
+  </section>
+
+  <section>
+    <h2>Manually Credit a Player (deposit confirmation)</h2>
+    <div class="refresh-note">Use this after confirming a real payment (e.g. a telebirr receipt) outside the app.</div>
+    <div class="credit-form">
+      <input type="text" id="credit-player-id" placeholder="player_id">
+      <input type="number" id="credit-amount" placeholder="Amount (ETB)" style="width:140px;">
+      <input type="text" id="credit-notes" placeholder="Notes (optional)" style="flex:1; min-width:160px;">
+      <button onclick="creditPlayer()">Credit</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Players</h2>
+    <div class="search-row">
+      <input type="text" id="player-search" placeholder="Search by username, phone, or player_id" onkeydown="if(event.key==='Enter') loadPlayers()">
+      <button class="secondary" onclick="loadPlayers()">Search</button>
+    </div>
+    <div id="players-table"></div>
+  </section>
+
+  <section>
+    <h2>Recent Transactions</h2>
+    <div id="transactions-table"></div>
+  </section>
+</div>
+
+<script>
+const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000'
+  : 'https://fast-bingo-backend.onrender.com';
+
+let adminSecret = sessionStorage.getItem('fastbingo_admin_secret') || '';
+
+async function api(path, options = {}) {
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-admin-secret': adminSecret,
+      ...(options.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+async function login() {
+  adminSecret = document.getElementById('admin-secret-input').value.trim();
+  if (!adminSecret) return;
+  try {
+    await api('/api/admin/overview');
+    sessionStorage.setItem('fastbingo_admin_secret', adminSecret);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    refreshAll();
+    setInterval(refreshOverview, 4000);
+    setInterval(loadWithdrawals, 8000);
+  } catch (err) {
+    document.getElementById('login-error').textContent = 'Incorrect secret, or the server is unreachable.';
+  }
+}
+
+function refreshAll() {
+  refreshOverview();
+  loadWithdrawals();
+  loadPlayers();
+  loadTransactions();
+}
+
+async function refreshOverview() {
+  try {
+    const o = await api('/api/admin/overview');
+    const stateColor = o.state === 'playing' ? 'var(--red)' : 'var(--teal)';
+    document.getElementById('overview-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-lbl">Round State</div><div class="stat-val" style="color:${stateColor};">${o.state.toUpperCase()}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Round ID</div><div class="stat-val">${o.game_id}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Timer</div><div class="stat-val">${o.timeRemaining}s</div></div>
+      <div class="stat-card"><div class="stat-lbl">Players in round</div><div class="stat-val">${o.participantCount} <span style="font-size:11px; color:var(--nav-gray);">(min ${o.minPlayersToStart})</span></div></div>
+      <div class="stat-card"><div class="stat-lbl">Pot</div><div class="stat-val">${o.pot} ETB</div></div>
+      <div class="stat-card"><div class="stat-lbl">Payout if won now</div><div class="stat-val" style="color:var(--gold);">${o.potentialPayout} ETB</div></div>
+      <div class="stat-card"><div class="stat-lbl">Balls drawn</div><div class="stat-val">${o.drawnBallsHistory.length} / 75</div></div>
+    `;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function loadWithdrawals() {
+  try {
+    const list = await api('/api/admin/withdrawals?status=pending');
+    const container = document.getElementById('withdrawals-table');
+    if (!list.length) { container.innerHTML = '<div class="empty">No pending withdrawal requests.</div>'; return; }
+    container.innerHTML = `<table>
+      <tr><th>Player ID</th><th>Amount</th><th>Requested</th><th>Actions</th></tr>
+      ${list.map(w => `
+        <tr>
+          <td>${w.player_id}</td>
+          <td>${w.amount} ETB</td>
+          <td>${new Date(w.requested_at).toLocaleString()}</td>
+          <td class="row-actions">
+            <button onclick="resolveWithdrawal(${w.id}, 'approve')">Approve</button>
+            <button class="danger" onclick="resolveWithdrawal(${w.id}, 'reject')">Reject</button>
+          </td>
+        </tr>`).join('')}
+    </table>`;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function resolveWithdrawal(id, action) {
+  if (action === 'approve' && !confirm('Confirm you have already sent this player their money outside the app?')) return;
+  try {
+    await api(`/api/admin/withdrawals/${id}/${action}`, { method: 'POST' });
+    loadWithdrawals();
+    loadTransactions();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function creditPlayer() {
+  const player_id = document.getElementById('credit-player-id').value.trim();
+  const amount = Number(document.getElementById('credit-amount').value);
+  const notes = document.getElementById('credit-notes').value.trim();
+  if (!player_id || !amount) { alert('player_id and a non-zero amount are required.'); return; }
+  try {
+    const result = await api('/api/admin/credit-player', {
+      method: 'POST',
+      body: JSON.stringify({ player_id, amount, notes }),
+    });
+    alert(`Credited. New balance: ${result.balance} ETB`);
+    document.getElementById('credit-player-id').value = '';
+    document.getElementById('credit-amount').value = '';
+    document.getElementById('credit-notes').value = '';
+    loadTransactions();
+    loadPlayers();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function loadPlayers() {
+  const search = document.getElementById('player-search').value.trim();
+  try {
+    const list = await api(`/api/admin/players${search ? `?search=${encodeURIComponent(search)}` : ''}`);
+    const container = document.getElementById('players-table');
+    if (!list.length) { container.innerHTML = '<div class="empty">No players found.</div>'; return; }
+    container.innerHTML = `<table>
+      <tr><th>Player ID</th><th>Username</th><th>Phone</th><th>Balance</th><th>Status</th><th>Actions</th></tr>
+      ${list.map(p => `
+        <tr>
+          <td>${p.player_id}</td>
+          <td>${p.username || '-'}</td>
+          <td>${p.phone_number || '-'}</td>
+          <td>${p.balance} ETB</td>
+          <td><span class="pill ${p.is_banned ? 'banned' : 'won'}">${p.is_banned ? 'Banned' : 'Active'}</span></td>
+          <td class="row-actions">
+            ${p.is_banned
+              ? `<button onclick="toggleBan('${p.player_id}', false)">Unban</button>`
+              : `<button class="danger" onclick="toggleBan('${p.player_id}', true)">Ban</button>`}
+          </td>
+        </tr>`).join('')}
+    </table>`;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function toggleBan(player_id, ban) {
+  const label = ban ? 'ban' : 'unban';
+  if (!confirm(`Are you sure you want to ${label} player ${player_id}?`)) return;
+  try {
+    await api(`/api/admin/players/${player_id}/${ban ? 'ban' : 'unban'}`, { method: 'POST' });
+    loadPlayers();
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+async function loadTransactions() {
+  try {
+    const list = await api('/api/admin/transactions?limit=100');
+    const container = document.getElementById('transactions-table');
+    if (!list.length) { container.innerHTML = '<div class="empty">No transactions yet.</div>'; return; }
+    container.innerHTML = `<table>
+      <tr><th>Time</th><th>Player</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Round</th><th>Notes</th></tr>
+      ${list.map(t => `
+        <tr>
+          <td>${new Date(t.created_at).toLocaleString()}</td>
+          <td>${t.player_id}</td>
+          <td>${t.type}</td>
+          <td style="color:${t.amount > 0 ? 'var(--teal)' : t.amount < 0 ? 'var(--red)' : '#fff'};">${t.amount > 0 ? '+' : ''}${t.amount}</td>
+          <td>${t.balance_after ?? '-'}</td>
+          <td>${t.game_id || '-'}</td>
+          <td>${t.notes || ''}</td>
+        </tr>`).join('')}
+    </table>`;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// Auto-login if a secret was already saved this session
+if (adminSecret) {
+  document.getElementById('admin-secret-input').value = adminSecret;
+  login();
+}
+</script>
+</body>
+</html>

@@ -459,7 +459,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <div class="screen active" id="sc-lobby">
   <div class="nav">
     <div class="nav-title" style="font-weight:900;">Fast Bingo</div>
-    <div class="rules-btn" onclick="toast('መስመር ይሙሉ እና ያሸንፉ!')">Rules</div>
+    <div class="rules-btn" onclick="goTo('rules')">Rules</div>
   </div>
   
   <div class="lobby-main-card">
@@ -472,10 +472,65 @@ input:checked + .slider:before { transform: translateX(18px); }
       </button>
       <div id="lobby-status-indicator" class="lobby-status-pill waiting">Waiting (40s)</div>
     </div>
+    <div id="lobby-players-note" style="font-size:11px; color:var(--nav-gray); margin-top:10px;"></div>
     
     <div class="wallet-box-lobby">
       <div class="lbl">Wallet Balance</div>
       <div class="val" id="lobby-wal-bal">10</div>
+    </div>
+  </div>
+</div>
+
+<!-- RULES SCREEN (Amharic) -->
+<div class="screen" id="sc-rules">
+  <div class="nav">
+    <div class="nav-back" onclick="goTo('lobby')">← ተመለስ</div>
+    <div class="nav-title">የጨዋታ ህጎች</div>
+  </div>
+  <div class="wallet-grid">
+    <div class="wallet-card main" style="gap:14px; text-align:right; direction:rtl;">
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">🎯 አጠቃላይ መመሪያ</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          ካርቴላ (ካርድ) ይምረጡ እና ጨዋታው ሲጀምር ቁጥሮች ይጠራሉ። በካርቴላዎ ላይ የተጠሩ ቁጥሮችን ምልክት ያድርጉ። አንድ ሙሉ መስመር (አግድም ወይም ቀጥ ያለ) ካጠናቀቁ ቢንጎ! ብለው ማሸነፍ ይችላሉ።
+        </div>
+      </div>
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">🔢 ካርቴላ አመራረጥ</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          ከ1 እስከ 150 ካሉት ካርቴላዎች ውስጥ ይምረጡ። ሌላ ተጫዋች አስቀድሞ የመረጠውን ካርቴላ መምረጥ አይቻልም - የተያዙ ካርቴላዎች ግራጫ ሆነው ይታያሉ።
+        </div>
+      </div>
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">✅ እንዴት ማሸነፍ ይቻላል</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          B-I-N-G-O በሚሉት አምዶች ውስጥ አንድ ሙሉ አግድም መስመር ወይም አንድ ሙሉ ቀጥ ያለ መስመር ካጠናቀቁ ብቻ ማሸነፍ ይችላሉ። ሰያፍ (diagonal) መስመር አይቆጠርም። የመሃል ቦታ (★) ሁልጊዜ ምልክት እንደተደረገበት ይቆጠራል።
+        </div>
+      </div>
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">💰 ዋጋ እና ሽልማት</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          እያንዳንዱ ካርቴላ 10 ብር ያስከፍላል። ሽልማቱ የሚሰላው በዚያ ዙር ውስጥ ከተሰበሰበው አጠቃላይ ገንዘብ (ፖት) ውስጥ ለአሸናፊው ትልቅ ድርሻ ተሰጥቶ ነው - ስለዚህ ብዙ ተጫዋቾች በተሳተፉ ቁጥር ሽልማቱ ይጨምራል።
+        </div>
+      </div>
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">👥 አነስተኛ ተጫዋቾች</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          ጨዋታው የሚጀምረው በቂ ተጫዋቾች ሲኖሩ ብቻ ነው። በቂ ተጫዋቾች ከሌሉ፣ ተጨማሪ ተጫዋቾች እስኪቀላቀሉ ድረስ መጠበቂያ ጊዜው ይራዘማል።
+        </div>
+      </div>
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">🎲 75ቱም ቁጥሮች ከወጡ</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          ማንም ካርቴላ ሳያሸንፍ ሁሉም 75 ቁጥሮች ከወጡ፣ ያ ዙር ያለ አሸናፊ ያበቃል እና ቀጣዩ ዙር ወዲያውኑ ይጀምራል።
+        </div>
+      </div>
+      <div>
+        <div class="w-card-lbl" style="color:var(--gold);">🚪 ጨዋታን ለቆ መውጣት</div>
+        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
+          በጨዋታ መሃል "Leave" ቢጫኑም ቦታዎ ይቆያል - ወደ ጨዋታው ሲመለሱ ("Play 10" ይጫኑ) በዚያው ቦታ ይቀጥላሉ፣ ወይም ዙሩ ካለቀ ውጤቱን (አሸነፉ/አላሸነፉም) ያሳይዎታል።
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -505,6 +560,15 @@ input:checked + .slider:before { transform: translateX(18px); }
       <div class="w-card-val" id="wall-main-val">0 ETB</div>
       <div class="w-card-desc">Starter Gift Balance Loaded Dynamically</div>
     </div>
+    <div class="wallet-card main" style="gap:10px;">
+      <div class="w-card-lbl">Request Withdrawal</div>
+      <div class="w-card-desc">Withdrawals are reviewed and paid out manually by an admin - this isn't instant.</div>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <input type="number" id="withdraw-amount-input" class="auth-input" placeholder="Amount (ETB)" style="margin-top:0;">
+        <button class="mini-start-btn" style="width:auto; padding:10px 16px; background:var(--teal);" onclick="requestWithdrawal()">Request</button>
+      </div>
+    </div>
+    <div id="withdrawals-list-container"></div>
   </div>
 </div>
 
@@ -646,6 +710,7 @@ let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
 let globalGameStateServer = "waiting"; 
+let minPlayersToStart = 2;
 let called = [];
 let selCard1 = 117, selCard2 = null;
 let marked1 = new Set(), marked2 = new Set();
@@ -754,19 +819,31 @@ function setupSocketEngine() {
     const lobbyPill = document.getElementById('lobby-status-indicator');
     const cartelaPill = document.getElementById('cartela-countdown');
     const gameTimerHeader = document.getElementById('game-countdown-header-pill');
+    const lobbyPlayersNote = document.getElementById('lobby-players-note');
     
     currentActiveGameRoundId = data.gameId;
     globalGameStateServer = data.state;
+    if (typeof data.minPlayersToStart === 'number') minPlayersToStart = data.minPlayersToStart;
 
     if (data.state === "waiting") {
       const text = `Waiting (${data.timeRemaining}s)`;
       if (lobbyPill) { lobbyPill.textContent = text; lobbyPill.className = "lobby-status-pill waiting"; }
       if (cartelaPill) { cartelaPill.textContent = text; }
       if (gameTimerHeader) { gameTimerHeader.textContent = `Lobby: ${data.timeRemaining}s`; }
+      if (lobbyPlayersNote) {
+        if (typeof data.participantCount === 'number') {
+          lobbyPlayersNote.textContent = data.participantCount < minPlayersToStart
+            ? `Waiting for players: ${data.participantCount}/${minPlayersToStart} needed to start`
+            : `${data.participantCount} players joined - starting soon`;
+        } else {
+          lobbyPlayersNote.textContent = '';
+        }
+      }
     } else {
       if (lobbyPill) { lobbyPill.textContent = "Playing"; lobbyPill.className = "lobby-status-pill playing"; }
       if (cartelaPill) { cartelaPill.textContent = "Game In Progress"; }
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
+      if (lobbyPlayersNote) lobbyPlayersNote.textContent = '';
       
       // CATCH-UP LOGIC: Sync previously drawn ball historical states if re-joining ongoing rooms
       if (data.state === "playing" && data.drawnHistory && data.drawnHistory.length > 0) {
@@ -794,7 +871,7 @@ function setupSocketEngine() {
   });
 
   socket.on('opponent_victory', (data) => {
-    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId);
+    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount);
   });
 }
 
@@ -806,9 +883,22 @@ async function syncUserDatabaseState() {
     if (data) { 
       currentSupabaseUser = data; 
       walletBalance = data.balance; 
+      localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
       updateLocalWallets(); 
+      updateBannedBanner();
     }
   } catch (err) {}
+}
+
+function updateBannedBanner() {
+  const playBtn = document.querySelector('.play-btn');
+  const note = document.getElementById('lobby-players-note');
+  if (currentSupabaseUser && currentSupabaseUser.is_banned) {
+    if (playBtn) { playBtn.disabled = true; playBtn.style.opacity = '0.4'; playBtn.style.pointerEvents = 'none'; }
+    if (note) note.innerHTML = `<span style="color:var(--red); font-weight:800;">Your account has been suspended. Contact support for help.</span>`;
+  } else if (playBtn) {
+    playBtn.disabled = false; playBtn.style.opacity = ''; playBtn.style.pointerEvents = '';
+  }
 }
 
 function updateLocalWallets() {
@@ -944,7 +1034,7 @@ function buildVisualWinnerMatrixGrid(cardNum) {
   }
 }
 
-async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId) {
+async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, payoutAmount) {
   isCurrentlyInGameRound = false;
   clearPendingRound();
 
@@ -962,7 +1052,9 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId) {
     document.getElementById('win-grid').innerHTML = '';
   } else {
     document.getElementById('win-head').textContent = isMe ? "🏆 You Won!" : "👑 Winner Declared!";
-    document.getElementById('win-sub').textContent = `${winnerName} (Cartela #${cardNum})`;
+    document.getElementById('win-sub').textContent = isMe
+      ? `You won ${payoutAmount ?? ''} ETB with Cartela #${cardNum}!`
+      : `${winnerName} (Cartela #${cardNum})`;
     buildVisualWinnerMatrixGrid(cardNum);
   }
   
@@ -1053,6 +1145,10 @@ async function joinGame(i) {
     toast("Please log in first");
     return;
   }
+  if (currentSupabaseUser.is_banned) {
+    toast("Your account has been suspended. Contact support for help.");
+    return;
+  }
 
   const pendingRoundId = getPendingRound();
 
@@ -1108,22 +1204,49 @@ async function joinGame(i) {
 
   // Fallback default state path: Game is waiting, safe to pick new cards
   document.getElementById('cpw').textContent = walletBalance;
+  await loadTakenCards();
   renderCardGrid();
   goTo('cards');
+}
+
+let takenCards = new Set();
+
+async function loadTakenCards() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/games/taken-cards/${currentActiveGameRoundId}`);
+    const data = await res.json();
+    takenCards = new Set((data.taken || []).map(Number));
+  } catch (err) {
+    takenCards = new Set();
+  }
+  // Don't leave a now-taken card pre-selected.
+  if (selCard1 && takenCards.has(selCard1)) selCard1 = null;
+  if (selCard2 && takenCards.has(selCard2)) selCard2 = null;
+  if (!selCard1 && selCard2) { selCard1 = selCard2; selCard2 = null; }
 }
 
 function renderCardGrid(){
   const g = document.getElementById('cgrid'); g.innerHTML='';
   for(let n=1;n<=150;n++){
     const d=document.createElement('div'); d.className='cn';
+    const isTaken = takenCards.has(n) && n !== selCard1 && n !== selCard2;
     if(n===selCard1) d.classList.add('sel');
     else if(n===selCard2) d.classList.add('sel2');
-    d.textContent=n; d.onclick=()=>selectCard(n); g.appendChild(d);
+    d.textContent=n;
+    if (isTaken) {
+      d.style.opacity = '0.3';
+      d.style.pointerEvents = 'none';
+      d.title = 'Already taken by another player';
+    } else {
+      d.onclick=()=>selectCard(n);
+    }
+    g.appendChild(d);
   }
   updateSelectionSummary();
 }
 
 function selectCard(n){
+  if (takenCards.has(n) && n !== selCard1 && n !== selCard2) return; // guard against a stale render
   if (selCard1 === n) { selCard1 = selCard2; selCard2 = null; }
   else if (selCard2 === n) { selCard2 = null; }
   else {
@@ -1185,10 +1308,24 @@ async function confirmJoin(){
   }
 
   if (!createResult || !createResult.success) {
-    if (createResult && createResult.error === "insufficient_balance") {
+    const code = createResult && createResult.error;
+    if (code === "insufficient_balance") {
       toast("የሂሳብ መጠንዎ በቂ አይደለም!");
+    } else if (code === "already_registered") {
+      toast("You're already registered for this round - tap Play 10 to rejoin it.");
+    } else if (code === "card_taken") {
+      toast(`Cartela #${createResult.card} was just taken by someone else - pick another.`);
+      await loadTakenCards();
+      renderCardGrid();
+    } else if (code === "banned") {
+      toast("Your account has been suspended. Contact support for help.");
+    } else if (code === "round_not_open") {
+      toast("That round already started - please wait for the next one.");
     } else {
-      toast("Couldn't join the round, please try again.");
+      console.error("games/create failed:", createResult);
+      // Showing the raw backend error here temporarily so it's visible without
+      // opening dev tools while things are still being verified after deploy.
+      toast(code ? `Join failed: ${code}` : "Couldn't join the round, please try again.");
     }
     return;
   }
@@ -1276,7 +1413,7 @@ async function loadHistory() {
 }
 
 function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; }
-function refreshCardPickerGrid(){ selCard1 = 117; selCard2 = null; renderCardGrid(); }
+async function refreshCardPickerGrid(){ selCard1 = 117; selCard2 = null; await loadTakenCards(); renderCardGrid(); }
 function refreshLiveGameGrids(){ renderGameCard(1); if(selCard2) renderGameCard(2); }
 
 function toast(msg){
@@ -1295,6 +1432,68 @@ function goTo(n){
   
   if (n === 'scores') loadLeaderboard();
   if (n === 'history') loadHistory();
+  if (n === 'wallet') loadWithdrawals();
+}
+
+async function requestWithdrawal() {
+  if (!currentSupabaseUser) return;
+  const input = document.getElementById('withdraw-amount-input');
+  const amount = Number(input.value);
+  if (!amount || amount <= 0) {
+    toast("Enter a valid amount to withdraw.");
+    return;
+  }
+  if (amount > walletBalance) {
+    toast("You can't withdraw more than your current balance.");
+    return;
+  }
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wallet/withdraw-request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player_id: currentSupabaseUser.player_id, amount })
+    });
+    const result = await res.json();
+    if (result && result.success) {
+      walletBalance = result.balance;
+      updateLocalWallets();
+      input.value = '';
+      toast("Withdrawal requested - an admin will review it shortly.");
+      loadWithdrawals();
+    } else {
+      const code = result && result.error;
+      if (code === "insufficient_balance") toast("Insufficient balance.");
+      else if (code === "banned") toast("Your account has been suspended.");
+      else toast(code ? `Request failed: ${code}` : "Withdrawal request failed, please try again.");
+    }
+  } catch (err) {
+    toast("Network error - please try again.");
+  }
+}
+
+async function loadWithdrawals() {
+  const container = document.getElementById('withdrawals-list-container');
+  if (!container || !currentSupabaseUser) return;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wallet/withdrawals/${currentSupabaseUser.player_id}`);
+    const data = await res.json();
+    if (!data || !data.length) {
+      container.innerHTML = '';
+      return;
+    }
+    const statusColor = { pending: 'var(--gold)', approved: 'var(--teal)', rejected: 'var(--red)' };
+    container.innerHTML = data.map(w => `
+      <div class="real-list-item">
+        <div>
+          <div style="font-size:12px; font-weight:bold;">${w.amount} ETB</div>
+          <div style="font-size:10px; color:var(--nav-gray);">${new Date(w.requested_at).toLocaleString()}</div>
+        </div>
+        <span style="color:${statusColor[w.status] || '#fff'}; font-weight:bold; text-transform:uppercase; font-size:11px;">${w.status}</span>
+      </div>
+    `).join('');
+  } catch (err) {
+    container.innerHTML = '';
+  }
 }
 
 initSupabaseSession();

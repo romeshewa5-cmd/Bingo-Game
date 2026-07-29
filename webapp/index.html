@@ -590,9 +590,14 @@ input:checked + .slider:before { transform: translateX(18px); }
     </div>
     <div id="lobby-players-note" style="font-size:11px; color:var(--nav-gray); margin-top:10px;"></div>
     
-    <div class="wallet-box-lobby">
-      <div class="lbl">Total Wallet Balance</div>
-      <div class="val" id="lobby-wal-bal">20 ETB</div>
+    <div class="wallet-box-lobby" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 14px 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+      <div>
+        <div class="lbl">Total Wallet Balance</div>
+        <div class="val" id="lobby-wal-bal">20 ETB</div>
+      </div>
+      <button class="rules-btn" style="background: var(--teal); color: #000; font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 20px; border: none; box-shadow: 0 0 12px rgba(15,192,130,0.4);" onclick="openDepositModal()">
+        💳 ገቢ ያድርጉ (Deposit)
+      </button>
     </div>
   </div>
 </div>
@@ -709,6 +714,37 @@ input:checked + .slider:before { transform: translateX(18px); }
       </div>
     </div>
 
+    <!-- REFERRAL & INVITE PROGRAM -->
+    <div class="wallet-card main" style="gap: 12px; border: 1px solid var(--gold);">
+      <div class="w-card-lbl" style="color:var(--gold); font-size:13px;">🎁 ጓደኛ ይጋብዙ እና ገንዘብ ያግኙ (Referral Program)</div>
+      
+      <!-- Amharic Rules Banner -->
+      <div style="font-size: 12px; color: #fff; line-height: 1.6; background: rgba(255, 189, 20, 0.1); padding: 10px 12px; border-radius: 10px; border-left: 3px solid var(--gold);">
+        ለእያንዳንዱ ጋበዙትና ለተመዘገበ ጓደኛ <b>5 ETB</b> ያግኙ! <b>10 ሰዎችን</b> ጋብዘው ያስመዘገቡ <b>100 ETB</b> ተጨማሪ ቦነስ ያገኛሉ!
+      </div>
+
+      <!-- Referral Link Box -->
+      <div>
+        <div class="w-card-lbl" style="margin-bottom: 6px;">የእርስዎ የሪፈራል ሊንክ (Your Referral Link)</div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="referral-link-input" class="auth-input" readonly style="margin-top: 0; font-size: 11px; color: var(--teal); background: rgba(0,0,0,0.4);" value="Loading link...">
+          <button class="mini-start-btn" style="width: auto; padding: 10px 14px; background: var(--gold); color: #000; font-size: 12px; white-space: nowrap;" onclick="copyReferralLink()">📋 ሊንክ ኮፒ</button>
+        </div>
+      </div>
+
+      <!-- Referral Stats Grid -->
+      <div style="display: flex; gap: 10px; margin-top: 4px;">
+        <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; text-align: center;">
+          <div style="font-size: 10px; color: var(--nav-gray); text-transform: uppercase;">የተጋበዙ ጓደኞች</div>
+          <div id="ref-count-val" style="font-size: 20px; font-weight: 900; color: #fff; margin-top: 2px;">0</div>
+        </div>
+        <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; text-align: center;">
+          <div style="font-size: 10px; color: var(--nav-gray); text-transform: uppercase;">ከሪፈራል የተገኘ ገቢ</div>
+          <div id="ref-earned-val" style="font-size: 20px; font-weight: 900; color: var(--gold); margin-top: 2px;">0 ETB</div>
+        </div>
+      </div>
+    </div>
+
     <!-- GAME HISTORY INSIDE PROFILE SCREEN -->
     <div style="font-size: 14px; font-weight: 800; color: var(--gold); margin-top: 10px;">⏱️ Match History</div>
     <div id="history-container-list">
@@ -821,7 +857,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 </div>
 
 <script>
-const BACKEND_URL = "https://fast-bingo-backend.onrender.com";
+const BACKEND_URL = window.location.origin;
 
 let socket = null;
 const tgApp = window.Telegram?.WebApp;
@@ -887,12 +923,29 @@ function verifyWinningPattern(cardNum, markedSet) {
 }
 
 function initSupabaseSession() {
+  // Capture Referral ID from URL parameters
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    let refCode = urlParams.get('ref') || urlParams.get('tgWebAppStartParam') || '';
+    if (refCode) {
+      if (refCode.startsWith('ref_')) refCode = refCode.replace('ref_', '');
+      localStorage.setItem('bingo_referrer_id', refCode);
+    }
+  } catch (e) {}
+
   const storedUser = localStorage.getItem('supabase_bingo_player');
-  if (storedUser) {
-    currentSupabaseUser = JSON.parse(storedUser);
-    syncUserDatabaseState();
-    setupSocketEngine();
-    return;
+  if (storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
+    try {
+      currentSupabaseUser = JSON.parse(storedUser);
+      if (currentSupabaseUser && currentSupabaseUser.player_id) {
+        syncUserDatabaseState();
+        setupSocketEngine();
+        return;
+      }
+    } catch (e) {
+      localStorage.removeItem('supabase_bingo_player');
+      currentSupabaseUser = null;
+    }
   }
 
   const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
@@ -932,17 +985,22 @@ function requestTelegramSecureContact() {
 
 async function registerUserToServer(username, phone) {
   try {
+    const referrerId = localStorage.getItem('bingo_referrer_id') || '';
     const response = await fetch(`${BACKEND_URL}/api/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, phone_number: phone })
+      body: JSON.stringify({ username, phone_number: phone, referrer_id: referrerId })
     });
     const result = await response.json();
-    currentSupabaseUser = result.user;
-    localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
-    document.getElementById('auth-overlay').style.display = 'none';
-    syncUserDatabaseState();
-    setupSocketEngine();
+    if (result && result.user && result.user.player_id) {
+      currentSupabaseUser = result.user;
+      localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+      document.getElementById('auth-overlay').style.display = 'none';
+      syncUserDatabaseState();
+      setupSocketEngine();
+    } else {
+      toast(result.error || "ለጊዜው መመዝገብ አልተቻለም");
+    }
   } catch (err) {
     toast("Network connection failed");
   }
@@ -1012,16 +1070,32 @@ async function syncUserDatabaseState() {
   if (!currentSupabaseUser) return;
   try {
     const response = await fetch(`${BACKEND_URL}/api/player/${currentSupabaseUser.player_id}`);
+    if (response.status === 404) {
+      localStorage.removeItem('supabase_bingo_player');
+      currentSupabaseUser = null;
+      document.getElementById('auth-overlay').style.display = 'flex';
+      return;
+    }
     const data = await response.json();
-    if (data) { 
+    if (data && data.player_id && !data.error) { 
       currentSupabaseUser = data; 
       mainBalance = Number(data.main_balance ?? data.balance ?? 0);
       playBalance = Number(data.play_balance ?? 0);
       totalBalance = mainBalance + playBalance;
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
       updateLocalWallets(); 
+    } else {
+      localStorage.removeItem('supabase_bingo_player');
+      currentSupabaseUser = null;
+      document.getElementById('auth-overlay').style.display = 'flex';
     }
   } catch (err) {}
+}
+
+function copyReferralLink() {
+  const input = document.getElementById('referral-link-input');
+  if (!input || !input.value) return;
+  copyToClipboard(input.value, 'የሪፈራል ሊንክ ኮፒ ተደርጓል!');
 }
 
 function updateLocalWallets() {
@@ -1032,6 +1106,22 @@ function updateLocalWallets() {
   document.getElementById('prof-play-val').textContent = playBalance + ' ETB';
   document.getElementById('prof-name-val').textContent = currentSupabaseUser?.username || '--';
   document.getElementById('prof-phone-val').textContent = currentSupabaseUser?.phone_number || '--';
+
+  if (currentSupabaseUser && currentSupabaseUser.player_id) {
+    const playerRefCode = currentSupabaseUser.player_id;
+    const webRefUrl = `${window.location.origin}/?ref=${playerRefCode}`;
+    const tgRefUrl = `https://t.me/fast_bingo_bot?start=ref_${playerRefCode}`;
+    const refInput = document.getElementById('referral-link-input');
+    if (refInput) {
+      refInput.value = (typeof tgApp !== 'undefined' && tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user) ? tgRefUrl : webRefUrl;
+    }
+
+    const refCount = document.getElementById('ref-count-val');
+    if (refCount) refCount.textContent = currentSupabaseUser.referrals_count ?? 0;
+
+    const refEarned = document.getElementById('ref-earned-val');
+    if (refEarned) refEarned.textContent = (currentSupabaseUser.referral_earnings ?? 0) + ' ETB';
+  }
 }
 
 function processIncomingBallCall(n, fullNumbersHistoryArray){

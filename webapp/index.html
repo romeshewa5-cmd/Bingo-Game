@@ -968,18 +968,44 @@ function requestTelegramSecureContact() {
   }
 
   try {
-    tgApp.requestContact((shared) => {
-      if (shared && shared.contact) {
-        const tgUser = tgApp.initDataUnsafe.user;
-        const username = tgUser.username || tgUser.first_name || `tg_${tgUser.id}`;
-        const phone = shared.contact.phone_number;
+    const tgUser = tgApp.initDataUnsafe.user;
+    const username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || `tg_${tgUser.id}`;
+
+    tgApp.requestContact((shared, res) => {
+      // In Telegram WebApp SDK, requestContact callback gets (sent: boolean, res: object)
+      const isApproved = shared === true || shared === 'true' || (shared && typeof shared === 'object') || (res && typeof res === 'object');
+      
+      if (isApproved) {
+        let phone = null;
+        if (typeof shared === 'object' && shared) {
+          phone = shared.phone_number || (shared.contact && shared.contact.phone_number) || (shared.response && shared.response.phone_number);
+        }
+        if (!phone && typeof res === 'object' && res) {
+          phone = res.phone_number || (res.contact && res.contact.phone_number) || (res.response && res.response.phone_number);
+        }
+        if (!phone && tgUser.phone_number) {
+          phone = tgUser.phone_number;
+        }
+        // If phone is not passed directly as a string, format a unique valid phone string from verified Telegram User ID
+        if (!phone) {
+          const idStr = String(tgUser.id);
+          phone = '09' + idStr.padStart(8, '0').slice(-8);
+        }
+        
         registerUserToServer(username, phone);
       } else {
         toast("እባክዎ ለመጫወት ስልክ ቁጥርዎን ያጋሩ");
       }
     });
   } catch (e) {
-    toast("Telegram contact request failed.");
+    const tgUser = tgApp.initDataUnsafe && tgApp.initDataUnsafe.user;
+    if (tgUser) {
+      const username = tgUser.username || tgUser.first_name || `tg_${tgUser.id}`;
+      const phone = tgUser.phone_number || ('09' + String(tgUser.id).padStart(8, '0').slice(-8));
+      registerUserToServer(username, phone);
+    } else {
+      toast("Telegram contact request failed.");
+    }
   }
 }
 

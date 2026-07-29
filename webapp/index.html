@@ -63,7 +63,7 @@ body {
   font-weight: 700;
 }
 
-.auth-overlay {
+.auth-overlay, .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(9, 13, 22, 0.98);
@@ -72,33 +72,52 @@ body {
   justify-content: center;
   z-index: 20000;
 }
-.auth-card {
+.auth-card, .modal-card {
   background: #111726;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 24px;
   width: 90%;
-  max-width: 340px;
-  text-align: center;
+  max-width: 360px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  max-height: 90vh;
+  overflow-y: auto;
 }
-.auth-input {
-  width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card3);
-  background: var(--card2); color: white; margin-top: 10px; font-size: 14px; text-align: center;
+.auth-input, .modal-input, select.modal-input {
+  width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--card3);
+  background: var(--card2); color: white; margin-top: 10px; font-size: 14px;
 }
-.auth-btn {
+.auth-btn, .action-btn {
   background: #229ED9;
   color: #fff;
   font-weight: 800;
   font-size: 15px;
   width: 100%;
   padding: 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
   cursor: pointer;
   margin-top: 16px;
 }
-.auth-btn:active { transform: scale(0.98); }
+.auth-btn:active, .action-btn:active { transform: scale(0.98); }
+
+.copy-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card2);
+  border: 1px solid var(--card3);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+.copy-label { font-size: 12px; color: var(--nav-gray); font-weight: 700; }
+.copy-val { font-size: 14px; font-weight: 900; color: var(--gold); }
+.copy-btn {
+  background: var(--card3); color: var(--teal); font-size: 11px; font-weight: 800;
+  padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer;
+}
+.copy-btn:active { background: var(--teal); color: #fff; }
 
 .lobby-main-card {
   background: radial-gradient(circle at top, #141c2d 0%, #0d121f 100%);
@@ -199,11 +218,14 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 85px;
 }
 .wallet-card.main {
   background: linear-gradient(135deg, #0e2023, #091517);
   border: 1px solid rgba(15, 192, 130, 0.15);
+}
+.wallet-card.play {
+  background: linear-gradient(135deg, #241c0e, #171209);
+  border: 1px solid rgba(255, 189, 20, 0.2);
 }
 .w-card-lbl {
   font-size: 10px;
@@ -214,8 +236,29 @@ body {
   align-items: center;
   gap: 4px;
 }
-.w-card-val { font-size: 18px; font-weight: 900; margin-top: 4px; }
-.w-card-desc { font-size: 12px; color: var(--nav-gray); margin-top: 6px; }
+.w-card-val { font-size: 22px; font-weight: 900; margin-top: 4px; }
+.w-card-desc { font-size: 11px; color: var(--nav-gray); margin-top: 4px; }
+
+.wallet-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.w-action-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.w-action-btn.deposit { background: var(--teal); color: #fff; }
+.w-action-btn.withdraw { background: var(--card3); color: var(--gold); border: 1px solid var(--gold); }
 
 .bnav {
   position: fixed;
@@ -414,7 +457,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 .toast {
   position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
   background: var(--red); color: #fff; font-size: 13px; font-weight: 700;
-  padding: 10px 20px; border-radius: 20px; display: none; z-index: 99999;
+  padding: 10px 20px; border-radius: 20px; display: none; z-index: 99999; text-align: center;
 }
 .toast.show { display: block; animation: fio 2.8s ease forwards; }
 @keyframes fio { 0%,100% { opacity: 0 } 15%,80% { opacity: 1 } }
@@ -446,12 +489,85 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- SHOWN ONLY WHEN THE APP IS OPENED OUTSIDE TELEGRAM -->
+<!-- SHOWN ONLY WHEN OPENED OUTSIDE TELEGRAM -->
 <div id="telegram-only-overlay" class="auth-overlay" style="display: none;">
   <div class="auth-card">
     <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
-    <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">Please open this game inside Telegram</div>
-    <div style="font-size: 13px; color: var(--nav-gray);">Fast Bingo only works inside the Telegram app so we can verify your account.</div>
+    <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">Please open inside Telegram</div>
+    <div style="font-size: 13px; color: var(--nav-gray);">Fast Bingo works inside Telegram to verify your account securely.</div>
+  </div>
+</div>
+
+<!-- DEPOSIT MODAL POPUP -->
+<div id="deposit-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="font-size: 18px; font-weight: 900; color: var(--gold);">💳 Deposit Funds</div>
+      <div style="cursor: pointer; font-size: 18px; color: var(--nav-gray);" onclick="closeDepositModal()">✕</div>
+    </div>
+    <div style="font-size: 12px; color: var(--nav-gray); margin-bottom: 10px;">
+      Send your payment to one of our official numbers below, then submit your transaction reference number to receive your funds + <b>10% Play Bonus</b>!
+    </div>
+
+    <!-- COPYABLE PAYMENT DETAILS -->
+    <div class="copy-row">
+      <div>
+        <div class="copy-label">Telebirr</div>
+        <div class="copy-val">0926710936</div>
+      </div>
+      <button class="copy-btn" onclick="copyToClipboard('0926710936', 'Telebirr number copied!')">📋 Copy</button>
+    </div>
+
+    <div class="copy-row">
+      <div>
+        <div class="copy-label">CBE Account</div>
+        <div class="copy-val">1000132035605</div>
+      </div>
+      <button class="copy-btn" onclick="copyToClipboard('1000132035605', 'CBE Account copied!')">📋 Copy</button>
+    </div>
+
+    <div class="copy-row">
+      <div>
+        <div class="copy-label">CBE Birr</div>
+        <div class="copy-val">0926710936</div>
+      </div>
+      <button class="copy-btn" onclick="copyToClipboard('0926710936', 'CBE Birr number copied!')">📋 Copy</button>
+    </div>
+
+    <!-- FORM -->
+    <select id="dep-method" class="modal-input">
+      <option value="Telebirr">Telebirr</option>
+      <option value="CBE">CBE (Commercial Bank of Ethiopia)</option>
+      <option value="CBE Birr">CBE Birr</option>
+    </select>
+    <input type="number" id="dep-amount" class="modal-input" placeholder="Amount Deposited (ETB)">
+    <input type="text" id="dep-ref" class="modal-input" placeholder="Transaction Reference / Receipt ID">
+
+    <button class="action-btn" style="background: var(--teal);" onclick="submitDepositRequest()">Submit Deposit</button>
+  </div>
+</div>
+
+<!-- WITHDRAWAL MODAL POPUP -->
+<div id="withdraw-modal" class="modal-overlay" style="display: none;">
+  <div class="modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="font-size: 18px; font-weight: 900; color: var(--gold);">💸 Withdraw Funds</div>
+      <div style="cursor: pointer; font-size: 18px; color: var(--nav-gray);" onclick="closeWithdrawModal()">✕</div>
+    </div>
+    <div style="font-size: 11px; color: var(--gold); background: rgba(255,189,20,0.1); padding: 8px; border-radius: 8px; margin-bottom: 10px;">
+      <b>Note:</b> Minimum withdrawal amount is <b>100 ETB</b>. Withdrawals are paid from your Main Wallet.
+    </div>
+
+    <select id="wdr-method" class="modal-input">
+      <option value="Telebirr">Telebirr</option>
+      <option value="CBE">CBE (Commercial Bank of Ethiopia)</option>
+      <option value="CBE Birr">CBE Birr</option>
+    </select>
+    <input type="text" id="wdr-account" class="modal-input" placeholder="Account / Phone Number">
+    <input type="text" id="wdr-name" class="modal-input" placeholder="Account Holder Full Name">
+    <input type="number" id="wdr-amount" class="modal-input" placeholder="Amount (Min 100 ETB)">
+
+    <button class="action-btn" style="background: var(--teal);" onclick="submitWithdrawalRequest()">Request Withdrawal</button>
   </div>
 </div>
 
@@ -475,8 +591,8 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div id="lobby-players-note" style="font-size:11px; color:var(--nav-gray); margin-top:10px;"></div>
     
     <div class="wallet-box-lobby">
-      <div class="lbl">Wallet Balance</div>
-      <div class="val" id="lobby-wal-bal">10</div>
+      <div class="lbl">Total Wallet Balance</div>
+      <div class="val" id="lobby-wal-bal">20 ETB</div>
     </div>
   </div>
 </div>
@@ -492,43 +608,30 @@ input:checked + .slider:before { transform: translateX(18px); }
       <div>
         <div class="w-card-lbl" style="color:var(--gold);">🎯 አጠቃላይ መመሪያ</div>
         <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          ካርቴላ (ካርድ) ይምረጡ እና ጨዋታው ሲጀምር ቁጥሮች ይጠራሉ። በካርቴላዎ ላይ የተጠሩ ቁጥሮችን ምልክት ያድርጉ። አንድ ሙሉ መስመር (አግድም ወይም ቀጥ ያለ) ካጠናቀቁ ቢንጎ! ብለው ማሸነፍ ይችላሉ።
+          ካርቴላ (ካርድ) ይምረጡ እና ጨዋታው ሲጀምር ቁጥሮች ይጠራሉ። በካርቴላዎ ላይ የተጠሩ ቁጥሮችን ምልክት ያድርጉ። 
         </div>
       </div>
       <div>
-        <div class="w-card-lbl" style="color:var(--gold);">🔢 ካርቴላ አመራረጥ</div>
+        <div class="w-card-lbl" style="color:var(--gold);">✅ የማሸነፊያ መስመሮች (Winning Patterns)</div>
         <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          ከ1 እስከ 150 ካሉት ካርቴላዎች ውስጥ ይምረጡ። ሌላ ተጫዋች አስቀድሞ የመረጠውን ካርቴላ መምረጥ አይቻልም - የተያዙ ካርቴላዎች ግራጫ ሆነው ይታያሉ።
+          • አግድም መስመር (Horizontal Row)<br>
+          • ቀጥ ያለ መስመር (Vertical Column)<br>
+          • ሰያፍ መስመር (Diagonal Line)<br>
+          • 4ቱ ማዕዘኖች (Four Corners)<br>
+          ከነዚህ ውስጥ አንዱን ካጠናቀቁ ቢንጎ! ብለው ማሸነፍ ይችላሉ። የመሃል ቦታ (★) ሁልጊዜ እንደተሞላ ይቆጠራል።
         </div>
       </div>
       <div>
-        <div class="w-card-lbl" style="color:var(--gold);">✅ እንዴት ማሸነፍ ይቻላል</div>
+        <div class="w-card-lbl" style="color:var(--gold);">🎁 ቦነስ እና ኮፖን</div>
         <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          B-I-N-G-O በሚሉት አምዶች ውስጥ አንድ ሙሉ አግድም መስመር ወይም አንድ ሙሉ ቀጥ ያለ መስመር ካጠናቀቁ ብቻ ማሸነፍ ይችላሉ። ሰያፍ (diagonal) መስመር አይቆጠርም። የመሃል ቦታ (★) ሁልጊዜ ምልክት እንደተደረገበት ይቆጠራል።
+          አዲስ ሲመዘገቡ የ20 ብር ፕሌይ ቦነስ ያገኛሉ! በተጨማሪም ገንዘብ ገቢ ሲያደርጉ የ10% ተጨማሪ ቦነስ በPlay Walletዎ ላይ ይደመራል።
         </div>
       </div>
       <div>
-        <div class="w-card-lbl" style="color:var(--gold);">💰 ዋጋ እና ሽልማት</div>
+        <div class="w-card-lbl" style="color:var(--gold);">💰 dual wallet (ዋና እና ቦነስ ሂሳብ)</div>
         <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          እያንዳንዱ ካርቴላ 10 ብር ያስከፍላል። ሽልማቱ የሚሰላው በዚያ ዙር ውስጥ ከተሰበሰበው አጠቃላይ ገንዘብ (ፖት) ውስጥ ለአሸናፊው ትልቅ ድርሻ ተሰጥቶ ነው - ስለዚህ ብዙ ተጫዋቾች በተሳተፉ ቁጥር ሽልማቱ ይጨምራል።
-        </div>
-      </div>
-      <div>
-        <div class="w-card-lbl" style="color:var(--gold);">👥 አነስተኛ ተጫዋቾች</div>
-        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          ጨዋታው የሚጀምረው በቂ ተጫዋቾች ሲኖሩ ብቻ ነው። በቂ ተጫዋቾች ከሌሉ፣ ተጨማሪ ተጫዋቾች እስኪቀላቀሉ ድረስ መጠበቂያ ጊዜው ይራዘማል።
-        </div>
-      </div>
-      <div>
-        <div class="w-card-lbl" style="color:var(--gold);">🎲 75ቱም ቁጥሮች ከወጡ</div>
-        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          ማንም ካርቴላ ሳያሸንፍ ሁሉም 75 ቁጥሮች ከወጡ፣ ያ ዙር ያለ አሸናፊ ያበቃል እና ቀጣዩ ዙር ወዲያውኑ ይጀምራል።
-        </div>
-      </div>
-      <div>
-        <div class="w-card-lbl" style="color:var(--gold);">🚪 ጨዋታን ለቆ መውጣት</div>
-        <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          በጨዋታ መሃል "Leave" ቢጫኑም ቦታዎ ይቆያል - ወደ ጨዋታው ሲመለሱ ("Play 10" ይጫኑ) በዚያው ቦታ ይቀጥላሉ፣ ወይም ዙሩ ካለቀ ውጤቱን (አሸነፉ/አላሸነፉም) ያሳይዎታል።
+          Main Wallet: ገቢ ያደረጉት እና ያሸነፉት ገንዘብ የተቀመጠበት (ወጪ ማድረግ ይቻላል).<br>
+          Play Wallet: በቦነስ እና በኮፖን ያገኙት ገንዘብ (ለመጫወት ብቻ ያገለግላል).
         </div>
       </div>
     </div>
@@ -543,31 +646,40 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- GAME HISTORY SCREEN -->
-<div class="screen" id="sc-history">
-  <div class="nav"><div class="nav-title">My Game History</div></div>
-  <div class="wallet-grid" id="history-container-list">
-    <div class="wallet-card main"><div style="font-size:14px; color:var(--nav-gray)">Loading history records...</div></div>
-  </div>
-</div>
-
 <!-- WALLET SCREEN -->
 <div class="screen" id="sc-wallet">
   <div class="nav"><div class="nav-title">My Wallet</div></div>
   <div class="wallet-grid">
+    <!-- MAIN WALLET CARD -->
     <div class="wallet-card main">
-      <div class="w-card-lbl">Available Balance</div>
-      <div class="w-card-val" id="wall-main-val">0 ETB</div>
-      <div class="w-card-desc">Starter Gift Balance Loaded Dynamically</div>
+      <div class="w-card-lbl">💼 Main Wallet (Withdrawable)</div>
+      <div class="w-card-val" id="wall-main-val" style="color:var(--teal);">0 ETB</div>
+      <div class="w-card-desc">Real money deposits & game winnings.</div>
     </div>
+
+    <!-- PLAY WALLET CARD -->
+    <div class="wallet-card play">
+      <div class="w-card-lbl" style="color:var(--gold);">🎁 Play Wallet (Bonus)</div>
+      <div class="w-card-val" id="wall-play-val" style="color:var(--gold);">20 ETB</div>
+      <div class="w-card-desc">Registration bonus, 10% deposit bonus & coupon play money.</div>
+    </div>
+
+    <!-- DEPOSIT & WITHDRAW BUTTONS -->
+    <div class="wallet-btn-row">
+      <button class="w-action-btn deposit" onclick="openDepositModal()">💳 Deposit</button>
+      <button class="w-action-btn withdraw" onclick="openWithdrawModal()">💸 Withdraw</button>
+    </div>
+
+    <!-- COUPON REDEEM SECTION -->
     <div class="wallet-card main" style="gap:10px;">
-      <div class="w-card-lbl">Request Withdrawal</div>
-      <div class="w-card-desc">Withdrawals are reviewed and paid out manually by an admin - this isn't instant.</div>
-      <div style="display:flex; gap:8px; margin-top:6px;">
-        <input type="number" id="withdraw-amount-input" class="auth-input" placeholder="Amount (ETB)" style="margin-top:0;">
-        <button class="mini-start-btn" style="width:auto; padding:10px 16px; background:var(--teal);" onclick="requestWithdrawal()">Request</button>
+      <div class="w-card-lbl" style="color:var(--gold);">🎟️ Redeem Coupon Code</div>
+      <div class="w-card-desc">Enter a promo coupon code to claim free play money!</div>
+      <div style="display:flex; gap:8px; margin-top:4px;">
+        <input type="text" id="coupon-code-input" class="auth-input" placeholder="Coupon Code (e.g. BINGO20)" style="margin-top:0; text-transform:uppercase;">
+        <button class="mini-start-btn" style="width:auto; padding:10px 16px; background:var(--gold); color:#000;" onclick="redeemCoupon()">Redeem</button>
       </div>
     </div>
+
     <div id="withdrawals-list-container"></div>
   </div>
 </div>
@@ -585,10 +697,22 @@ input:checked + .slider:before { transform: translateX(18px); }
         <div class="w-card-lbl">Phone Number</div>
         <div class="w-card-desc" id="prof-phone-val" style="font-size:16px; color:#fff;">--</div>
       </div>
-      <div>
-        <div class="w-card-lbl">Wallet Vault</div>
-        <div class="w-card-val" id="prof-main-val" style="color:var(--teal)">0 ETB</div>
+      <div style="display:flex; justify-content:space-between;">
+        <div>
+          <div class="w-card-lbl">Main Wallet</div>
+          <div class="w-card-val" id="prof-main-val" style="color:var(--teal); font-size:16px;">0 ETB</div>
+        </div>
+        <div>
+          <div class="w-card-lbl">Play Wallet</div>
+          <div class="w-card-val" id="prof-play-val" style="color:var(--gold); font-size:16px;">20 ETB</div>
+        </div>
       </div>
+    </div>
+
+    <!-- GAME HISTORY INSIDE PROFILE SCREEN -->
+    <div style="font-size: 14px; font-weight: 800; color: var(--gold); margin-top: 10px;">⏱️ Match History</div>
+    <div id="history-container-list">
+      <div class="wallet-card main"><div style="font-size:13px; color:var(--nav-gray)">Loading history records...</div></div>
     </div>
   </div>
 </div>
@@ -602,7 +726,7 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
   
   <div class="stats-bar">
-    <div class="chip">Wallet: <b id="cpw" style="color: var(--teal)">--</b> ETB</div>
+    <div class="chip">Available Balance: <b id="cpw" style="color: var(--teal)">--</b> ETB</div>
     <div class="chip">Active Cards: <b id="cac" style="color: var(--teal)">1</b></div>
   </div>
 
@@ -635,9 +759,9 @@ input:checked + .slider:before { transform: translateX(18px); }
   
   <div class="gstats-row-container">
     <div class="gstat-block"><span class="gstat-lbl">Game ID</span><span class="gstat-val" id="gg">--</span></div>
-    <div class="gstat-block"><span class="gstat-lbl">Players</span><span class="gstat-val" id="gp">38</span></div>
+    <div class="gstat-block"><span class="gstat-lbl">Players</span><span class="gstat-val" id="gp">--</span></div>
     <div class="gstat-block"><span class="gstat-lbl">Bet</span><span class="gstat-val" id="gb">10</span></div>
-    <div class="gstat-block"><span class="gstat-lbl">Derash</span><span class="gstat-val" style="color:var(--teal)" id="gd">304</span></div>
+    <div class="gstat-block"><span class="gstat-lbl">Derash</span><span class="gstat-val" style="color:var(--teal)" id="gd">--</span></div>
     <div class="gstat-block"><span class="gstat-lbl">Called</span><span class="gstat-val" id="gcl">0</span></div>
   </div>
 
@@ -688,24 +812,24 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- NAVIGATION DOCK -->
+<!-- NAVIGATION DOCK (History removed, 4 clean tabs) -->
 <div class="bnav" id="global-nav-bar">
   <div class="bni active" id="btn-nav-lobby" onclick="goTo('lobby')"><span class="bni-icon">🎮</span>Game</div>
   <div class="bni" id="btn-nav-scores" onclick="goTo('scores')"><span class="bni-icon">🏆</span>Scores</div>
-  <div class="bni" id="btn-nav-history" onclick="goTo('history')"><span class="bni-icon">⏱️</span>History</div>
   <div class="bni" id="btn-nav-wallet" onclick="goTo('wallet')"><span class="bni-icon">💼</span>Wallet</div>
   <div class="bni" id="btn-nav-profile" onclick="goTo('profile')"><span class="bni-icon">👤</span>Profile</div>
 </div>
 
 <script>
-const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000'
-  : 'https://fast-bingo-backend.onrender.com';
+const BACKEND_URL = window.location.origin;
 
 let socket = null;
 const tgApp = window.Telegram?.WebApp;
 
-let walletBalance = 10;
+let mainBalance = 0;
+let playBalance = 20; // Default 20 Birr Signup Bonus!
+let totalBalance = 20;
+
 let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
@@ -719,8 +843,6 @@ let isAutoMode = false;
 let currentActiveGameRoundId = null;
 let winnerPopupInterval = null;
 
-// Key used to remember which round a player registered for, so it survives
-// clicking "Leave", closing the app/Telegram webview, or reloading the page.
 const PENDING_ROUND_KEY = 'fastbingo_pending_round';
 function setPendingRound(gameId){ if(gameId) localStorage.setItem(PENDING_ROUND_KEY, gameId); }
 function getPendingRound(){ return localStorage.getItem(PENDING_ROUND_KEY); }
@@ -741,6 +863,29 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
+// Check Rows, Columns, Diagonals, and Four Corners
+function verifyWinningPattern(cardNum, markedSet) {
+  const card = genCard(cardNum);
+  const m = (c, r) => markedSet.has(`${c}-${r}`) || card[c][r] === 0;
+
+  // 1. Horizontal Rows
+  for (let r = 0; r < 5; r++) {
+    if ([0, 1, 2, 3, 4].every(c => m(c, r))) return true;
+  }
+  // 2. Vertical Columns
+  for (let c = 0; c < 5; c++) {
+    if ([0, 1, 2, 3, 4].every(r => m(c, r))) return true;
+  }
+  // 3. Main Diagonal
+  if ([0, 1, 2, 3, 4].every(i => m(i, i))) return true;
+  // 4. Anti Diagonal
+  if ([0, 1, 2, 3, 4].every(i => m(4 - i, i))) return true;
+  // 5. Four Corners
+  if (m(0, 0) && m(4, 0) && m(0, 4) && m(4, 4)) return true;
+
+  return false;
+}
+
 function initSupabaseSession() {
   const storedUser = localStorage.getItem('supabase_bingo_player');
   if (storedUser) {
@@ -752,7 +897,8 @@ function initSupabaseSession() {
 
   const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
   if (!hasTelegramIdentity) {
-    document.getElementById('telegram-only-overlay').style.display = 'flex';
+    // Dev fallback if opened outside Telegram
+    registerUserToServer(`Player_${Math.floor(Math.random()*1000)}`, `09${Math.floor(10000000 + Math.random()*90000000)}`);
     return;
   }
 
@@ -780,7 +926,7 @@ function requestTelegramSecureContact() {
       }
     });
   } catch (e) {
-    toast("Telegram contact request failed. Please try again.");
+    toast("Telegram contact request failed.");
   }
 }
 
@@ -803,17 +949,9 @@ async function registerUserToServer(username, phone) {
 }
 
 function setupSocketEngine() {
-  if (socket) {
-    // If socket already exists, do not re-bind or recreate listeners to prevent leaks
-    return; 
-  } 
+  if (socket) return;
   
   socket = io(BACKEND_URL);
-
-  // Fallback explicit listener clean to guarantee clean pipelines
-  socket.off('room_tick');
-  socket.off('ball_drawn');
-  socket.off('opponent_victory');
 
   socket.on('room_tick', (data) => {
     const lobbyPill = document.getElementById('lobby-status-indicator');
@@ -835,8 +973,6 @@ function setupSocketEngine() {
           lobbyPlayersNote.textContent = data.participantCount < minPlayersToStart
             ? `Waiting for players: ${data.participantCount}/${minPlayersToStart} needed to start`
             : `${data.participantCount} players joined - starting soon`;
-        } else {
-          lobbyPlayersNote.textContent = '';
         }
       }
     } else {
@@ -845,16 +981,13 @@ function setupSocketEngine() {
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
       if (lobbyPlayersNote) lobbyPlayersNote.textContent = '';
       
-      // CATCH-UP LOGIC: Sync previously drawn ball historical states if re-joining ongoing rooms
       if (data.state === "playing" && data.drawnHistory && data.drawnHistory.length > 0) {
-      called = data.drawnHistory;
-      if (called.length > 0) {
-        const lastBall = called[called.length - 1];
-        processIncomingBallCall(lastBall, called);
+        called = data.drawnHistory;
+        if (called.length > 0) {
+          processIncomingBallCall(called[called.length - 1], called);
+        }
       }
-    }
-      // CRITICAL REJOIN FIX: If the player has already successfully registered to the database session,
-      // and they are currently inside the lobby view state, force auto-sync recovery immediately.
+
       if (userJoinedActiveRound && !isCurrentlyInGameRound) {
         isCurrentlyInGameRound = true;
         document.getElementById('gg').textContent = currentActiveGameRoundId;
@@ -871,7 +1004,7 @@ function setupSocketEngine() {
   });
 
   socket.on('opponent_victory', (data) => {
-    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount);
+    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount, data.isSplit);
   });
 }
 
@@ -882,29 +1015,21 @@ async function syncUserDatabaseState() {
     const data = await response.json();
     if (data) { 
       currentSupabaseUser = data; 
-      walletBalance = data.balance; 
+      mainBalance = Number(data.main_balance ?? data.balance ?? 0);
+      playBalance = Number(data.play_balance ?? 0);
+      totalBalance = mainBalance + playBalance;
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
       updateLocalWallets(); 
-      updateBannedBanner();
     }
   } catch (err) {}
 }
 
-function updateBannedBanner() {
-  const playBtn = document.querySelector('.play-btn');
-  const note = document.getElementById('lobby-players-note');
-  if (currentSupabaseUser && currentSupabaseUser.is_banned) {
-    if (playBtn) { playBtn.disabled = true; playBtn.style.opacity = '0.4'; playBtn.style.pointerEvents = 'none'; }
-    if (note) note.innerHTML = `<span style="color:var(--red); font-weight:800;">Your account has been suspended. Contact support for help.</span>`;
-  } else if (playBtn) {
-    playBtn.disabled = false; playBtn.style.opacity = ''; playBtn.style.pointerEvents = '';
-  }
-}
-
 function updateLocalWallets() {
-  document.getElementById('lobby-wal-bal').textContent = walletBalance;
-  document.getElementById('wall-main-val').textContent = walletBalance + ' ETB';
-  document.getElementById('prof-main-val').textContent = walletBalance + ' ETB';
+  document.getElementById('lobby-wal-bal').textContent = totalBalance + ' ETB';
+  document.getElementById('wall-main-val').textContent = mainBalance + ' ETB';
+  document.getElementById('wall-play-val').textContent = playBalance + ' ETB';
+  document.getElementById('prof-main-val').textContent = mainBalance + ' ETB';
+  document.getElementById('prof-play-val').textContent = playBalance + ' ETB';
   document.getElementById('prof-name-val').textContent = currentSupabaseUser?.username || '--';
   document.getElementById('prof-phone-val').textContent = currentSupabaseUser?.phone_number || '--';
 }
@@ -947,12 +1072,11 @@ function autoMarkCardBackground(cardNumber, valCalled) {
 }
 
 function checkAutoBingoBackground(cardNumber) {
+  const marked = cardNumber === 1 ? marked1 : marked2;
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
-  const card = genCard(selCard); const marked = cardNumber === 1 ? marked1 : marked2;
-  const m = (c,r) => marked.has(`${c}-${r}`) || card[c][r] === 0;
-  let won = false;
-  for(let i=0;i<5;i++){ if([0,1,2,3,4].every(j=>m(j,i)) || [0,1,2,3,4].every(j=>m(i,j))) { won=true; break; } }
-  if (won) claimBingo();
+  if (verifyWinningPattern(selCard, marked)) {
+    claimBingo();
+  }
 }
 
 function renderMasterBoard() {
@@ -991,16 +1115,13 @@ function markCell(cardNumber,key,c,r){
 }
 
 function claimBingo(){
-  const verifyCard = (cardNumber) => {
+  const checkCard = (cardNumber) => {
     const selCard = cardNumber === 1 ? selCard1 : selCard2; if(!selCard) return null;
-    const card=genCard(selCard); const marked = cardNumber === 1 ? marked1 : marked2;
-    const m = (c,r) => marked.has(`${c}-${r}`) || card[c][r] === 0;
-    for(let i=0; i<5; i++){
-      if([0,1,2,3,4].every(j=>m(j,i)) || [0,1,2,3,4].every(j=>m(i,j))) return { selCard };
-    }
+    const marked = cardNumber === 1 ? marked1 : marked2;
+    if (verifyWinningPattern(selCard, marked)) return { selCard };
     return null;
   };
-  const winningPlay = verifyCard(1) || verifyCard(2);
+  const winningPlay = checkCard(1) || checkCard(2);
   if(winningPlay && socket && currentSupabaseUser?.player_id) {
     socket.emit('claim_bingo', { player_id: currentSupabaseUser.player_id, cardNum: winningPlay.selCard });
   }
@@ -1034,34 +1155,29 @@ function buildVisualWinnerMatrixGrid(cardNum) {
   }
 }
 
-async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, payoutAmount) {
+async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, payoutAmount, isSplit) {
   isCurrentlyInGameRound = false;
   clearPendingRound();
 
   const isMe = !!(winnerPlayerId && currentSupabaseUser && String(winnerPlayerId) === String(currentSupabaseUser.player_id));
   if (isMe) {
-    // The server already credited the payout the moment it validated the win claim -
-    // just pull the authoritative balance rather than adding to it ourselves.
     await syncUserDatabaseState();
   }
 
   if (!winnerPlayerId) {
-    // Draw - all 75 numbers were called with no valid winner.
     document.getElementById('win-head').textContent = "No Winner This Round";
     document.getElementById('win-sub').textContent = "All 75 numbers were called with no bingo.";
     document.getElementById('win-grid').innerHTML = '';
   } else {
-    document.getElementById('win-head').textContent = isMe ? "🏆 You Won!" : "👑 Winner Declared!";
+    document.getElementById('win-head').textContent = isMe ? (isSplit ? "🏆 You Split the Win!" : "🏆 You Won!") : (isSplit ? "👑 Split Winners!" : "👑 Winner Declared!");
     document.getElementById('win-sub').textContent = isMe
-      ? `You won ${payoutAmount ?? ''} ETB with Cartela #${cardNum}!`
+      ? `You won ${payoutAmount ?? ''} ETB into your Main Wallet with Cartela #${cardNum}!`
       : `${winnerName} (Cartela #${cardNum})`;
     buildVisualWinnerMatrixGrid(cardNum);
   }
   
   document.getElementById('winner-popup').classList.add('active');
 
-  // Round is fully over now - clear the previous cartela/marks so the next
-  // card-picker screen and game screen both start clean.
   selCard1 = 117; selCard2 = null;
   marked1 = new Set(); marked2 = new Set();
   called = [];
@@ -1081,42 +1197,10 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, p
   }, 1000);
 }
 
-async function showPastRoundResultPopup(isWinner) {
-  if (isWinner) {
-    // The server already credited the payout when it validated the win claim -
-    // just pull the authoritative balance instead of crediting it again here.
-    await syncUserDatabaseState();
-  }
-
-  document.getElementById('win-head').textContent = isWinner ? "🏆 You Won!" : "Round Over";
-  document.getElementById('win-sub').textContent = isWinner
-    ? "That round finished while you were away — you won! Your balance has already been updated."
-    : "That round finished while you were away. Better luck in the next one!";
-  document.getElementById('win-grid').innerHTML = '';
-
-  const timerLabel = document.getElementById('win-timer');
-  timerLabel.textContent = "Tap Play 10 to join the next round";
-
-  document.getElementById('winner-popup').classList.add('active');
-
-  // Clear out the cartela/marks from the round that just concluded.
-  selCard1 = 117; selCard2 = null;
-  marked1 = new Set(); marked2 = new Set();
-  called = [];
-
-  if (winnerPopupInterval) clearInterval(winnerPopupInterval);
-  winnerPopupInterval = setTimeout(() => {
-    document.getElementById('winner-popup').classList.remove('active');
-  }, 4500);
-}
-
 function closeWinnerModal() {
   document.getElementById('winner-popup').classList.remove('active');
-  
-  // Hard reset before going back
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false;
-  
   navigateBackToLobbySafely();
 }
 
@@ -1124,12 +1208,9 @@ async function reconnectToRound(gameId, status) {
   userJoinedActiveRound = true;
   isCurrentlyInGameRound = true;
 
-  // Dynamic multi-card preservation extraction
   if (status.cards_list && status.cards_list.length > 0) {
     selCard1 = status.cards_list[0];
     selCard2 = status.cards_list.length > 1 ? status.cards_list[1] : null;
-  } else {
-    selCard2 = (status.cards_bought === 2) ? 118 : null;
   }
 
   setPendingRound(gameId);
@@ -1145,65 +1226,22 @@ async function joinGame(i) {
     toast("Please log in first");
     return;
   }
-  if (currentSupabaseUser.is_banned) {
-    toast("Your account has been suspended. Contact support for help.");
-    return;
-  }
-
   const pendingRoundId = getPendingRound();
-
-  // STEP 1: If we remember a round the player registered for, resolve it first.
   if (pendingRoundId) {
     try {
       const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${pendingRoundId}`);
       const status = await res.json();
-
-      if (pendingRoundId === currentActiveGameRoundId) {
-        // Same round still exists on the server (waiting or playing) -> take them back to it.
-        if (status && status.registered) {
-          await reconnectToRound(pendingRoundId, status);
-          return;
-        }
-        // Server has no record of it (shouldn't normally happen) - drop the stale memory.
-        clearPendingRound();
-      } else {
-        // The server has already moved on to a new round -> the remembered round is over.
-        clearPendingRound();
-        if (status && status.registered) {
-          showPastRoundResultPopup(status.is_winner);
-          return; // Let the player view the result, then tap Play again to join the next round.
-        }
+      if (pendingRoundId === currentActiveGameRoundId && status && status.registered) {
+        await reconnectToRound(pendingRoundId, status);
+        return;
       }
+      clearPendingRound();
     } catch (err) {
-      console.error("Error resolving pending round:", err);
       clearPendingRound();
     }
   }
 
-  // STEP 2: No unresolved round left to show. If a round is currently live and we
-  // somehow aren't registered for it locally, double-check with the server in case
-  // this device lost its memory (e.g. storage cleared) but the account is still in it.
-  if (globalGameStateServer === "playing" && currentActiveGameRoundId) {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${currentActiveGameRoundId}`);
-      const status = await res.json();
-
-      if (status && status.registered) {
-        await reconnectToRound(currentActiveGameRoundId, status);
-        return;
-      } else {
-        toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
-        return;
-      }
-    } catch (err) {
-      console.error("Error checking game state reconnection:", err);
-      toast("Reconnection handshake failed.");
-      return;
-    }
-  }
-
-  // Fallback default state path: Game is waiting, safe to pick new cards
-  document.getElementById('cpw').textContent = walletBalance;
+  document.getElementById('cpw').textContent = totalBalance;
   await loadTakenCards();
   renderCardGrid();
   goTo('cards');
@@ -1219,7 +1257,6 @@ async function loadTakenCards() {
   } catch (err) {
     takenCards = new Set();
   }
-  // Don't leave a now-taken card pre-selected.
   if (selCard1 && takenCards.has(selCard1)) selCard1 = null;
   if (selCard2 && takenCards.has(selCard2)) selCard2 = null;
   if (!selCard1 && selCard2) { selCard1 = selCard2; selCard2 = null; }
@@ -1246,7 +1283,7 @@ function renderCardGrid(){
 }
 
 function selectCard(n){
-  if (takenCards.has(n) && n !== selCard1 && n !== selCard2) return; // guard against a stale render
+  if (takenCards.has(n) && n !== selCard1 && n !== selCard2) return;
   if (selCard1 === n) { selCard1 = selCard2; selCard2 = null; }
   else if (selCard2 === n) { selCard2 = null; }
   else {
@@ -1285,11 +1322,8 @@ async function confirmJoin(){
 
   let count = selCard2 ? 2 : 1;
   const gameCost = selGame.bet * count;
-  if (walletBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
+  if (totalBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
 
-  // Register the participant server-side FIRST - the server validates the balance,
-  // deducts the entry fee itself, and confirms the round before we take any local
-  // action or enter the game screen. The client never decides or pushes a balance here.
   let createResult = null;
   try {
     const createRes = await fetch(`${BACKEND_URL}/api/games/create`, {
@@ -1312,26 +1346,16 @@ async function confirmJoin(){
     if (code === "insufficient_balance") {
       toast("የሂሳብ መጠንዎ በቂ አይደለም!");
     } else if (code === "already_registered") {
-      toast("You're already registered for this round - tap Play 10 to rejoin it.");
-    } else if (code === "card_taken") {
-      toast(`Cartela #${createResult.card} was just taken by someone else - pick another.`);
-      await loadTakenCards();
-      renderCardGrid();
-    } else if (code === "banned") {
-      toast("Your account has been suspended. Contact support for help.");
-    } else if (code === "round_not_open") {
-      toast("That round already started - please wait for the next one.");
+      toast("You're already registered for this round.");
     } else {
-      console.error("games/create failed:", createResult);
-      // Showing the raw backend error here temporarily so it's visible without
-      // opening dev tools while things are still being verified after deploy.
-      toast(code ? `Join failed: ${code}` : "Couldn't join the round, please try again.");
+      toast("Couldn't join the round, please try again.");
     }
     return;
   }
 
-  // Server already deducted the entry fee - just sync the real number it returned.
-  walletBalance = createResult.balance;
+  mainBalance = createResult.main_balance;
+  playBalance = createResult.play_balance;
+  totalBalance = createResult.balance;
   updateLocalWallets();
   userJoinedActiveRound = true;
   setPendingRound(currentActiveGameRoundId);
@@ -1342,22 +1366,15 @@ async function confirmJoin(){
 }
 
 function cancelRegistrationAndRefund() {
-  // No entry fee has been taken yet at this point (that only happens once
-  // Start Game is confirmed), so there's nothing to refund - just back out.
   userJoinedActiveRound = false;
   goTo('lobby');
 }
 
 function navigateBackToLobbySafely() {
-  // 1. Reset all state hooks so the background tick stops pulling you back in
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false;
-
-  // 2. Restore the navigation bar layout
   const globalNav = document.getElementById('global-nav-bar');
   if (globalNav) globalNav.style.display = 'flex';
-
-  // 3. Navigate smoothly back to the lobby screen
   goTo('lobby');
 }
 
@@ -1373,6 +1390,131 @@ function syncActiveGameScreenStructure() {
     container2.innerHTML = `<div class="empty-placeholder-unit">Slot 2 Empty</div>`;
   }
   renderMasterBoard(); renderGameCard(1); if(selCard2) renderGameCard(2);
+}
+
+// MODAL CONTROLS
+function openDepositModal() { document.getElementById('deposit-modal').style.display = 'flex'; }
+function closeDepositModal() { document.getElementById('deposit-modal').style.display = 'none'; }
+function openWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'flex'; }
+function closeWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'none'; }
+
+function copyToClipboard(text, msg) {
+  navigator.clipboard.writeText(text).then(() => {
+    toast(msg || "Copied to clipboard!");
+  }).catch(() => {
+    toast("Copied!");
+  });
+}
+
+// SUBMIT DEPOSIT REQUEST
+async function submitDepositRequest() {
+  if (!currentSupabaseUser) return;
+  const method = document.getElementById('dep-method').value;
+  const amount = Number(document.getElementById('dep-amount').value);
+  const reference_id = document.getElementById('dep-ref').value.trim();
+
+  if (!amount || amount <= 0 || !reference_id) {
+    toast("Please enter a valid amount and transaction reference number.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wallet/deposit-request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player_id: currentSupabaseUser.player_id, method, amount, reference_id })
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      toast("Deposit submitted! Admin will verify and credit your Main Wallet + 10% Play Bonus.");
+      closeDepositModal();
+      document.getElementById('dep-amount').value = '';
+      document.getElementById('dep-ref').value = '';
+    } else {
+      toast(data.error || "Deposit submission failed.");
+    }
+  } catch (err) {
+    toast("Network error submitting deposit.");
+  }
+}
+
+// SUBMIT WITHDRAWAL REQUEST (Min 100 ETB)
+async function submitWithdrawalRequest() {
+  if (!currentSupabaseUser) return;
+  const method = document.getElementById('wdr-method').value;
+  const account_number = document.getElementById('wdr-account').value.trim();
+  const account_name = document.getElementById('wdr-name').value.trim();
+  const amount = Number(document.getElementById('wdr-amount').value);
+
+  if (!amount || amount < 100) {
+    toast("Minimum withdrawal amount is 100 ETB.");
+    return;
+  }
+  if (!account_number) {
+    toast("Please enter your account / phone number.");
+    return;
+  }
+  if (amount > mainBalance) {
+    toast("Insufficient Main Wallet balance. Play Wallet bonus funds cannot be withdrawn.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wallet/withdraw-request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        player_id: currentSupabaseUser.player_id,
+        method, account_number, account_name, amount
+      })
+    });
+    const result = await res.json();
+    if (result && result.success) {
+      mainBalance = result.balances.main_balance;
+      playBalance = result.balances.play_balance;
+      totalBalance = result.balances.balance;
+      updateLocalWallets();
+      closeWithdrawModal();
+      document.getElementById('wdr-amount').value = '';
+      toast("Withdrawal requested! An admin will review and process your transfer.");
+      loadWithdrawals();
+    } else {
+      toast(result.message || result.error || "Withdrawal failed.");
+    }
+  } catch (err) {
+    toast("Network error requesting withdrawal.");
+  }
+}
+
+// REDEEM COUPON
+async function redeemCoupon() {
+  if (!currentSupabaseUser) return;
+  const input = document.getElementById('coupon-code-input');
+  const code = input.value.trim().toUpperCase();
+  if (!code) {
+    toast("Please enter a coupon code.");
+    return;
+  }
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wallet/redeem-coupon`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player_id: currentSupabaseUser.player_id, coupon_code: code })
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      mainBalance = data.balances.main_balance;
+      playBalance = data.balances.play_balance;
+      totalBalance = data.balances.balance;
+      updateLocalWallets();
+      input.value = '';
+      toast(`🎉 Coupon Redeemed! +${data.coupon_amount} ETB added to your Play Wallet!`);
+    } else {
+      toast(data.error || "Failed to redeem coupon.");
+    }
+  } catch (err) {
+    toast("Network error redeeming coupon.");
+  }
 }
 
 async function loadLeaderboard() {
@@ -1393,13 +1535,13 @@ async function loadLeaderboard() {
 async function loadHistory() {
   const container = document.getElementById('history-container-list');
   if(!currentSupabaseUser || !currentSupabaseUser.player_id) {
-    container.innerHTML = `<div class="wallet-card main">No historical cards matches found</div>`;
+    container.innerHTML = `<div class="wallet-card main">No historical matches found</div>`;
     return;
   }
   try {
     const res = await fetch(`${BACKEND_URL}/api/history/${currentSupabaseUser.player_id}`);
     const data = await res.json();
-    if(!data || !data.length) { container.innerHTML = `<div class="wallet-card main">No historical cards matches found</div>`; return; }
+    if(!data || !data.length) { container.innerHTML = `<div class="wallet-card main">No historical matches found</div>`; return; }
     container.innerHTML = data.map(g => `
       <div class="real-list-item">
         <div>
@@ -1409,7 +1551,30 @@ async function loadHistory() {
         <span style="color:${g.is_winner ? 'var(--teal)' : 'var(--red)'}; font-weight:bold;">${g.is_winner ? 'WON' : 'DONE'}</span>
       </div>
     `).join('');
-  } catch(e) { container.innerHTML = `<div class="wallet-card main">Failed to load play data logs</div>`; }
+  } catch(e) { container.innerHTML = `<div class="wallet-card main">Failed to load history</div>`; }
+}
+
+async function loadWithdrawals() {
+  const container = document.getElementById('withdrawals-list-container');
+  if (!container || !currentSupabaseUser) return;
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/wallet/withdrawals/${currentSupabaseUser.player_id}`);
+    const data = await res.json();
+    if (!data || !data.length) {
+      container.innerHTML = '';
+      return;
+    }
+    const statusColor = { pending: 'var(--gold)', approved: 'var(--teal)', rejected: 'var(--red)' };
+    container.innerHTML = data.map(w => `
+      <div class="real-list-item">
+        <div>
+          <div style="font-size:12px; font-weight:bold;">${w.amount} ETB (${w.method})</div>
+          <div style="font-size:10px; color:var(--nav-gray);">${new Date(w.requested_at).toLocaleString()}</div>
+        </div>
+        <span style="color:${statusColor[w.status] || '#fff'}; font-weight:bold; text-transform:uppercase; font-size:11px;">${w.status}</span>
+      </div>
+    `).join('');
+  } catch (err) { container.innerHTML = ''; }
 }
 
 function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; }
@@ -1431,69 +1596,8 @@ function goTo(n){
   if(targetNav) targetNav.classList.add('active');
   
   if (n === 'scores') loadLeaderboard();
-  if (n === 'history') loadHistory();
+  if (n === 'profile') loadHistory();
   if (n === 'wallet') loadWithdrawals();
-}
-
-async function requestWithdrawal() {
-  if (!currentSupabaseUser) return;
-  const input = document.getElementById('withdraw-amount-input');
-  const amount = Number(input.value);
-  if (!amount || amount <= 0) {
-    toast("Enter a valid amount to withdraw.");
-    return;
-  }
-  if (amount > walletBalance) {
-    toast("You can't withdraw more than your current balance.");
-    return;
-  }
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/wallet/withdraw-request`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id: currentSupabaseUser.player_id, amount })
-    });
-    const result = await res.json();
-    if (result && result.success) {
-      walletBalance = result.balance;
-      updateLocalWallets();
-      input.value = '';
-      toast("Withdrawal requested - an admin will review it shortly.");
-      loadWithdrawals();
-    } else {
-      const code = result && result.error;
-      if (code === "insufficient_balance") toast("Insufficient balance.");
-      else if (code === "banned") toast("Your account has been suspended.");
-      else toast(code ? `Request failed: ${code}` : "Withdrawal request failed, please try again.");
-    }
-  } catch (err) {
-    toast("Network error - please try again.");
-  }
-}
-
-async function loadWithdrawals() {
-  const container = document.getElementById('withdrawals-list-container');
-  if (!container || !currentSupabaseUser) return;
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/wallet/withdrawals/${currentSupabaseUser.player_id}`);
-    const data = await res.json();
-    if (!data || !data.length) {
-      container.innerHTML = '';
-      return;
-    }
-    const statusColor = { pending: 'var(--gold)', approved: 'var(--teal)', rejected: 'var(--red)' };
-    container.innerHTML = data.map(w => `
-      <div class="real-list-item">
-        <div>
-          <div style="font-size:12px; font-weight:bold;">${w.amount} ETB</div>
-          <div style="font-size:10px; color:var(--nav-gray);">${new Date(w.requested_at).toLocaleString()}</div>
-        </div>
-        <span style="color:${statusColor[w.status] || '#fff'}; font-weight:bold; text-transform:uppercase; font-size:11px;">${w.status}</span>
-      </div>
-    `).join('');
-  } catch (err) {
-    container.innerHTML = '';
-  }
 }
 
 initSupabaseSession();

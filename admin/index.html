@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Fast Bingo - Admin</title>
+<title>Fast Bingo - Admin Dashboard</title>
 <style>
 :root {
   --gold: #ffbd14; --teal: #0fc082; --bg-dark: #090d16; --card: #111726;
@@ -21,9 +21,9 @@ h1 { font-size: 22px; font-weight: 900; color: var(--gold); margin-bottom: 4px; 
   max-width: 360px; margin: 80px auto; background: var(--card); border: 1px solid var(--card2);
   border-radius: 16px; padding: 24px; text-align: center;
 }
-.login-card input {
-  width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--card3);
-  background: var(--card2); color: #fff; margin-top: 12px; font-size: 14px;
+.login-card input, input, select {
+  width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--card3);
+  background: var(--card2); color: #fff; margin-top: 6px; font-size: 14px;
 }
 button {
   background: var(--teal); color: #fff; font-weight: 700; font-size: 13px; border: none;
@@ -46,15 +46,12 @@ tr:last-child td { border-bottom: none; }
 .pill.pending { background: rgba(255,189,20,0.15); color: var(--gold); }
 .pill.approved, .pill.won { background: rgba(15,192,130,0.15); color: var(--teal); }
 .pill.rejected, .pill.banned { background: rgba(255,59,48,0.15); color: var(--red); }
+.pill.duplicate { background: rgba(255,59,48,0.3); color: #ff6b6b; border: 1px solid var(--red); }
 .row-actions { display: flex; gap: 6px; }
 .credit-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.credit-form input {
-  padding: 9px; border-radius: 8px; border: 1px solid var(--card3); background: var(--card2); color: #fff; font-size: 13px;
-}
+.credit-form input, .credit-form select { flex: 1; min-width: 130px; margin-top: 0; }
 .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
-.search-row input {
-  flex: 1; padding: 9px; border-radius: 8px; border: 1px solid var(--card3); background: var(--card2); color: #fff; font-size: 13px;
-}
+.search-row input { flex: 1; margin-top: 0; }
 .empty { color: var(--nav-gray); font-size: 12px; padding: 10px 0; }
 .refresh-note { font-size: 11px; color: var(--nav-gray); margin-bottom: 10px; }
 </style>
@@ -64,58 +61,81 @@ tr:last-child td { border-bottom: none; }
 <div id="login-screen" class="login-card">
   <div style="font-size:28px; margin-bottom:8px;">🔐</div>
   <div style="font-weight:900; font-size:18px; color:var(--gold);">Fast Bingo Admin</div>
-  <input type="password" id="admin-secret-input" placeholder="Admin secret">
+  <input type="password" id="admin-secret-input" placeholder="Admin secret (or leave default)">
   <button style="width:100%; margin-top:14px;" onclick="login()">Sign in</button>
   <div id="login-error" style="color:var(--red); font-size:12px; margin-top:10px;"></div>
 </div>
 
 <div id="dashboard" class="wrap" style="display:none;">
-  <h1>Fast Bingo Admin</h1>
-  <div class="sub">Live round status, players, transactions, and withdrawal approvals.</div>
+  <h1>Fast Bingo Admin Control</h1>
+  <div class="sub">Manage deposits (10% bonus auto-added), withdrawals, player coupons & round state.</div>
 
   <div class="grid" id="overview-grid"></div>
 
+  <!-- DEPOSIT APPROVALS -->
   <section>
-    <h2>Withdrawal Requests</h2>
-    <div class="refresh-note">Approve only after you've actually sent the player their money outside the app.</div>
+    <h2>Pending Deposit Requests</h2>
+    <div class="refresh-note">Approving a deposit automatically adds the amount to Main Wallet + 10% bonus to Play Wallet.</div>
+    <div id="deposits-table"></div>
+  </section>
+
+  <!-- WITHDRAWAL APPROVALS -->
+  <section>
+    <h2>Withdrawal Requests (Min 100 ETB)</h2>
+    <div class="refresh-note">Confirm you have transferred money via Telebirr/CBE before approving. Rejecting refunds held Main Wallet.</div>
     <div id="withdrawals-table"></div>
   </section>
 
+  <!-- COUPON MANAGER -->
   <section>
-    <h2>Manually Credit a Player (deposit confirmation)</h2>
-    <div class="refresh-note">Use this after confirming a real payment (e.g. a telebirr receipt) outside the app.</div>
+    <h2>Coupon Generator</h2>
+    <div class="refresh-note">Create promo coupon codes to grant free Play Wallet money for players.</div>
+    <div class="credit-form">
+      <input type="text" id="cp-code" placeholder="Coupon Code (e.g. BINGO20)">
+      <input type="number" id="cp-amount" placeholder="Bonus Amount (ETB)">
+      <input type="number" id="cp-max" placeholder="Max Redemptions" value="100">
+      <button onclick="createCoupon()">Create Coupon</button>
+    </div>
+    <div id="coupons-table" style="margin-top: 14px;"></div>
+  </section>
+
+  <!-- MANUAL CREDIT PLAYER -->
+  <section>
+    <h2>Manually Credit a Player</h2>
     <div class="credit-form">
       <input type="text" id="credit-player-id" placeholder="player_id">
-      <input type="number" id="credit-amount" placeholder="Amount (ETB)" style="width:140px;">
-      <input type="text" id="credit-notes" placeholder="Notes (optional)" style="flex:1; min-width:160px;">
-      <button onclick="creditPlayer()">Credit</button>
+      <input type="number" id="credit-amount" placeholder="Amount (ETB)">
+      <select id="credit-wallet-type">
+        <option value="main">Main Wallet (Withdrawable)</option>
+        <option value="play">Play Wallet (Bonus)</option>
+      </select>
+      <input type="text" id="credit-notes" placeholder="Notes / Reference">
+      <button onclick="creditPlayer()">Credit Player</button>
     </div>
   </section>
 
+  <!-- PLAYER LIST -->
   <section>
-    <h2>Players</h2>
+    <h2>Registered Players</h2>
     <div class="search-row">
-      <input type="text" id="player-search" placeholder="Search by username, phone, or player_id" onkeydown="if(event.key==='Enter') loadPlayers()">
+      <input type="text" id="player-search" placeholder="Search username, phone, or player_id" onkeydown="if(event.key==='Enter') loadPlayers()">
       <button class="secondary" onclick="loadPlayers()">Search</button>
     </div>
     <div id="players-table"></div>
   </section>
 
+  <!-- TRANSACTIONS LEDGER -->
   <section>
-    <h2>Recent Transactions</h2>
+    <h2>Recent Transactions Ledger</h2>
     <div id="transactions-table"></div>
   </section>
 </div>
 
 <script>
-const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000'
-  : 'https://fast-bingo-backend.onrender.com';
-
-let adminSecret = sessionStorage.getItem('fastbingo_admin_secret') || '';
+let adminSecret = sessionStorage.getItem('fastbingo_admin_secret') || 'admin';
 
 async function api(path, options = {}) {
-  const res = await fetch(`${BACKEND_URL}${path}`, {
+  const res = await fetch(path, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -129,8 +149,8 @@ async function api(path, options = {}) {
 }
 
 async function login() {
-  adminSecret = document.getElementById('admin-secret-input').value.trim();
-  if (!adminSecret) return;
+  const val = document.getElementById('admin-secret-input').value.trim();
+  if (val) adminSecret = val;
   try {
     await api('/api/admin/overview');
     sessionStorage.setItem('fastbingo_admin_secret', adminSecret);
@@ -138,15 +158,18 @@ async function login() {
     document.getElementById('dashboard').style.display = 'block';
     refreshAll();
     setInterval(refreshOverview, 4000);
-    setInterval(loadWithdrawals, 8000);
+    setInterval(loadDeposits, 6000);
+    setInterval(loadWithdrawals, 6000);
   } catch (err) {
-    document.getElementById('login-error').textContent = 'Incorrect secret, or the server is unreachable.';
+    document.getElementById('login-error').textContent = 'Incorrect secret or server issue.';
   }
 }
 
 function refreshAll() {
   refreshOverview();
+  loadDeposits();
   loadWithdrawals();
+  loadCoupons();
   loadPlayers();
   loadTransactions();
 }
@@ -159,69 +182,133 @@ async function refreshOverview() {
       <div class="stat-card"><div class="stat-lbl">Round State</div><div class="stat-val" style="color:${stateColor};">${o.state.toUpperCase()}</div></div>
       <div class="stat-card"><div class="stat-lbl">Round ID</div><div class="stat-val">${o.game_id}</div></div>
       <div class="stat-card"><div class="stat-lbl">Timer</div><div class="stat-val">${o.timeRemaining}s</div></div>
-      <div class="stat-card"><div class="stat-lbl">Players in round</div><div class="stat-val">${o.participantCount} <span style="font-size:11px; color:var(--nav-gray);">(min ${o.minPlayersToStart})</span></div></div>
+      <div class="stat-card"><div class="stat-lbl">Players Joined</div><div class="stat-val">${o.participantCount} / min ${o.minPlayersToStart}</div></div>
       <div class="stat-card"><div class="stat-lbl">Pot</div><div class="stat-val">${o.pot} ETB</div></div>
-      <div class="stat-card"><div class="stat-lbl">Payout if won now</div><div class="stat-val" style="color:var(--gold);">${o.potentialPayout} ETB</div></div>
-      <div class="stat-card"><div class="stat-lbl">Balls drawn</div><div class="stat-val">${o.drawnBallsHistory.length} / 75</div></div>
+      <div class="stat-card"><div class="stat-lbl">Payout (80%)</div><div class="stat-val" style="color:var(--gold);">${o.potentialPayout} ETB</div></div>
     `;
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
+}
+
+async function loadDeposits() {
+  try {
+    const list = await api('/api/admin/deposits');
+    const container = document.getElementById('deposits-table');
+    const pending = list.filter(d => d.status === 'pending');
+    if (!pending.length) { container.innerHTML = '<div class="empty">No pending deposit requests.</div>'; return; }
+    container.innerHTML = `<table>
+      <tr><th>Player ID</th><th>Method</th><th>Amount</th><th>Ref No</th><th>Duplicate Flag</th><th>Actions</th></tr>
+      ${pending.map(d => `
+        <tr>
+          <td>${d.player_id}</td>
+          <td><b>${d.method}</b></td>
+          <td>${d.amount} ETB (+${Math.floor(d.amount*0.1)} bonus)</td>
+          <td><code>${d.reference_id}</code></td>
+          <td>${d.is_duplicate ? '<span class="pill duplicate">⚠️ DUPLICATE REF</span>' : '<span class="pill approved">CLEAR</span>'}</td>
+          <td class="row-actions">
+            <button onclick="approveDeposit(${d.id})">Approve (+10% Bonus)</button>
+            <button class="danger" onclick="rejectDeposit(${d.id})">Reject</button>
+          </td>
+        </tr>`).join('')}
+    </table>`;
+  } catch (err) { console.error(err); }
+}
+
+async function approveDeposit(id) {
+  try {
+    await api(`/api/admin/deposits/${id}/approve`, { method: 'POST' });
+    alert("Deposit approved! Added amount to Main Wallet + 10% bonus to Play Wallet.");
+    loadDeposits(); loadTransactions(); loadPlayers();
+  } catch (e) { alert(e.message); }
+}
+
+async function rejectDeposit(id) {
+  try {
+    await api(`/api/admin/deposits/${id}/reject`, { method: 'POST' });
+    loadDeposits();
+  } catch (e) { alert(e.message); }
 }
 
 async function loadWithdrawals() {
   try {
-    const list = await api('/api/admin/withdrawals?status=pending');
+    const list = await api('/api/admin/withdrawals');
     const container = document.getElementById('withdrawals-table');
-    if (!list.length) { container.innerHTML = '<div class="empty">No pending withdrawal requests.</div>'; return; }
+    const pending = list.filter(w => w.status === 'pending');
+    if (!pending.length) { container.innerHTML = '<div class="empty">No pending withdrawal requests.</div>'; return; }
     container.innerHTML = `<table>
-      <tr><th>Player ID</th><th>Amount</th><th>Requested</th><th>Actions</th></tr>
-      ${list.map(w => `
+      <tr><th>Player ID</th><th>Method</th><th>Account / Phone</th><th>Name</th><th>Amount</th><th>Actions</th></tr>
+      ${pending.map(w => `
         <tr>
           <td>${w.player_id}</td>
-          <td>${w.amount} ETB</td>
-          <td>${new Date(w.requested_at).toLocaleString()}</td>
+          <td><b>${w.method}</b></td>
+          <td><code>${w.account_number}</code></td>
+          <td>${w.account_name || '-'}</td>
+          <td style="color:var(--gold); font-weight:bold;">${w.amount} ETB</td>
           <td class="row-actions">
-            <button onclick="resolveWithdrawal(${w.id}, 'approve')">Approve</button>
-            <button class="danger" onclick="resolveWithdrawal(${w.id}, 'reject')">Reject</button>
+            <button onclick="resolveWithdrawal(${w.id}, 'approve')">Approve (Paid Out)</button>
+            <button class="danger" onclick="resolveWithdrawal(${w.id}, 'reject')">Reject (Refund)</button>
           </td>
         </tr>`).join('')}
     </table>`;
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 async function resolveWithdrawal(id, action) {
-  if (action === 'approve' && !confirm('Confirm you have already sent this player their money outside the app?')) return;
+  if (action === 'approve' && !confirm('Have you actually transferred the funds outside the app?')) return;
   try {
     await api(`/api/admin/withdrawals/${id}/${action}`, { method: 'POST' });
-    loadWithdrawals();
-    loadTransactions();
-  } catch (err) {
-    alert(err.message);
-  }
+    loadWithdrawals(); loadTransactions(); loadPlayers();
+  } catch (err) { alert(err.message); }
+}
+
+async function createCoupon() {
+  const code = document.getElementById('cp-code').value.trim();
+  const bonus_amount = Number(document.getElementById('cp-amount').value);
+  const max_uses = Number(document.getElementById('cp-max').value);
+  if (!code || !bonus_amount) { alert("Code and bonus amount required."); return; }
+  try {
+    await api('/api/admin/coupons/create', {
+      method: 'POST',
+      body: JSON.stringify({ code, bonus_amount, max_uses })
+    });
+    alert(`Coupon ${code} created successfully!`);
+    document.getElementById('cp-code').value = '';
+    document.getElementById('cp-amount').value = '';
+    loadCoupons();
+  } catch (e) { alert(e.message); }
+}
+
+async function loadCoupons() {
+  try {
+    const list = await api('/api/admin/coupons');
+    const container = document.getElementById('coupons-table');
+    if (!list.length) { container.innerHTML = '<div class="empty">No coupons active.</div>'; return; }
+    container.innerHTML = `<table>
+      <tr><th>Code</th><th>Bonus (Play Wallet)</th><th>Redemptions</th><th>Status</th></tr>
+      ${list.map(c => `
+        <tr>
+          <td><code><b>${c.code}</b></code></td>
+          <td>${c.bonus_amount} ETB</td>
+          <td>${c.used_count} / ${c.max_uses}</td>
+          <td><span class="pill approved">Active</span></td>
+        </tr>`).join('')}
+    </table>`;
+  } catch (e) {}
 }
 
 async function creditPlayer() {
   const player_id = document.getElementById('credit-player-id').value.trim();
   const amount = Number(document.getElementById('credit-amount').value);
+  const wallet_type = document.getElementById('credit-wallet-type').value;
   const notes = document.getElementById('credit-notes').value.trim();
-  if (!player_id || !amount) { alert('player_id and a non-zero amount are required.'); return; }
+  if (!player_id || !amount) { alert('player_id and amount required.'); return; }
   try {
-    const result = await api('/api/admin/credit-player', {
+    const res = await api('/api/admin/credit-player', {
       method: 'POST',
-      body: JSON.stringify({ player_id, amount, notes }),
+      body: JSON.stringify({ player_id, amount, wallet_type, notes }),
     });
-    alert(`Credited. New balance: ${result.balance} ETB`);
-    document.getElementById('credit-player-id').value = '';
-    document.getElementById('credit-amount').value = '';
-    document.getElementById('credit-notes').value = '';
-    loadTransactions();
-    loadPlayers();
-  } catch (err) {
-    alert(err.message);
-  }
+    alert(`Credited! Total Balance: ${res.balances.balance} ETB (Main: ${res.balances.main_balance}, Play: ${res.balances.play_balance})`);
+    loadTransactions(); loadPlayers();
+  } catch (err) { alert(err.message); }
 }
 
 async function loadPlayers() {
@@ -231,13 +318,15 @@ async function loadPlayers() {
     const container = document.getElementById('players-table');
     if (!list.length) { container.innerHTML = '<div class="empty">No players found.</div>'; return; }
     container.innerHTML = `<table>
-      <tr><th>Player ID</th><th>Username</th><th>Phone</th><th>Balance</th><th>Status</th><th>Actions</th></tr>
+      <tr><th>Player ID</th><th>Username</th><th>Phone</th><th>Main Wallet</th><th>Play Wallet</th><th>Total</th><th>Status</th><th>Actions</th></tr>
       ${list.map(p => `
         <tr>
           <td>${p.player_id}</td>
           <td>${p.username || '-'}</td>
           <td>${p.phone_number || '-'}</td>
-          <td>${p.balance} ETB</td>
+          <td>${p.main_balance ?? p.balance} ETB</td>
+          <td>${p.play_balance ?? 0} ETB</td>
+          <td><b>${p.balance} ETB</b></td>
           <td><span class="pill ${p.is_banned ? 'banned' : 'won'}">${p.is_banned ? 'Banned' : 'Active'}</span></td>
           <td class="row-actions">
             ${p.is_banned
@@ -246,46 +335,37 @@ async function loadPlayers() {
           </td>
         </tr>`).join('')}
     </table>`;
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 async function toggleBan(player_id, ban) {
-  const label = ban ? 'ban' : 'unban';
-  if (!confirm(`Are you sure you want to ${label} player ${player_id}?`)) return;
+  if (!confirm(`Are you sure you want to ${ban ? 'ban' : 'unban'} player ${player_id}?`)) return;
   try {
     await api(`/api/admin/players/${player_id}/${ban ? 'ban' : 'unban'}`, { method: 'POST' });
     loadPlayers();
-  } catch (err) {
-    alert(err.message);
-  }
+  } catch (err) { alert(err.message); }
 }
 
 async function loadTransactions() {
   try {
     const list = await api('/api/admin/transactions?limit=100');
     const container = document.getElementById('transactions-table');
-    if (!list.length) { container.innerHTML = '<div class="empty">No transactions yet.</div>'; return; }
+    if (!list.length) { container.innerHTML = '<div class="empty">No transactions logged yet.</div>'; return; }
     container.innerHTML = `<table>
-      <tr><th>Time</th><th>Player</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Round</th><th>Notes</th></tr>
+      <tr><th>Time</th><th>Player</th><th>Type</th><th>Amount</th><th>Balance After</th><th>Notes</th></tr>
       ${list.map(t => `
         <tr>
           <td>${new Date(t.created_at).toLocaleString()}</td>
           <td>${t.player_id}</td>
-          <td>${t.type}</td>
-          <td style="color:${t.amount > 0 ? 'var(--teal)' : t.amount < 0 ? 'var(--red)' : '#fff'};">${t.amount > 0 ? '+' : ''}${t.amount}</td>
+          <td><b>${t.type}</b></td>
+          <td style="color:${t.amount > 0 ? 'var(--teal)' : 'var(--red)'};">${t.amount > 0 ? '+' : ''}${t.amount} ETB</td>
           <td>${t.balance_after ?? '-'}</td>
-          <td>${t.game_id || '-'}</td>
           <td>${t.notes || ''}</td>
         </tr>`).join('')}
     </table>`;
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
-// Auto-login if a secret was already saved this session
 if (adminSecret) {
   document.getElementById('admin-secret-input').value = adminSecret;
   login();

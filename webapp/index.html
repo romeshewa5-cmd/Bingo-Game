@@ -498,6 +498,32 @@ input:checked + .slider:before { transform: translateX(18px); }
   </div>
 </div>
 
+<!-- TELEGRAM GROUP JOIN BONUS OVERLAY -->
+<div id="tg-group-bonus-overlay" class="auth-overlay" style="display: none;">
+  <div class="auth-card" style="max-width: 360px; text-align: center; border: 2px solid var(--gold);">
+    <div style="font-size: 38px; margin-bottom: 6px;">📢</div>
+    <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 6px;">ተጨማሪ 10 ETB ቦነስ ያግኙ!</div>
+    <div style="font-size: 12px; color: #fff; line-height: 1.6; margin-bottom: 14px; background: rgba(255, 189, 20, 0.1); padding: 12px; border-radius: 12px; border-left: 3px solid var(--gold);">
+      የቴሌግራም ግሩፓችንን በመቀላቀል ተጨማሪ <b>10 ETB</b> ቦነስ ያግኙ! (በአጠቃላይ <b>20 ETB</b> ቦነስ በጨዋታ ቦርሳዎ ይገባል)
+    </div>
+
+    <!-- BUTTON TO JOIN TELEGRAM GROUP -->
+    <button id="tg-group-join-btn" class="auth-btn" style="background: #0088cc; color: #fff; font-weight: 800; margin-bottom: 10px;" onclick="handleTgGroupClick()">
+      ✈️ የቴሌግራም ግሩፕ ይቀላቀሉ (Join Group)
+    </button>
+
+    <!-- VERIFY & CLAIM BUTTON -->
+    <button id="tg-verify-claim-btn" class="auth-btn" style="background: var(--teal); color: #000; font-weight: 900; font-size: 14px; margin-bottom: 8px;" onclick="verifyAndClaimTgBonus()">
+      ✅ አረጋግጥ እና ቦነስ ተቀበል
+    </button>
+
+    <!-- SKIP BUTTON -->
+    <div style="font-size: 11px; color: var(--nav-gray); cursor: pointer; text-decoration: underline; margin-top: 8px;" onclick="skipTgBonusAndEnter()">
+      አልፈልግም፣ በ10 ETB ብቻ ቀጥል (Skip)
+    </div>
+  </div>
+</div>
+
 <!-- DEPOSIT MODAL POPUP -->
 <div id="deposit-modal" class="modal-overlay" style="display: none;">
   <div class="modal-card">
@@ -858,13 +884,15 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 <script>
 const BACKEND_URL = window.location.origin;
+const TELEGRAM_GROUP_LINK = "https://t.me/+0DKjQu1B3K9hN2Rk"; // Customize your Telegram group link here!
 
 let socket = null;
 const tgApp = window.Telegram?.WebApp;
+let userClickedTgGroupLink = false;
 
 let mainBalance = 0;
-let playBalance = 20; // Default 20 Birr Signup Bonus!
-let totalBalance = 20;
+let playBalance = 10; // Base 10 Birr Signup Bonus!
+let totalBalance = 10;
 
 let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
@@ -962,54 +990,48 @@ function initSupabaseSession() {
 function requestTelegramSecureContact() {
   const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
   if (!hasTelegramIdentity) {
-    document.getElementById('auth-overlay').style.display = 'none';
-    document.getElementById('telegram-only-overlay').style.display = 'flex';
+    // Fallback registration if testing in web browser outside Telegram
+    registerUserToServer(`Player_${Math.floor(Math.random()*1000)}`, `09${Math.floor(10000000 + Math.random()*90000000)}`);
     return;
   }
 
-  try {
-    const tgUser = tgApp.initDataUnsafe.user;
-    const username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || `tg_${tgUser.id}`;
+  const tgUser = tgApp.initDataUnsafe.user;
+  const username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || `tg_${tgUser.id}`;
 
+  try {
     tgApp.requestContact((shared, res) => {
-      // In Telegram WebApp SDK, requestContact callback gets (sent: boolean, res: object)
       const isApproved = shared === true || shared === 'true' || (shared && typeof shared === 'object') || (res && typeof res === 'object');
       
-      if (isApproved) {
-        let phone = null;
-        if (typeof shared === 'object' && shared) {
-          phone = shared.phone_number || (shared.contact && shared.contact.phone_number) || (shared.response && shared.response.phone_number);
-        }
-        if (!phone && typeof res === 'object' && res) {
-          phone = res.phone_number || (res.contact && res.contact.phone_number) || (res.response && res.response.phone_number);
-        }
-        if (!phone && tgUser.phone_number) {
-          phone = tgUser.phone_number;
-        }
-        // If phone is not passed directly as a string, format a unique valid phone string from verified Telegram User ID
-        if (!phone) {
-          const idStr = String(tgUser.id);
-          phone = '09' + idStr.padStart(8, '0').slice(-8);
-        }
-        
-        registerUserToServer(username, phone);
-      } else {
-        toast("እባክዎ ለመጫወት ስልክ ቁጥርዎን ያጋሩ");
+      let phone = null;
+      if (typeof shared === 'object' && shared) {
+        phone = shared.phone_number || (shared.contact && shared.contact.phone_number) || (shared.response && shared.response.phone_number);
       }
+      if (!phone && typeof res === 'object' && res) {
+        phone = res.phone_number || (res.contact && res.contact.phone_number) || (res.response && res.response.phone_number);
+      }
+      if (!phone && tgUser.phone_number) {
+        phone = tgUser.phone_number;
+      }
+      if (!phone) {
+        const idStr = String(tgUser.id);
+        phone = '09' + idStr.padStart(8, '0').slice(-8);
+      }
+      
+      registerUserToServer(username, phone);
     });
   } catch (e) {
-    const tgUser = tgApp.initDataUnsafe && tgApp.initDataUnsafe.user;
-    if (tgUser) {
-      const username = tgUser.username || tgUser.first_name || `tg_${tgUser.id}`;
-      const phone = tgUser.phone_number || ('09' + String(tgUser.id).padStart(8, '0').slice(-8));
-      registerUserToServer(username, phone);
-    } else {
-      toast("Telegram contact request failed.");
-    }
+    const phone = tgUser.phone_number || ('09' + String(tgUser.id).padStart(8, '0').slice(-8));
+    registerUserToServer(username, phone);
   }
 }
 
 async function registerUserToServer(username, phone) {
+  const submitBtn = document.getElementById('main-auth-submit-btn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'በመመዝገብ ላይ...';
+  }
+
   try {
     const referrerId = localStorage.getItem('bingo_referrer_id') || '';
     const response = await fetch(`${BACKEND_URL}/api/register`, {
@@ -1017,19 +1039,83 @@ async function registerUserToServer(username, phone) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, phone_number: phone, referrer_id: referrerId })
     });
+    
+    if (!response.ok) {
+      const errTxt = await response.text();
+      let errJson = {};
+      try { errJson = JSON.parse(errTxt); } catch (e) {}
+      throw new Error(errJson.error || `Server error ${response.status}`);
+    }
+
     const result = await response.json();
     if (result && result.user && result.user.player_id) {
       currentSupabaseUser = result.user;
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
       document.getElementById('auth-overlay').style.display = 'none';
+      
       syncUserDatabaseState();
       setupSocketEngine();
+
+      // Show Telegram Group bonus overlay if new user or bonus not yet claimed
+      if (result.isNew || !result.user.tg_bonus_claimed) {
+        document.getElementById('tg-group-bonus-overlay').style.display = 'flex';
+      }
     } else {
       toast(result.error || "ለጊዜው መመዝገብ አልተቻለም");
     }
   } catch (err) {
-    toast("Network connection failed");
+    console.error("registerUserToServer error:", err);
+    toast(err.message || "Network connection failed");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'ስልክ ቁጥርዎን ያጋሩ';
+    }
   }
+}
+
+function handleTgGroupClick() {
+  userClickedTgGroupLink = true;
+  if (tgApp && tgApp.openTelegramLink) {
+    tgApp.openTelegramLink(TELEGRAM_GROUP_LINK);
+  } else {
+    window.open(TELEGRAM_GROUP_LINK, '_blank');
+  }
+}
+
+async function verifyAndClaimTgBonus() {
+  if (!userClickedTgGroupLink) {
+    toast("እባክዎ መጀመሪያ 'የቴሌግራም ግሩፕ ይቀላቀሉ' የሚለውን ይጫኑ!");
+    return;
+  }
+  if (!currentSupabaseUser || !currentSupabaseUser.player_id) {
+    document.getElementById('tg-group-bonus-overlay').style.display = 'none';
+    return;
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/claim-telegram-bonus`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ player_id: currentSupabaseUser.player_id })
+    });
+    const result = await response.json();
+    if (result && result.user) {
+      currentSupabaseUser = result.user;
+      localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+      updateLocalWallets();
+      toast("🎉 10 ETB ተጨማሪ ቦነስ ተጨምሯል! በአጠቃላይ 20 ETB!");
+    }
+  } catch (e) {
+    console.error("Claim bonus error:", e);
+  } finally {
+    document.getElementById('tg-group-bonus-overlay').style.display = 'none';
+  }
+}
+
+function skipTgBonusAndEnter() {
+  document.getElementById('tg-group-bonus-overlay').style.display = 'none';
+  toast("በ 10 ETB ቦነስ ቀጥለዋል!");
 }
 
 function setupSocketEngine() {

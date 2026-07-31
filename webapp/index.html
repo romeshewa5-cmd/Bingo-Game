@@ -710,7 +710,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       <button class="play-btn" onclick="joinGame(0)">
         <span>▶</span> PLAY 10
       </button>
-      <div id="lobby-status-indicator" class="lobby-status-pill waiting">Waiting (40s)</div>
+      <div id="lobby-status-indicator" class="lobby-status-pill waiting">Connecting...</div>
     </div>
     <div id="lobby-players-note" style="font-size:11px; color:var(--nav-gray); margin-top:10px;"></div>
     
@@ -902,7 +902,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
-        <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting (40s)</div>
+        <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting...</div>
       </div>
     </div>
   </div>
@@ -981,8 +981,11 @@ input:checked + .slider:before { transform: translateX(18px); }
 </div>
 
 <script>
-const BACKEND_URL = ""; // Relative path to current host prevents CORS and 405 Method Not Allowed
+// Backend runs as a SEPARATE Render service - must be the full https URL, no trailing slash.
+// Leave as "" only if one service serves both this page and the API.
+const BACKEND_URL = "https://fast-bingo-backend.onrender.com";
 const TELEGRAM_GROUP_LINK = "https://t.me/+0DKjQu1B3K9hN2Rk"; // Customize your Telegram group link here!
+const BOT_USERNAME = "Fastbing_bot"; // <-- set this (no @) so the phone-share fallback works
 
 let socket = null;
 const tgApp = window.Telegram?.WebApp;
@@ -1004,7 +1007,23 @@ let cardCache = {};
 let isAutoMode = false;
 let currentActiveGameRoundId = null;
 let winnerPopupInterval = null;
-let isProcessingBonus = false; // Prevent double-clicks during bonus processing
+let isProcessingBonus = false;
+let socketConnected = false;
+let lastTickAt = 0;
+let tickWatchdog = null;
+
+// If no room_tick arrives for 5s the socket is dead -> tell the user + retry.
+function startTickWatchdog() {
+  if (tickWatchdog) return;
+  tickWatchdog = setInterval(() => {
+    if (!socket) return;
+    if (lastTickAt && Date.now() - lastTickAt > 5000) {
+      const pill = document.getElementById('lobby-status-indicator');
+      if (pill) { pill.textContent = "Reconnecting..."; pill.className = "lobby-status-pill waiting"; }
+      try { socket.connect(); socket.emit('request_tick'); } catch (e) {}
+    }
+  }, 3000);
+}
 
 const PENDING_ROUND_KEY = 'fastbingo_pending_round';
 function setPendingRound(gameId){ if(gameId) localStorage.setItem(PENDING_ROUND_KEY, gameId); }
@@ -1026,270 +1045,168 @@ function genCard(n){
   card[2][2]=0; cardCache[n]=card; return card;
 }
 
-// Check Rows, Columns, Diagonals, and Four Corners
 function verifyWinningPattern(cardNum, markedSet) {
   const card = genCard(cardNum);
   const m = (c, r) => markedSet.has(`${c}-${r}`) || card[c][r] === 0;
 
-  // 1. Horizontal Rows
   for (let r = 0; r < 5; r++) {
     if ([0, 1, 2, 3, 4].every(c => m(c, r))) return true;
   }
-  // 2. Vertical Columns
   for (let c = 0; c < 5; c++) {
     if ([0, 1, 2, 3, 4].every(r => m(c, r))) return true;
   }
-  // 3. Main Diagonal
   if ([0, 1, 2, 3, 4].every(i => m(i, i))) return true;
-  // 4. Anti Diagonal
   if ([0, 1, 2, 3, 4].every(i => m(4 - i, i))) return true;
-  // 5. Four Corners
   if (m(0, 0) && m(4, 0) && m(0, 4) && m(4, 4)) return true;
 
   return false;
 }
 
-function initSupabaseSession() {
-  // Capture Referral ID from URL parameters
+// ============================================================
+//  TELEGRAM-NATIVE AUTH  (fixed)
+//  - identity comes from Telegram.WebApp.initData (verified server-side)
+//  - the same Telegram account ALWAYS resolves to the same player
+//  - phone number comes from the real contact shared with the bot
+// ============================================================
+let TG_INIT_DATA = '';
+let phonePollTimer = null;
+
+function initApp() {
+  console.log("🚀 Fast Bingo initializing...");
+
+  try {
+    if (tgApp) { tgApp.ready(); tgApp.expand && tgApp.expand(); }
+  } catch (e) {}
+
+  // Capture referral code
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    let refCode = urlParams.get('ref') || urlParams.get('tgWebAppStartParam') || '';
+    let refCode = urlParams.get('ref') || urlParams.get('tgWebAppStartParam')
+      || (tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.start_param) || '';
     if (refCode) {
       if (refCode.startsWith('ref_')) refCode = refCode.replace('ref_', '');
       localStorage.setItem('bingo_referrer_id', refCode);
     }
   } catch (e) {}
 
-  const storedUser = localStorage.getItem('supabase_bingo_player');
-  if (storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
-    try {
-      currentSupabaseUser = JSON.parse(storedUser);
-      if (currentSupabaseUser && currentSupabaseUser.player_id) {
-        // User exists - sync and go to lobby
-        syncUserDatabaseState();
-        setupSocketEngine();
-        return;
-      }
-    } catch (e) {
-      localStorage.removeItem('supabase_bingo_player');
-      currentSupabaseUser = null;
-    }
-  }
+  TG_INIT_DATA = (tgApp && tgApp.initData) ? tgApp.initData : '';
 
-  const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
-  if (!hasTelegramIdentity) {
-    // Dev fallback if opened outside Telegram - show message
+  if (!TG_INIT_DATA) {
     document.getElementById('telegram-only-overlay').style.display = 'flex';
     return;
   }
 
-  tgApp.ready();
-  document.getElementById('auth-overlay').style.display = 'flex';
+  // Socket connects immediately so the lobby countdown runs even before login.
+  setupSocketEngine();
+  authenticateWithTelegram();
 }
 
-function requestTelegramSecureContact() {
-  const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
-  
-  // Get Telegram user info first
-  const tgUser = hasTelegramIdentity ? tgApp.initDataUnsafe.user : null;
-  
-  // Check if we have stored contact data from a previous attempt
-  const storedContact = localStorage.getItem('pending_telegram_contact');
-  
-  if (storedContact) {
-    try {
-      const contactData = JSON.parse(storedContact);
-      // Use stored contact data
-      registerUserToServer(contactData.username, contactData.phone, contactData.telegram_id);
-      localStorage.removeItem('pending_telegram_contact');
-      return;
-    } catch (e) {
-      localStorage.removeItem('pending_telegram_contact');
-    }
-  }
-  
-  if (!hasTelegramIdentity || !tgUser) {
-    // Fallback registration for testing outside Telegram
-    const fallbackUsername = `Player_${Math.floor(Math.random()*1000)}`;
-    const fallbackPhone = `09${Math.floor(10000000 + Math.random()*90000000)}`;
-    registerUserToServer(fallbackUsername, fallbackPhone, null);
-    return;
-  }
-
-  // Get username from Telegram
-  const username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || `tg_${tgUser.id}`;
-  const telegramId = String(tgUser.id);
-
-  // Try to request contact via Telegram's requestContact
+async function authenticateWithTelegram() {
   try {
-    if (tgApp.requestContact) {
-      tgApp.requestContact(function(shared, response) {
-        let phoneNumber = null;
-        
-        // Parse phone from various possible response formats
-        if (shared === true || shared === 'true') {
-          // Contact was shared successfully - Telegram should have the phone
-          // Try to get from response
-          if (response && typeof response === 'object') {
-            phoneNumber = response.phone_number || 
-                         (response.contact && response.contact.phone_number) ||
-                         (response.response && response.response.phone_number);
-          }
-        } else if (typeof shared === 'object' && shared) {
-          phoneNumber = shared.phone_number || 
-                       (shared.contact && shared.contact.phone_number);
-        } else if (response && typeof response === 'object') {
-          phoneNumber = response.phone_number || 
-                       (response.contact && response.contact.phone_number);
-        }
-        
-        // If still no phone, use the one from initData if available
-        if (!phoneNumber && tgUser.phone_number) {
-          phoneNumber = tgUser.phone_number;
-        }
-        
-        // Last resort: generate a phone-like string from Telegram ID
-        if (!phoneNumber) {
-          phoneNumber = '09' + telegramId.padStart(8, '0').slice(-8);
-        }
-        
-        // Store contact data for potential retry
-        localStorage.setItem('pending_telegram_contact', JSON.stringify({
-          username: username,
-          phone: phoneNumber,
-          telegram_id: telegramId
-        }));
-        
-        // Register the user
-        registerUserToServer(username, phoneNumber, telegramId);
-      });
-    } else {
-      // requestContact not available, use available data
-      const phoneNumber = tgUser.phone_number || ('09' + telegramId.padStart(8, '0').slice(-8));
-      registerUserToServer(username, phoneNumber, telegramId);
-    }
-  } catch (e) {
-    console.warn("requestContact error:", e);
-    // Fallback - use available data
-    const phoneNumber = tgUser.phone_number || ('09' + telegramId.padStart(8, '0').slice(-8));
-    registerUserToServer(username, phoneNumber, telegramId);
-  }
-}
-
-async function registerUserToServer(username, phone, telegramId) {
-  const submitBtn = document.getElementById('main-auth-submit-btn');
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="loading-spinner"></span> በመመዝገብ ላይ...';
-  }
-
-  try {
-    const referrerId = localStorage.getItem('bingo_referrer_id') || '';
-    
-    const response = await fetch(`${BACKEND_URL}/api/register`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        username, 
-        phone_number: phone, 
-        referrer_id: referrerId,
-        telegram_id: telegramId || null
+    const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: TG_INIT_DATA,
+        referrer_id: localStorage.getItem('bingo_referrer_id') || ''
       })
     });
-    
-    if (!response.ok) {
-      const errTxt = await response.text();
-      let errJson = {};
-      try { errJson = JSON.parse(errTxt); } catch (e) {}
-      throw new Error(errJson.error || `Server error ${response.status}`);
+
+    if (res.status === 401) {
+      toast("Telegram verification failed. Please reopen from the bot.");
+      document.getElementById('telegram-only-overlay').style.display = 'flex';
+      return;
     }
 
-    const result = await response.json();
-    
-    if (result && result.user && result.user.player_id) {
-      currentSupabaseUser = result.user;
-      localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
-      
-      // Hide auth overlay
-      document.getElementById('auth-overlay').style.display = 'none';
-      
-      // Sync wallets
-      mainBalance = Number(result.user.main_balance ?? 0);
-      playBalance = Number(result.user.play_balance ?? 0);
-      totalBalance = mainBalance + playBalance;
-      updateLocalWallets();
-      
-      // Initialize socket
-      setupSocketEngine();
+    const data = await res.json();
 
-      // Show Telegram Group bonus overlay for NEW users who haven't claimed the bonus yet
-      // OR for ALL new registrations to give them the option
-      if (result.isNew || !result.user.tg_bonus_claimed) {
-        // Reset the group click state for new session
-        userClickedTgGroupLink = false;
-        updateBonusDisplay(result.isNew);
-        document.getElementById('tg-group-bonus-overlay').style.display = 'flex';
-      } else {
-        // User already claimed TG bonus - go straight to lobby
-        toast("እንኳን ደህና መጡ! " + totalBalance + " ETB ቦነስ ተገኝቷል!");
-      }
-    } else {
-      toast(result.error || "ለጊዜው መመዝገብ አልተቻለም");
+    if (data.user && data.user.player_id) {
+      applyUser(data.user, data.isNew);
+      return;
     }
+
+    // Server has no phone for this Telegram account yet -> ask for it.
+    document.getElementById('auth-overlay').style.display = 'flex';
   } catch (err) {
-    console.warn("registerUserToServer error:", err);
-    
-    // Fallback: create local user for offline/resilient mode
-    let fallbackUser = null;
-    try {
-      const existing = localStorage.getItem('supabase_bingo_player');
-      if (existing) fallbackUser = JSON.parse(existing);
-    } catch (e) {}
-    
-    if (!fallbackUser || !fallbackUser.player_id) {
-      fallbackUser = {
-        player_id: `p_${Date.now()}_${Math.floor(Math.random()*10000)}`,
-        username: username || 'Player',
-        phone_number: phone || '0900000000',
-        telegram_id: telegramId || null,
-        main_balance: 0,
-        play_balance: 10, // 10 ETB signup bonus
-        balance: 10,
-        tg_bonus_claimed: false,
-        created_at: new Date().toISOString()
-      };
-    }
-    
-    currentSupabaseUser = fallbackUser;
-    localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
-    
-    mainBalance = Number(fallbackUser.main_balance ?? 0);
-    playBalance = Number(fallbackUser.play_balance ?? 0);
-    totalBalance = mainBalance + playBalance;
-    
-    document.getElementById('auth-overlay').style.display = 'none';
-    updateLocalWallets();
-    setupSocketEngine();
-    
-    // Show bonus popup for new users
-    if (!fallbackUser.tg_bonus_claimed) {
-      userClickedTgGroupLink = false;
-      updateBonusDisplay(true);
-      document.getElementById('tg-group-bonus-overlay').style.display = 'flex';
-    }
-    
-    toast("እንኳን ደህና መጡ! 10 ETB ቦነስ ተገኝቷል!");
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '📱 ስልክ ቁጥርዎን ያጋሩ';
-    }
+    console.error("❌ auth failed:", err);
+    toast("Can't reach the server. Check your connection.");
+    document.getElementById('auth-overlay').style.display = 'flex';
   }
+}
+
+function applyUser(user, isNew) {
+  currentSupabaseUser = user;
+  // cache only (never used as the source of truth for identity)
+  localStorage.setItem('supabase_bingo_player', JSON.stringify(user));
+
+  mainBalance = Number(user.main_balance ?? user.balance ?? 0);
+  playBalance = Number(user.play_balance ?? 0);
+  totalBalance = mainBalance + playBalance;
+
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.getElementById('telegram-only-overlay').style.display = 'none';
+  updateLocalWallets();
+  setupSocketEngine();
+
+  if (!user.tg_bonus_claimed) {
+    userClickedTgGroupLink = false;
+    updateBonusDisplay(!!isNew);
+    document.getElementById('tg-group-bonus-overlay').style.display = 'flex';
+  }
+}
+
+/**
+ * Telegram's WebApp.requestContact() does NOT return the phone number to the
+ * page on most clients — it only shares it with the BOT. So we open the bot
+ * chat, let the user tap "Share my phone number", and poll the server.
+ */
+function requestTelegramSecureContact() {
+  const btn = document.getElementById('main-auth-submit-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading-spinner"></span> በመጠባበቅ ላይ...'; }
+
+  const finish = () => { if (btn) { btn.disabled = false; btn.innerHTML = '📱 ስልክ ቁጥርዎን ያጋሩ'; } };
+
+  const startPolling = () => {
+    let tries = 0;
+    if (phonePollTimer) clearInterval(phonePollTimer);
+    phonePollTimer = setInterval(async () => {
+      tries++;
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/auth/phone-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            initData: TG_INIT_DATA,
+            referrer_id: localStorage.getItem('bingo_referrer_id') || ''
+          })
+        });
+        const d = await r.json();
+        if (d.has_phone && d.user) {
+          clearInterval(phonePollTimer);
+          finish();
+          applyUser(d.user, d.isNew);
+        }
+      } catch (e) {}
+      if (tries > 90) { clearInterval(phonePollTimer); finish(); toast("Still waiting for your phone number. Tap again after sharing it with the bot."); }
+    }, 2000);
+  };
+
+  try {
+    if (tgApp && tgApp.requestContact) {
+      tgApp.requestContact(function () { startPolling(); });
+      startPolling();
+      return;
+    }
+  } catch (e) { console.warn("requestContact error:", e); }
+
+  // Fallback: send the user to the bot chat to press the share button.
+  if (tgApp && tgApp.openTelegramLink && typeof BOT_USERNAME === 'string' && BOT_USERNAME) {
+    tgApp.openTelegramLink(`https://t.me/${BOT_USERNAME}?start=share_phone`);
+  }
+  startPolling();
 }
 
 function updateBonusDisplay(isNewUser) {
-  // Update the current bonus display based on signup bonus already received
   const bonusDisplay = document.getElementById('current-bonus-display');
   const extraSection = document.getElementById('extra-bonus-section');
   
@@ -1305,14 +1222,12 @@ function updateBonusDisplay(isNewUser) {
 function handleTgGroupClick() {
   userClickedTgGroupLink = true;
   
-  // Update button to show "joined" state
   const joinBtn = document.getElementById('tg-group-join-btn');
   if (joinBtn) {
     joinBtn.classList.add('joined');
     joinBtn.innerHTML = '✅ ✓ Joined! Now Verify Below';
   }
   
-  // Open Telegram group link
   if (tgApp && tgApp.openTelegramLink) {
     tgApp.openTelegramLink(TELEGRAM_GROUP_LINK);
   } else {
@@ -1321,7 +1236,6 @@ function handleTgGroupClick() {
 }
 
 async function verifyAndClaimTgBonus() {
-  // Prevent double-clicks
   if (isProcessingBonus) return;
   isProcessingBonus = true;
   
@@ -1331,8 +1245,6 @@ async function verifyAndClaimTgBonus() {
     verifyBtn.innerHTML = '<span class="loading-spinner"></span> Verifying...';
   }
   
-  // If user clicked the group link, give them 20 ETB total (10 signup + 10 group bonus)
-  // If user didn't click, give them 10 ETB (just signup bonus - already credited)
   const shouldCreditTGGroupBonus = userClickedTgGroupLink;
   
   try {
@@ -1340,9 +1252,12 @@ async function verifyAndClaimTgBonus() {
       throw new Error("User not logged in");
     }
     
+    console.log("🎁 Claiming bonus, joined group:", shouldCreditTGGroupBonus);
+    
+    // NOTE: no `credentials: "include"` - the API uses CORS origin '*',
+    // and browsers block credentialed requests against a wildcard origin.
     const response = await fetch(`${BACKEND_URL}/api/claim-telegram-bonus`, {
       method: "POST",
-      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
         player_id: currentSupabaseUser.player_id,
@@ -1351,6 +1266,7 @@ async function verifyAndClaimTgBonus() {
     });
     
     const result = await response.json();
+    console.log("✅ Bonus claim response:", result);
     
     if (result && result.user) {
       currentSupabaseUser = result.user;
@@ -1369,12 +1285,10 @@ async function verifyAndClaimTgBonus() {
       }
     }
   } catch (e) {
-    console.warn("Claim bonus error:", e);
+    console.error("❌ Bonus claim error:", e);
     
-    // Local fallback - apply bonus locally if not already claimed
     if (currentSupabaseUser && !currentSupabaseUser.tg_bonus_claimed) {
       if (shouldCreditTGGroupBonus) {
-        // Give the TG group bonus
         playBalance += 10;
         totalBalance += 10;
         currentSupabaseUser.play_balance = playBalance;
@@ -1390,20 +1304,16 @@ async function verifyAndClaimTgBonus() {
       updateLocalWallets();
     }
     
-    // Sync with socket if available
     if (socket && socket.connected) {
       socket.emit('sync_player_profile', currentSupabaseUser);
     }
   } finally {
-    // Close the bonus overlay and go to lobby
     document.getElementById('tg-group-bonus-overlay').style.display = 'none';
     isProcessingBonus = false;
   }
 }
 
 function skipTgBonusAndEnter() {
-  // User skips the group bonus - just go to lobby
-  // They already have their signup bonus credited
   document.getElementById('tg-group-bonus-overlay').style.display = 'none';
   toast("Proceeding with " + totalBalance + " ETB bonus!");
 }
@@ -1411,23 +1321,65 @@ function skipTgBonusAndEnter() {
 function setupSocketEngine() {
   if (socket) return;
   
-  socket = io(BACKEND_URL);
+  console.log("🔌 Setting up Socket.io connection...");
+  
+  socket = io(BACKEND_URL || undefined, {
+    path: '/socket.io',
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: Infinity,
+    timeout: 20000
+  });
+
+  socket.on('connect', () => {
+    console.log("✅ Socket connected! ID:", socket.id);
+    socketConnected = true;
+    updateConnectionStatus();
+    socket.emit('request_tick');
+    startTickWatchdog();
+  });
+
+  socket.on('disconnect', () => {
+    console.log("❌ Socket disconnected");
+    socketConnected = false;
+    updateConnectionStatus();
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error("❌ Socket connection error:", error);
+    socketConnected = false;
+    updateConnectionStatus();
+  });
 
   socket.on('room_tick', (data) => {
+    console.log("📡 Room tick received:", data);
+    
     const lobbyPill = document.getElementById('lobby-status-indicator');
     const cartelaPill = document.getElementById('cartela-countdown');
     const gameTimerHeader = document.getElementById('game-countdown-header-pill');
     const lobbyPlayersNote = document.getElementById('lobby-players-note');
     
+    lastTickAt = Date.now();
+
+    // A new round started -> we are no longer in the previous one.
+    if (currentActiveGameRoundId && data.gameId !== currentActiveGameRoundId) {
+      userJoinedActiveRound = false;
+      isCurrentlyInGameRound = false;
+      clearPendingRound();
+    }
+
     currentActiveGameRoundId = data.gameId;
     globalGameStateServer = data.state;
     if (typeof data.minPlayersToStart === 'number') minPlayersToStart = data.minPlayersToStart;
 
     if (data.state === "waiting") {
-      const text = `Waiting (${data.timeRemaining}s)`;
+      const secs = Math.max(0, Number(data.timeRemaining) || 0);
+      const text = `Starting in ${secs}s`;
       if (lobbyPill) { lobbyPill.textContent = text; lobbyPill.className = "lobby-status-pill waiting"; }
       if (cartelaPill) { cartelaPill.textContent = text; }
-      if (gameTimerHeader) { gameTimerHeader.textContent = `Lobby: ${data.timeRemaining}s`; }
+      if (gameTimerHeader) { gameTimerHeader.textContent = `Lobby: ${secs}s`; }
       if (lobbyPlayersNote) {
         if (typeof data.participantCount === 'number') {
           lobbyPlayersNote.textContent = data.participantCount < minPlayersToStart
@@ -1468,17 +1420,45 @@ function setupSocketEngine() {
   });
 }
 
+function updateConnectionStatus() {
+  const lobbyPill = document.getElementById('lobby-status-indicator');
+  if (lobbyPill) {
+    if (socketConnected && currentActiveGameRoundId) {
+      lobbyPill.textContent = "Connected ✓";
+      lobbyPill.className = "lobby-status-pill waiting";
+    } else if (socketConnected) {
+      lobbyPill.textContent = "Waiting for game...";
+      lobbyPill.className = "lobby-status-pill waiting";
+    } else {
+      lobbyPill.textContent = "Connecting...";
+      lobbyPill.className = "lobby-status-pill waiting";
+    }
+  }
+}
+
 async function syncUserDatabaseState() {
-  if (!currentSupabaseUser) return;
+  if (!currentSupabaseUser || !currentSupabaseUser.player_id) {
+    console.log("⚠️ No user to sync");
+    return;
+  }
+  
+  console.log("🔄 Syncing user from server:", currentSupabaseUser.player_id);
+  
   try {
     const response = await fetch(`${BACKEND_URL}/api/player/${currentSupabaseUser.player_id}`);
+    console.log("📡 Sync response status:", response.status);
+    
     if (response.status === 404) {
+      console.log("❌ User not found on server");
       localStorage.removeItem('supabase_bingo_player');
       currentSupabaseUser = null;
       document.getElementById('auth-overlay').style.display = 'flex';
       return;
     }
+    
     const data = await response.json();
+    console.log("📥 Sync data received:", data);
+    
     if (data && data.player_id && !data.error) { 
       currentSupabaseUser = data; 
       mainBalance = Number(data.main_balance ?? data.balance ?? 0);
@@ -1486,12 +1466,20 @@ async function syncUserDatabaseState() {
       totalBalance = mainBalance + playBalance;
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
       updateLocalWallets(); 
+      console.log("✅ User synced successfully");
     } else {
-      localStorage.removeItem('supabase_bingo_player');
-      currentSupabaseUser = null;
-      document.getElementById('auth-overlay').style.display = 'flex';
+      console.log("⚠️ Server returned no valid data, using local");
     }
-  } catch (err) {}
+  } catch (err) {
+    console.error("❌ Sync error:", err);
+    // Use local data if server unreachable
+    if (currentSupabaseUser) {
+      mainBalance = Number(currentSupabaseUser.main_balance ?? currentSupabaseUser.balance ?? 0);
+      playBalance = Number(currentSupabaseUser.play_balance ?? 0);
+      totalBalance = mainBalance + playBalance;
+      updateLocalWallets();
+    }
+  }
 }
 
 function copyReferralLink() {
@@ -1501,6 +1489,8 @@ function copyReferralLink() {
 }
 
 function updateLocalWallets() {
+  console.log("💰 Updating wallets - Main:", mainBalance, "Play:", playBalance, "Total:", totalBalance);
+  
   document.getElementById('lobby-wal-bal').textContent = totalBalance + ' ETB';
   document.getElementById('wall-main-val').textContent = mainBalance + ' ETB';
   document.getElementById('wall-play-val').textContent = playBalance + ' ETB';
@@ -1714,10 +1704,18 @@ async function reconnectToRound(gameId, status) {
 }
 
 async function joinGame(i) {
+  console.log("🎮 joinGame called");
+  
   if (!currentSupabaseUser) {
     toast("Please log in first");
     return;
   }
+  
+  if (!currentActiveGameRoundId) {
+    toast("Waiting for game to start...");
+    return;
+  }
+  
   const pendingRoundId = getPendingRound();
   if (pendingRoundId) {
     try {
@@ -1742,6 +1740,10 @@ async function joinGame(i) {
 let takenCards = new Set();
 
 async function loadTakenCards() {
+  if (!currentActiveGameRoundId) {
+    takenCards = new Set();
+    return;
+  }
   try {
     const res = await fetch(`${BACKEND_URL}/api/games/taken-cards/${currentActiveGameRoundId}`);
     const data = await res.json();
@@ -1802,13 +1804,15 @@ function updateSelectionSummary() {
 }
 
 async function confirmJoin(){
+  console.log("🎯 confirmJoin called");
+  
   if (globalGameStateServer === "playing") {
     toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
     return;
   }
 
   if (!currentSupabaseUser || !currentActiveGameRoundId) {
-    toast("Something went wrong, please try again.");
+    toast("Waiting for game server...");
     return;
   }
 
@@ -1816,7 +1820,10 @@ async function confirmJoin(){
   const gameCost = selGame.bet * count;
   if (totalBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
 
+  console.log("📤 Creating game entry...");
+  
   let createResult = null;
+  let httpStatus = 0;
   try {
     const createRes = await fetch(`${BACKEND_URL}/api/games/create`, {
       method: "POST",
@@ -1828,20 +1835,32 @@ async function confirmJoin(){
         cards_list: selCard2 ? [selCard1, selCard2] : [selCard1]
       })
     });
+    httpStatus = createRes.status;
     createResult = await createRes.json();
+    console.log("📥 Game create result:", httpStatus, createResult);
   } catch (err) {
+    console.error("❌ Game create error:", err);
     createResult = null;
   }
 
   if (!createResult || !createResult.success) {
     const code = createResult && createResult.error;
-    if (code === "insufficient_balance") {
-      toast("የሂሳብ መጠንዎ በቂ አይደለም!");
-    } else if (code === "already_registered") {
-      toast("You're already registered for this round.");
-    } else {
-      toast("Couldn't join the round, please try again.");
+    const messages = {
+      insufficient_balance: "የሂሳብ መጠንዎ በቂ አይደለም!",
+      already_registered: "You're already registered for this round.",
+      round_not_open: "This round already started — wait for the next one.",
+      round_expired: "That round just ended. Pick your cartela again.",
+      card_taken: "Someone just took that cartela. Choose another.",
+      player_not_found: "Your account wasn't found. Please reopen the app.",
+      banned: "Your account is suspended.",
+      missing_fields: "Something is missing in your selection."
+    };
+    if (code === "round_expired" && createResult.game_id) {
+      currentActiveGameRoundId = createResult.game_id;
+      await loadTakenCards();
+      renderCardGrid();
     }
+    toast(messages[code] || (code ? ("Couldn't join: " + code) : "Couldn't reach the server. Try again."));
     return;
   }
 
@@ -1884,7 +1903,6 @@ function syncActiveGameScreenStructure() {
   renderMasterBoard(); renderGameCard(1); if(selCard2) renderGameCard(2);
 }
 
-// MODAL CONTROLS
 function openDepositModal() { document.getElementById('deposit-modal').style.display = 'flex'; }
 function closeDepositModal() { document.getElementById('deposit-modal').style.display = 'none'; }
 function openWithdrawModal() { document.getElementById('withdraw-modal').style.display = 'flex'; }
@@ -1898,7 +1916,6 @@ function copyToClipboard(text, msg) {
   });
 }
 
-// SUBMIT DEPOSIT REQUEST
 async function submitDepositRequest() {
   if (!currentSupabaseUser) return;
   const method = document.getElementById('dep-method').value;
@@ -1930,7 +1947,6 @@ async function submitDepositRequest() {
   }
 }
 
-// SUBMIT WITHDRAWAL REQUEST (Min 100 ETB)
 async function submitWithdrawalRequest() {
   if (!currentSupabaseUser) return;
   const method = document.getElementById('wdr-method').value;
@@ -1978,7 +1994,6 @@ async function submitWithdrawalRequest() {
   }
 }
 
-// REDEEM COUPON
 async function redeemCoupon() {
   if (!currentSupabaseUser) return;
   const input = document.getElementById('coupon-code-input');
@@ -2092,7 +2107,8 @@ function goTo(n){
   if (n === 'wallet') loadWithdrawals();
 }
 
-initSupabaseSession();
+// Initialize the app
+initApp();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a23dec372f30348a',t:'MTc4NTUxNDc0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

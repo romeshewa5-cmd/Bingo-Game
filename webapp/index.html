@@ -98,8 +98,10 @@ body {
   border: none;
   cursor: pointer;
   margin-top: 16px;
+  transition: all 0.2s ease;
 }
 .auth-btn:active, .action-btn:active { transform: scale(0.98); }
+.auth-btn:disabled, .action-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 .copy-row {
   display: flex;
@@ -473,6 +475,87 @@ input:checked + .slider:before { transform: translateX(18px); }
   background: var(--card2); border: 1px solid var(--card3); border-radius: 10px;
   padding: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
 }
+
+/* Bonus Popup Specific Styles */
+.bonus-popup-highlight {
+  background: linear-gradient(135deg, rgba(255, 189, 20, 0.15), rgba(255, 189, 20, 0.05));
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0;
+  text-align: center;
+}
+.bonus-amount {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(255, 189, 20, 0.5);
+}
+.bonus-label {
+  font-size: 12px;
+  color: #fff;
+  margin-top: 4px;
+}
+.join-group-btn {
+  background: linear-gradient(135deg, #0088cc, #006699);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+.join-group-btn:active { transform: scale(0.98); }
+.join-group-btn.joined {
+  background: var(--teal);
+  color: #000;
+}
+.verify-claim-btn {
+  background: var(--teal);
+  color: #000;
+  font-weight: 900;
+  font-size: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+.verify-claim-btn:disabled {
+  background: var(--card3);
+  color: var(--nav-gray);
+  cursor: not-allowed;
+}
+.verify-claim-btn:active:not(:disabled) { transform: scale(0.98); }
+.skip-link {
+  font-size: 12px;
+  color: var(--nav-gray);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 8px;
+}
+.skip-link:hover { color: #fff; }
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -485,7 +568,9 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div style="font-size: 20px; font-weight: 900; color: var(--gold); margin-bottom: 4px;">FAST BINGO</div>
     <div style="font-size: 13px; color: var(--nav-gray); margin-bottom: 12px;">ይግቡ እና ጨዋታውን ይቀላቀሉ</div>
     
-    <button id="main-auth-submit-btn" class="auth-btn" onclick="requestTelegramSecureContact()">ስልክ ቁጥርዎን ያጋሩ</button>
+    <button id="main-auth-submit-btn" class="auth-btn" onclick="requestTelegramSecureContact()">
+      📱 ስልክ ቁጥርዎን ያጋሩ
+    </button>
   </div>
 </div>
 
@@ -500,26 +585,39 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 <!-- TELEGRAM GROUP JOIN BONUS OVERLAY -->
 <div id="tg-group-bonus-overlay" class="auth-overlay" style="display: none;">
-  <div class="auth-card" style="max-width: 360px; text-align: center; border: 2px solid var(--gold);">
-    <div style="font-size: 38px; margin-bottom: 6px;">📢</div>
-    <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 6px;">ተጨማሪ 10 ETB ቦነስ ያግኙ!</div>
-    <div style="font-size: 12px; color: #fff; line-height: 1.6; margin-bottom: 14px; background: rgba(255, 189, 20, 0.1); padding: 12px; border-radius: 12px; border-left: 3px solid var(--gold);">
-      የቴሌግራም ግሩፓችንን በመቀላቀል ተጨማሪ <b>10 ETB</b> ቦነስ ያግኙ! (በአጠቃላይ <b>20 ETB</b> ቦነስ በጨዋታ ቦርሳዎ ይገባል)
+  <div class="auth-card" style="max-width: 360px; text-align: center;">
+    
+    <!-- Bonus Amount Display -->
+    <div class="bonus-popup-highlight">
+      <div style="font-size: 14px; color: #fff; margin-bottom: 8px;">🎁 Your Sign Up Bonus</div>
+      <div class="bonus-amount" id="current-bonus-display">10 ETB</div>
+      <div class="bonus-label">already credited to your wallet!</div>
+    </div>
+    
+    <!-- Extra Bonus Section -->
+    <div id="extra-bonus-section" style="margin: 16px 0;">
+      <div style="font-size: 16px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">
+        ⭐ Get EXTRA 10 ETB Bonus!
+      </div>
+      <div style="font-size: 12px; color: #fff; line-height: 1.5; background: rgba(15, 192, 130, 0.1); padding: 10px; border-radius: 10px; border: 1px solid rgba(15, 192, 130, 0.3);">
+        Join our Telegram group and verify to unlock your <b style="color: var(--gold);">+10 ETB bonus!</b><br>
+        <span style="color: var(--teal);">Total potential: <b>20 ETB</b> free play money!</span>
+      </div>
     </div>
 
     <!-- BUTTON TO JOIN TELEGRAM GROUP -->
-    <button id="tg-group-join-btn" class="auth-btn" style="background: #0088cc; color: #fff; font-weight: 800; margin-bottom: 10px;" onclick="handleTgGroupClick()">
-      ✈️ የቴሌግራም ግሩፕ ይቀላቀሉ (Join Group)
+    <button id="tg-group-join-btn" class="join-group-btn" onclick="handleTgGroupClick()">
+      ✈️ Join Telegram Group for +10 ETB
     </button>
 
     <!-- VERIFY & CLAIM BUTTON -->
-    <button id="tg-verify-claim-btn" class="auth-btn" style="background: var(--teal); color: #000; font-weight: 900; font-size: 14px; margin-bottom: 8px;" onclick="verifyAndClaimTgBonus()">
-      ✅ አረጋግጥ እና ቦነስ ተቀበል
+    <button id="tg-verify-claim-btn" class="verify-claim-btn" onclick="verifyAndClaimTgBonus()">
+      ✅ Claim My Bonus & Enter Game
     </button>
 
     <!-- SKIP BUTTON -->
-    <div style="font-size: 11px; color: var(--nav-gray); cursor: pointer; text-decoration: underline; margin-top: 8px;" onclick="skipTgBonusAndEnter()">
-      አልፈልግም፣ በ10 ETB ብቻ ቀጥል (Skip)
+    <div class="skip-link" onclick="skipTgBonusAndEnter()">
+      Skip this offer, proceed with 10 ETB only
     </div>
   </div>
 </div>
@@ -619,7 +717,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div class="wallet-box-lobby" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 14px 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
       <div>
         <div class="lbl">Total Wallet Balance</div>
-        <div class="val" id="lobby-wal-bal">20 ETB</div>
+        <div class="val" id="lobby-wal-bal">0 ETB</div>
       </div>
       <button class="rules-btn" style="background: var(--teal); color: #000; font-weight: 800; font-size: 13px; padding: 10px 18px; border-radius: 20px; border: none; box-shadow: 0 0 12px rgba(15,192,130,0.4);" onclick="openDepositModal()">
         💳 ገቢ ያድርጉ (Deposit)
@@ -655,7 +753,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       <div>
         <div class="w-card-lbl" style="color:var(--gold);">🎁 ቦነስ እና ኮፖን</div>
         <div class="w-card-desc" style="color:#fff; margin-top:6px; line-height:1.6;">
-          አዲስ ሲመዘገቡ የ20 ብር ፕሌይ ቦነስ ያገኛሉ! በተጨማሪም ገንዘብ ገቢ ሲያደርጉ የ10% ተጨማሪ ቦነስ በPlay Walletዎ ላይ ይደመራል።
+          አዲስ ሲመዘገቡ የ10 ብር ፕሌይ ቦነስ ያገኛሉ! በተጨማሪም ገንዘብ ገቢ ሲያደርጉ የ10% ተጨማሪ ቦነስ በPlay Walletዎ ላይ ይደመራል።
         </div>
       </div>
       <div>
@@ -691,7 +789,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     <!-- PLAY WALLET CARD -->
     <div class="wallet-card play">
       <div class="w-card-lbl" style="color:var(--gold);">🎁 Play Wallet (Bonus)</div>
-      <div class="w-card-val" id="wall-play-val" style="color:var(--gold);">20 ETB</div>
+      <div class="w-card-val" id="wall-play-val" style="color:var(--gold);">0 ETB</div>
       <div class="w-card-desc">Registration bonus, 10% deposit bonus & coupon play money.</div>
     </div>
 
@@ -735,7 +833,7 @@ input:checked + .slider:before { transform: translateX(18px); }
         </div>
         <div>
           <div class="w-card-lbl">Play Wallet</div>
-          <div class="w-card-val" id="prof-play-val" style="color:var(--gold); font-size:16px;">20 ETB</div>
+          <div class="w-card-val" id="prof-play-val" style="color:var(--gold); font-size:16px;">0 ETB</div>
         </div>
       </div>
     </div>
@@ -891,8 +989,8 @@ const tgApp = window.Telegram?.WebApp;
 let userClickedTgGroupLink = false;
 
 let mainBalance = 0;
-let playBalance = 10; // Base 10 Birr Signup Bonus!
-let totalBalance = 10;
+let playBalance = 0;
+let totalBalance = 0;
 
 let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
@@ -906,6 +1004,7 @@ let cardCache = {};
 let isAutoMode = false;
 let currentActiveGameRoundId = null;
 let winnerPopupInterval = null;
+let isProcessingBonus = false; // Prevent double-clicks during bonus processing
 
 const PENDING_ROUND_KEY = 'fastbingo_pending_round';
 function setPendingRound(gameId){ if(gameId) localStorage.setItem(PENDING_ROUND_KEY, gameId); }
@@ -966,6 +1065,7 @@ function initSupabaseSession() {
     try {
       currentSupabaseUser = JSON.parse(storedUser);
       if (currentSupabaseUser && currentSupabaseUser.player_id) {
+        // User exists - sync and go to lobby
         syncUserDatabaseState();
         setupSocketEngine();
         return;
@@ -978,8 +1078,8 @@ function initSupabaseSession() {
 
   const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
   if (!hasTelegramIdentity) {
-    // Dev fallback if opened outside Telegram
-    registerUserToServer(`Player_${Math.floor(Math.random()*1000)}`, `09${Math.floor(10000000 + Math.random()*90000000)}`);
+    // Dev fallback if opened outside Telegram - show message
+    document.getElementById('telegram-only-overlay').style.display = 'flex';
     return;
   }
 
@@ -989,56 +1089,113 @@ function initSupabaseSession() {
 
 function requestTelegramSecureContact() {
   const hasTelegramIdentity = !!(tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user);
-  if (!hasTelegramIdentity) {
-    // Fallback registration if testing in web browser outside Telegram
-    registerUserToServer(`Player_${Math.floor(Math.random()*1000)}`, `09${Math.floor(10000000 + Math.random()*90000000)}`);
+  
+  // Get Telegram user info first
+  const tgUser = hasTelegramIdentity ? tgApp.initDataUnsafe.user : null;
+  
+  // Check if we have stored contact data from a previous attempt
+  const storedContact = localStorage.getItem('pending_telegram_contact');
+  
+  if (storedContact) {
+    try {
+      const contactData = JSON.parse(storedContact);
+      // Use stored contact data
+      registerUserToServer(contactData.username, contactData.phone, contactData.telegram_id);
+      localStorage.removeItem('pending_telegram_contact');
+      return;
+    } catch (e) {
+      localStorage.removeItem('pending_telegram_contact');
+    }
+  }
+  
+  if (!hasTelegramIdentity || !tgUser) {
+    // Fallback registration for testing outside Telegram
+    const fallbackUsername = `Player_${Math.floor(Math.random()*1000)}`;
+    const fallbackPhone = `09${Math.floor(10000000 + Math.random()*90000000)}`;
+    registerUserToServer(fallbackUsername, fallbackPhone, null);
     return;
   }
 
-  const tgUser = tgApp.initDataUnsafe.user;
+  // Get username from Telegram
   const username = tgUser.username || [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || `tg_${tgUser.id}`;
+  const telegramId = String(tgUser.id);
 
+  // Try to request contact via Telegram's requestContact
   try {
-    tgApp.requestContact((shared, res) => {
-      const isApproved = shared === true || shared === 'true' || (shared && typeof shared === 'object') || (res && typeof res === 'object');
-      
-      let phone = null;
-      if (typeof shared === 'object' && shared) {
-        phone = shared.phone_number || (shared.contact && shared.contact.phone_number) || (shared.response && shared.response.phone_number);
-      }
-      if (!phone && typeof res === 'object' && res) {
-        phone = res.phone_number || (res.contact && res.contact.phone_number) || (res.response && res.response.phone_number);
-      }
-      if (!phone && tgUser.phone_number) {
-        phone = tgUser.phone_number;
-      }
-      if (!phone) {
-        const idStr = String(tgUser.id);
-        phone = '09' + idStr.padStart(8, '0').slice(-8);
-      }
-      
-      registerUserToServer(username, phone);
-    });
+    if (tgApp.requestContact) {
+      tgApp.requestContact(function(shared, response) {
+        let phoneNumber = null;
+        
+        // Parse phone from various possible response formats
+        if (shared === true || shared === 'true') {
+          // Contact was shared successfully - Telegram should have the phone
+          // Try to get from response
+          if (response && typeof response === 'object') {
+            phoneNumber = response.phone_number || 
+                         (response.contact && response.contact.phone_number) ||
+                         (response.response && response.response.phone_number);
+          }
+        } else if (typeof shared === 'object' && shared) {
+          phoneNumber = shared.phone_number || 
+                       (shared.contact && shared.contact.phone_number);
+        } else if (response && typeof response === 'object') {
+          phoneNumber = response.phone_number || 
+                       (response.contact && response.contact.phone_number);
+        }
+        
+        // If still no phone, use the one from initData if available
+        if (!phoneNumber && tgUser.phone_number) {
+          phoneNumber = tgUser.phone_number;
+        }
+        
+        // Last resort: generate a phone-like string from Telegram ID
+        if (!phoneNumber) {
+          phoneNumber = '09' + telegramId.padStart(8, '0').slice(-8);
+        }
+        
+        // Store contact data for potential retry
+        localStorage.setItem('pending_telegram_contact', JSON.stringify({
+          username: username,
+          phone: phoneNumber,
+          telegram_id: telegramId
+        }));
+        
+        // Register the user
+        registerUserToServer(username, phoneNumber, telegramId);
+      });
+    } else {
+      // requestContact not available, use available data
+      const phoneNumber = tgUser.phone_number || ('09' + telegramId.padStart(8, '0').slice(-8));
+      registerUserToServer(username, phoneNumber, telegramId);
+    }
   } catch (e) {
-    const phone = tgUser.phone_number || ('09' + String(tgUser.id).padStart(8, '0').slice(-8));
-    registerUserToServer(username, phone);
+    console.warn("requestContact error:", e);
+    // Fallback - use available data
+    const phoneNumber = tgUser.phone_number || ('09' + telegramId.padStart(8, '0').slice(-8));
+    registerUserToServer(username, phoneNumber, telegramId);
   }
 }
 
-async function registerUserToServer(username, phone) {
+async function registerUserToServer(username, phone, telegramId) {
   const submitBtn = document.getElementById('main-auth-submit-btn');
   if (submitBtn) {
     submitBtn.disabled = true;
-    submitBtn.textContent = 'በመመዝገብ ላይ...';
+    submitBtn.innerHTML = '<span class="loading-spinner"></span> በመመዝገብ ላይ...';
   }
 
   try {
     const referrerId = localStorage.getItem('bingo_referrer_id') || '';
+    
     const response = await fetch(`${BACKEND_URL}/api/register`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, phone_number: phone, referrer_id: referrerId })
+      body: JSON.stringify({ 
+        username, 
+        phone_number: phone, 
+        referrer_id: referrerId,
+        telegram_id: telegramId || null
+      })
     });
     
     if (!response.ok) {
@@ -1049,63 +1206,113 @@ async function registerUserToServer(username, phone) {
     }
 
     const result = await response.json();
+    
     if (result && result.user && result.user.player_id) {
       currentSupabaseUser = result.user;
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+      
+      // Hide auth overlay
       document.getElementById('auth-overlay').style.display = 'none';
       
-      syncUserDatabaseState();
+      // Sync wallets
+      mainBalance = Number(result.user.main_balance ?? 0);
+      playBalance = Number(result.user.play_balance ?? 0);
+      totalBalance = mainBalance + playBalance;
+      updateLocalWallets();
+      
+      // Initialize socket
       setupSocketEngine();
 
-      // Show Telegram Group bonus overlay if new user or bonus not yet claimed
+      // Show Telegram Group bonus overlay for NEW users who haven't claimed the bonus yet
+      // OR for ALL new registrations to give them the option
       if (result.isNew || !result.user.tg_bonus_claimed) {
+        // Reset the group click state for new session
+        userClickedTgGroupLink = false;
+        updateBonusDisplay(result.isNew);
         document.getElementById('tg-group-bonus-overlay').style.display = 'flex';
+      } else {
+        // User already claimed TG bonus - go straight to lobby
+        toast("እንኳን ደህና መጡ! " + totalBalance + " ETB ቦነስ ተገኝቷል!");
       }
     } else {
       toast(result.error || "ለጊዜው መመዝገብ አልተቻለም");
     }
   } catch (err) {
-    console.warn("registerUserToServer error, falling back to resilient instant login:", err);
+    console.warn("registerUserToServer error:", err);
+    
+    // Fallback: create local user for offline/resilient mode
     let fallbackUser = null;
     try {
       const existing = localStorage.getItem('supabase_bingo_player');
       if (existing) fallbackUser = JSON.parse(existing);
     } catch (e) {}
+    
     if (!fallbackUser || !fallbackUser.player_id) {
       fallbackUser = {
         player_id: `p_${Date.now()}_${Math.floor(Math.random()*10000)}`,
         username: username || 'Player',
         phone_number: phone || '0900000000',
+        telegram_id: telegramId || null,
         main_balance: 0,
-        play_balance: 10,
+        play_balance: 10, // 10 ETB signup bonus
         balance: 10,
         tg_bonus_claimed: false,
         created_at: new Date().toISOString()
       };
     }
+    
     currentSupabaseUser = fallbackUser;
     localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+    
+    mainBalance = Number(fallbackUser.main_balance ?? 0);
+    playBalance = Number(fallbackUser.play_balance ?? 0);
+    totalBalance = mainBalance + playBalance;
+    
     document.getElementById('auth-overlay').style.display = 'none';
-
-    syncUserDatabaseState();
+    updateLocalWallets();
     setupSocketEngine();
-    if (socket && socket.connected) {
-      socket.emit('sync_player_profile', fallbackUser);
-    }
+    
+    // Show bonus popup for new users
     if (!fallbackUser.tg_bonus_claimed) {
+      userClickedTgGroupLink = false;
+      updateBonusDisplay(true);
       document.getElementById('tg-group-bonus-overlay').style.display = 'flex';
     }
-    toast("እንኳን ደህና መጡ! (10 ETB ቦነስ ተገኝቷል)");
+    
+    toast("እንኳን ደህና መጡ! 10 ETB ቦነስ ተገኝቷል!");
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'ስልክ ቁጥርዎን ያጋሩ';
+      submitBtn.innerHTML = '📱 ስልክ ቁጥርዎን ያጋሩ';
     }
+  }
+}
+
+function updateBonusDisplay(isNewUser) {
+  // Update the current bonus display based on signup bonus already received
+  const bonusDisplay = document.getElementById('current-bonus-display');
+  const extraSection = document.getElementById('extra-bonus-section');
+  
+  if (isNewUser) {
+    bonusDisplay.textContent = '10 ETB';
+    extraSection.style.display = 'block';
+  } else {
+    bonusDisplay.textContent = '0 ETB';
+    extraSection.style.display = 'none';
   }
 }
 
 function handleTgGroupClick() {
   userClickedTgGroupLink = true;
+  
+  // Update button to show "joined" state
+  const joinBtn = document.getElementById('tg-group-join-btn');
+  if (joinBtn) {
+    joinBtn.classList.add('joined');
+    joinBtn.innerHTML = '✅ ✓ Joined! Now Verify Below';
+  }
+  
+  // Open Telegram group link
   if (tgApp && tgApp.openTelegramLink) {
     tgApp.openTelegramLink(TELEGRAM_GROUP_LINK);
   } else {
@@ -1114,50 +1321,91 @@ function handleTgGroupClick() {
 }
 
 async function verifyAndClaimTgBonus() {
-  if (!userClickedTgGroupLink) {
-    toast("እባክዎ መጀመሪያ 'የቴሌግራም ግሩፕ ይቀላቀሉ' የሚለውን ይጫኑ!");
-    return;
+  // Prevent double-clicks
+  if (isProcessingBonus) return;
+  isProcessingBonus = true;
+  
+  const verifyBtn = document.getElementById('tg-verify-claim-btn');
+  if (verifyBtn) {
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = '<span class="loading-spinner"></span> Verifying...';
   }
-  if (!currentSupabaseUser || !currentSupabaseUser.player_id) {
-    document.getElementById('tg-group-bonus-overlay').style.display = 'none';
-    return;
-  }
-
+  
+  // If user clicked the group link, give them 20 ETB total (10 signup + 10 group bonus)
+  // If user didn't click, give them 10 ETB (just signup bonus - already credited)
+  const shouldCreditTGGroupBonus = userClickedTgGroupLink;
+  
   try {
+    if (!currentSupabaseUser || !currentSupabaseUser.player_id) {
+      throw new Error("User not logged in");
+    }
+    
     const response = await fetch(`${BACKEND_URL}/api/claim-telegram-bonus`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id: currentSupabaseUser.player_id })
+      body: JSON.stringify({ 
+        player_id: currentSupabaseUser.player_id,
+        claimed_tg_group: shouldCreditTGGroupBonus
+      })
     });
+    
     const result = await response.json();
+    
     if (result && result.user) {
       currentSupabaseUser = result.user;
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+      
+      mainBalance = Number(result.user.main_balance ?? 0);
+      playBalance = Number(result.user.play_balance ?? 0);
+      totalBalance = mainBalance + playBalance;
+      
       updateLocalWallets();
-      toast("🎉 10 ETB ተጨማሪ ቦነስ ተጨምሯል! በአጠቃላይ 20 ETB!");
+      
+      if (shouldCreditTGGroupBonus) {
+        toast("🎉 +10 ETB Telegram Group Bonus! Total: " + totalBalance + " ETB");
+      } else {
+        toast("✅ Verified! Your bonus: " + totalBalance + " ETB");
+      }
     }
   } catch (e) {
-    console.warn("Claim bonus backend error, applying locally:", e);
+    console.warn("Claim bonus error:", e);
+    
+    // Local fallback - apply bonus locally if not already claimed
     if (currentSupabaseUser && !currentSupabaseUser.tg_bonus_claimed) {
-      currentSupabaseUser.play_balance = (Number(currentSupabaseUser.play_balance) || 0) + 10;
-      currentSupabaseUser.balance = (Number(currentSupabaseUser.balance) || 0) + 10;
-      currentSupabaseUser.tg_bonus_claimed = true;
+      if (shouldCreditTGGroupBonus) {
+        // Give the TG group bonus
+        playBalance += 10;
+        totalBalance += 10;
+        currentSupabaseUser.play_balance = playBalance;
+        currentSupabaseUser.balance = totalBalance;
+        currentSupabaseUser.tg_bonus_claimed = true;
+        
+        toast("🎉 +10 ETB Telegram Group Bonus! Total: " + totalBalance + " ETB");
+      } else {
+        toast("✅ Verified! Your bonus: " + totalBalance + " ETB");
+      }
+      
       localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
       updateLocalWallets();
-      if (socket && socket.connected) {
-        socket.emit('sync_player_profile', currentSupabaseUser);
-      }
-      toast("🎉 10 ETB ተጨማሪ ቦነስ ተጨምሯል! በአጠቃላይ 20 ETB!");
+    }
+    
+    // Sync with socket if available
+    if (socket && socket.connected) {
+      socket.emit('sync_player_profile', currentSupabaseUser);
     }
   } finally {
+    // Close the bonus overlay and go to lobby
     document.getElementById('tg-group-bonus-overlay').style.display = 'none';
+    isProcessingBonus = false;
   }
 }
 
 function skipTgBonusAndEnter() {
+  // User skips the group bonus - just go to lobby
+  // They already have their signup bonus credited
   document.getElementById('tg-group-bonus-overlay').style.display = 'none';
-  toast("በ 10 ETB ቦነስ ቀጥለዋል!");
+  toast("Proceeding with " + totalBalance + " ETB bonus!");
 }
 
 function setupSocketEngine() {

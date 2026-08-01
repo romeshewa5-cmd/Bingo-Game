@@ -580,6 +580,7 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
     <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">Please open inside Telegram</div>
     <div style="font-size: 13px; color: var(--nav-gray);">Fast Bingo works inside Telegram to verify your account securely.</div>
+    <div id="tg-diag" style="margin-top:12px;font-size:10px;color:#7a8;word-break:break-all;line-height:1.5;"></div>
   </div>
 </div>
 
@@ -1104,7 +1105,37 @@ function initApp() {
   }
   console.log("🔐 initData length:", TG_INIT_DATA.length);
 
+  // FALLBACK: some Telegram clients open Mini Apps without initData. The bot
+  // puts a one-time ?tgauth=<token> on its Play button; log in with that.
   if (!TG_INIT_DATA) {
+    let tok = '';
+    try {
+      tok = new URLSearchParams(location.search).get('tgauth')
+         || new URLSearchParams((location.hash || '').replace(/^#/, '')).get('tgauth')
+         || sessionStorage.getItem('fastbingo_tgauth') || '';
+    } catch (e) {}
+    if (tok) {
+      try { sessionStorage.setItem('fastbingo_tgauth', tok); } catch (e) {}
+      console.log("\ud83d\udd11 using tgauth token login");
+      setupSocketEngine();
+      loginWithToken(tok);
+      return;
+    }
+  }
+
+  if (!TG_INIT_DATA) {
+    // Show WHY on screen - the Telegram in-app browser has no dev console.
+    const diag = [
+      'Telegram JS: ' + (tgApp ? 'loaded' : 'MISSING'),
+      'version: ' + ((tgApp && tgApp.version) || '-'),
+      'platform: ' + ((tgApp && tgApp.platform) || '-'),
+      'initData: empty',
+      'user: ' + ((tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user) ? 'present' : 'none'),
+      'url: ' + location.host
+    ].join(' | ');
+    console.log('🔎 ' + diag);
+    const box = document.getElementById('tg-diag');
+    if (box) box.textContent = diag;
     document.getElementById('telegram-only-overlay').style.display = 'flex';
     return;
   }
@@ -1112,6 +1143,28 @@ function initApp() {
   // Socket connects immediately so the lobby countdown runs even before login.
   setupSocketEngine();
   authenticateWithTelegram();
+}
+
+async function loginWithToken(token) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!res.ok) {
+      try { sessionStorage.removeItem('fastbingo_tgauth'); } catch (e) {}
+      const box = document.getElementById('tg-diag');
+      if (box) box.textContent = 'token login failed (' + res.status + ') - send /start to the bot again';
+      document.getElementById('telegram-only-overlay').style.display = 'flex';
+      return;
+    }
+    const data = await res.json();
+    applyUser(data.user, false);
+  } catch (err) {
+    console.error('token login error', err);
+    document.getElementById('telegram-only-overlay').style.display = 'flex';
+  }
 }
 
 async function authenticateWithTelegram() {
@@ -2123,6 +2176,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a246c58d8aeb9dd1',t:'MTc4NTYwNzUzMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>

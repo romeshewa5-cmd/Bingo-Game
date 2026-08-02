@@ -1014,9 +1014,9 @@ let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
 let globalGameStateServer = "waiting"; 
-let minPlayersToStart = 2;
+let minPlayersToStart = 1;
 let called = [];
-let selCard1 = 117, selCard2 = null;
+let selCard1 = null, selCard2 = null;
 let marked1 = new Set(), marked2 = new Set();
 let cardCache = {};
 let isAutoMode = false;
@@ -1072,6 +1072,8 @@ function verifyWinningPattern(cardNum, markedSet) {
   }
   if ([0, 1, 2, 3, 4].every(i => m(i, i))) return true;
   if ([0, 1, 2, 3, 4].every(i => m(4 - i, i))) return true;
+  // 4 corners - the server accepts this too (winningLineCells). Both sides must
+  // agree or a claim gets silently rejected and the player freezes.
   if (m(0, 0) && m(4, 0) && m(0, 4) && m(4, 4)) return true;
 
   return false;
@@ -1505,6 +1507,14 @@ function setupSocketEngine() {
     processIncomingBallCall(data.number, data.pool);
   });
 
+  socket.on('bingo_rejected', (data) => {
+    console.warn("\u26d4 bingo rejected:", data && data.reason);
+    bingoClaimed = false;
+    if (data && data.reason === 'no_winning_line') toast("Not a winning pattern yet.");
+  });
+
+  socket.on('new_round', () => { bingoClaimed = false; });
+
   socket.on('opponent_victory', (data) => {
     triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount, data.isSplit, data);
   });
@@ -1686,7 +1696,9 @@ function markCell(cardNumber,key,c,r){
   if(called.includes(v)){ marked.has(key)?marked.delete(key):marked.add(key); renderGameCard(cardNumber); }
 }
 
+let bingoClaimed = false;
 function claimBingo(){
+  if (bingoClaimed) return;          // don't spam the server every ball
   const checkCard = (cardNumber) => {
     const selCard = cardNumber === 1 ? selCard1 : selCard2; if(!selCard) return null;
     const marked = cardNumber === 1 ? marked1 : marked2;
@@ -1695,7 +1707,11 @@ function claimBingo(){
   };
   const winningPlay = checkCard(1) || checkCard(2);
   if(winningPlay && socket && currentSupabaseUser?.player_id) {
+    bingoClaimed = true;
+    console.log("\ud83c\udfc6 claiming bingo, card", winningPlay.selCard);
     socket.emit('claim_bingo', { player_id: currentSupabaseUser.player_id, cardNum: winningPlay.selCard });
+    // If the server never answers, don't leave the player stuck.
+    setTimeout(() => { bingoClaimed = false; }, 4000);
   }
 }
 
@@ -1732,16 +1748,27 @@ function buildVisualWinnerMatrixGrid(cardNum, winningCells) {
 }
 
 async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, payoutAmount, isSplit, extra) {
+  try {
+    await showWinnerPopup(winnerName, cardNum, winnerPlayerId, payoutAmount, isSplit, extra);
+  } catch (err) {
+    console.error("winner popup failed:", err);
+    // Never leave the player stranded on the game board.
+    try { document.getElementById('winner-popup').classList.add('active'); } catch (e) {}
+    setTimeout(() => closeWinnerModal(), 5000);
+  }
+}
+
+async function showWinnerPopup(winnerName, cardNum, winnerPlayerId, payoutAmount, isSplit, extra) {
   isCurrentlyInGameRound = false;
   clearPendingRound();
   extra = extra || {};
 
-  // The winner's balance changed - but so did everyone's (entry fee), so always
-  // re-sync rather than only for the winner.
   if (Array.isArray(extra.drawnHistory) && extra.drawnHistory.length) called = extra.drawnHistory;
   const isMe = !!(winnerPlayerId && currentSupabaseUser && String(winnerPlayerId) === String(currentSupabaseUser.player_id));
-  await syncUserDatabaseState();
 
+  // NOTE: draw the popup FIRST. Previously an await sat here, so if the sync
+  // was slow or threw, the popup never appeared and the player just froze on
+  // the game board while the next round started.
   if (!winnerPlayerId) {
     document.getElementById('win-head').textContent = "No Winner This Round";
     document.getElementById('win-sub').textContent = "All 75 numbers were called with no bingo.";
@@ -1756,9 +1783,13 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, p
   
   document.getElementById('winner-popup').classList.add('active');
 
+  // Balance refresh happens after the popup is on screen, never blocking it.
+  syncUserDatabaseState().catch(e => console.warn('sync failed', e));
+
   selCard1 = 117; selCard2 = null;
   marked1 = new Set(); marked2 = new Set();
-  called = [];
+  // NOTE: `called` is intentionally NOT cleared here - buildVisualWinnerMatrixGrid
+  // reads it to shade the marked numbers. It resets on the next round tick.
   
   let remainingTime = Number(extra.displaySeconds) || 5;
   const timerLabel = document.getElementById('win-timer');
@@ -1775,11 +1806,27 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, p
   }, 1000);
 }
 
-function closeWinnerModal() {
+async function closeWinnerModal() {
   document.getElementById('winner-popup').classList.remove('active');
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false;
-  navigateBackToLobbySafely();
+  bingoClaimed = false;
+
+  // Players want to keep playing: drop them straight on the cartela picker for
+  // the next round rather than the lobby.
+  const nav = document.getElementById('global-nav-bar');
+  if (nav) nav.style.display = 'flex';
+
+  if (currentSupabaseUser && currentActiveGameRoundId && globalGameStateServer === 'waiting') {
+    try {
+      document.getElementById('cpw').textContent = totalBalance;
+      await loadTakenCards();
+      renderCardGrid();
+      goTo('cards');
+      return;
+    } catch (e) { console.warn('could not open cartela screen', e); }
+  }
+  goTo('lobby');
 }
 
 async function reconnectToRound(gameId, status) {
@@ -2207,5 +2254,5 @@ function goTo(n){
 initApp();
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a24e2b496dfa8c19',t:'MTc4NTY4NTEwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

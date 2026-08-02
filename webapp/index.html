@@ -320,6 +320,20 @@ body {
   background: var(--teal) !important; color: #fff !important; box-shadow: 0 0 10px var(--teal);
 }
 .win-cell.free { background: var(--card3); color: var(--gold); }
+/* The actual winning line - gold + pulsing, clearly distinct from the teal
+   "this number was called" cells. */
+.win-cell.winline {
+  background: var(--gold) !important;
+  color: #10151f !important;
+  box-shadow: 0 0 14px var(--gold), 0 0 4px #fff inset;
+  transform: scale(1.06);
+  animation: winPulse 0.9s ease-in-out infinite alternate;
+  border: 2px solid #fff;
+}
+@keyframes winPulse {
+  from { box-shadow: 0 0 8px var(--gold); }
+  to   { box-shadow: 0 0 20px var(--gold), 0 0 30px rgba(255,189,20,.6); }
+}
 
 .card-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:3px; padding:0 12px 90px; }
 .cn {
@@ -988,7 +1002,6 @@ const BACKEND_URL = "https://fast-bingo-backend.onrender.com";
 const TELEGRAM_GROUP_LINK = "https://t.me/+0DKjQu1B3K9hN2Rk"; // Customize your Telegram group link here!
 const BOT_USERNAME = "Fastbing_bot"; // <-- set this (no @) so the phone-share fallback works
 
-
 let socket = null;
 const tgApp = window.Telegram?.WebApp;
 let userClickedTgGroupLink = false;
@@ -1441,6 +1454,16 @@ function setupSocketEngine() {
     globalGameStateServer = data.state;
     if (typeof data.minPlayersToStart === 'number') minPlayersToStart = data.minPlayersToStart;
 
+    // Live Players / Derash / Bet on the in-game stats row.
+    const gpEl = document.getElementById('gp');
+    const gdEl = document.getElementById('gd');
+    const gbEl = document.getElementById('gb');
+    const gclEl = document.getElementById('gcl');
+    if (gpEl && typeof data.participantCount === 'number') gpEl.textContent = data.participantCount;
+    if (gdEl && typeof data.derash === 'number') gdEl.textContent = data.derash + ' ETB';
+    if (gbEl && typeof data.cardPrice === 'number') gbEl.textContent = data.cardPrice;
+    if (gclEl && Array.isArray(data.drawnHistory)) gclEl.textContent = data.drawnHistory.length;
+
     if (data.state === "waiting") {
       const secs = Math.max(0, Number(data.timeRemaining) || 0);
       const text = `Starting in ${secs}s`;
@@ -1483,7 +1506,7 @@ function setupSocketEngine() {
   });
 
   socket.on('opponent_victory', (data) => {
-    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount, data.isSplit);
+    triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount, data.isSplit, data);
   });
 }
 
@@ -1676,10 +1699,13 @@ function claimBingo(){
   }
 }
 
-function buildVisualWinnerMatrixGrid(cardNum) {
+function buildVisualWinnerMatrixGrid(cardNum, winningCells) {
   const gridHolder = document.getElementById('win-grid');
   gridHolder.innerHTML = '';
   const matrix = genCard(cardNum);
+  // Set of "col,row" that form the winning line, so it stands out from the
+  // merely-marked numbers.
+  const winSet = new Set((winningCells || []).map(p => p[0] + ',' + p[1]));
   
   for (let r = 0; r < 5; r++) {
     const rowDiv = document.createElement('div');
@@ -1689,14 +1715,15 @@ function buildVisualWinnerMatrixGrid(cardNum) {
       const cellDiv = document.createElement('div');
       cellDiv.className = 'win-cell';
       
+      const isWinCell = winSet.has(c + ',' + r);
       if (cellVal === 0) {
         cellDiv.classList.add('free');
         cellDiv.textContent = '★';
+        if (isWinCell) cellDiv.classList.add('winline');
       } else {
         cellDiv.textContent = cellVal;
-        if (called.includes(cellVal)) {
-          cellDiv.classList.add('highlight');
-        }
+        if (called.includes(cellVal)) cellDiv.classList.add('highlight');
+        if (isWinCell) cellDiv.classList.add('winline');
       }
       rowDiv.appendChild(cellDiv);
     }
@@ -1704,14 +1731,16 @@ function buildVisualWinnerMatrixGrid(cardNum) {
   }
 }
 
-async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, payoutAmount, isSplit) {
+async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, payoutAmount, isSplit, extra) {
   isCurrentlyInGameRound = false;
   clearPendingRound();
+  extra = extra || {};
 
+  // The winner's balance changed - but so did everyone's (entry fee), so always
+  // re-sync rather than only for the winner.
+  if (Array.isArray(extra.drawnHistory) && extra.drawnHistory.length) called = extra.drawnHistory;
   const isMe = !!(winnerPlayerId && currentSupabaseUser && String(winnerPlayerId) === String(currentSupabaseUser.player_id));
-  if (isMe) {
-    await syncUserDatabaseState();
-  }
+  await syncUserDatabaseState();
 
   if (!winnerPlayerId) {
     document.getElementById('win-head').textContent = "No Winner This Round";
@@ -1722,7 +1751,7 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, p
     document.getElementById('win-sub').textContent = isMe
       ? `You won ${payoutAmount ?? ''} ETB into your Main Wallet with Cartela #${cardNum}!`
       : `${winnerName} (Cartela #${cardNum})`;
-    buildVisualWinnerMatrixGrid(cardNum);
+    buildVisualWinnerMatrixGrid(cardNum, extra.winningCells || []);
   }
   
   document.getElementById('winner-popup').classList.add('active');
@@ -1731,7 +1760,7 @@ async function triggerOpponentWinSequence(winnerName, cardNum, winnerPlayerId, p
   marked1 = new Set(); marked2 = new Set();
   called = [];
   
-  let remainingTime = 7;
+  let remainingTime = Number(extra.displaySeconds) || 5;
   const timerLabel = document.getElementById('win-timer');
   timerLabel.textContent = `Next game starting in ${remainingTime}s...`;
   
@@ -2177,5 +2206,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a24d0a53eec2aea6',t:'MTc4NTY3MzI2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+</body>
 </html>

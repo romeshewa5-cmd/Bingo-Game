@@ -1014,9 +1014,9 @@ let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
 let globalGameStateServer = "waiting"; 
-let minPlayersToStart = 1;
+let minPlayersToStart = 2;
 let called = [];
-let selCard1 = null, selCard2 = null;
+let selCard1 = 117, selCard2 = null;
 let marked1 = new Set(), marked2 = new Set();
 let cardCache = {};
 let isAutoMode = false;
@@ -1128,10 +1128,10 @@ function initApp() {
     try {
       tok = new URLSearchParams(location.search).get('tgauth')
          || new URLSearchParams((location.hash || '').replace(/^#/, '')).get('tgauth')
-         || sessionStorage.getItem('fastbingo_tgauth') || '';
+         || localStorage.getItem('fastbingo_tgauth') || '';
     } catch (e) {}
     if (tok) {
-      try { sessionStorage.setItem('fastbingo_tgauth', tok); } catch (e) {}
+      try { localStorage.setItem('fastbingo_tgauth', tok); } catch (e) {}
       console.log("\ud83d\udd11 using tgauth token login");
       setupSocketEngine();
       loginWithToken(tok);
@@ -1169,7 +1169,7 @@ async function loginWithToken(token) {
       body: JSON.stringify({ token })
     });
     if (!res.ok) {
-      try { sessionStorage.removeItem('fastbingo_tgauth'); } catch (e) {}
+      try { localStorage.removeItem('fastbingo_tgauth'); } catch (e) {}
       const box = document.getElementById('tg-diag');
       if (box) box.textContent = 'token login failed (' + res.status + ') - send /start to the bot again';
       document.getElementById('telegram-only-overlay').style.display = 'flex';
@@ -1513,7 +1513,22 @@ function setupSocketEngine() {
     if (data && data.reason === 'no_winning_line') toast("Not a winning pattern yet.");
   });
 
-  socket.on('new_round', () => { bingoClaimed = false; });
+  socket.on('new_round', () => {
+    bingoClaimed = false;
+    // Safety net: if the round rolled over while we're still sitting on the
+    // game board (missed/failed popup), get the player back to the cartelas.
+    const gameScreen = document.getElementById('sc-game');
+    const onGameScreen = !!(gameScreen && gameScreen.classList.contains('active'));
+    const popupOpen = document.getElementById('winner-popup')
+      && document.getElementById('winner-popup').classList.contains('active');
+    if (onGameScreen && !popupOpen) {
+      console.warn("\u26a0\ufe0f new round started while stuck in game room - recovering");
+      isCurrentlyInGameRound = false;
+      userJoinedActiveRound = false;
+      clearPendingRound();
+      closeWinnerModal();
+    }
+  });
 
   socket.on('opponent_victory', (data) => {
     triggerOpponentWinSequence(data.winnerName, data.cardNum, data.winnerPlayerId, data.payoutAmount, data.isSplit, data);
@@ -1783,7 +1798,19 @@ async function showWinnerPopup(winnerName, cardNum, winnerPlayerId, payoutAmount
   
   document.getElementById('winner-popup').classList.add('active');
 
-  // Balance refresh happens after the popup is on screen, never blocking it.
+  // Apply the authoritative balance the server just sent, so the wallet updates
+  // instantly rather than only after the app is closed and reopened.
+  try {
+    const mine = extra.balances && currentSupabaseUser && extra.balances[currentSupabaseUser.player_id];
+    if (mine) {
+      mainBalance = Number(mine.main_balance) || 0;
+      playBalance = Number(mine.play_balance) || 0;
+      totalBalance = mainBalance + playBalance;
+      currentSupabaseUser = { ...currentSupabaseUser, ...mine };
+      localStorage.setItem('supabase_bingo_player', JSON.stringify(currentSupabaseUser));
+      updateLocalWallets();
+    }
+  } catch (e) {}
   syncUserDatabaseState().catch(e => console.warn('sync failed', e));
 
   selCard1 = 117; selCard2 = null;
@@ -2185,24 +2212,63 @@ async function loadLeaderboard() {
 async function loadHistory() {
   const container = document.getElementById('history-container-list');
   if(!currentSupabaseUser || !currentSupabaseUser.player_id) {
-    container.innerHTML = `<div class="wallet-card main">No historical matches found</div>`;
+    container.innerHTML = `<div class="wallet-card main">No history yet</div>`;
     return;
   }
+  container.innerHTML = `<div class="wallet-card main">Loading...</div>`;
   try {
     const res = await fetch(`${BACKEND_URL}/api/history/${currentSupabaseUser.player_id}`);
     const data = await res.json();
-    if(!data || !data.length) { container.innerHTML = `<div class="wallet-card main">No historical matches found</div>`; return; }
-    container.innerHTML = data.map(g => `
+    if(!data || !data.length) { container.innerHTML = `<div class="wallet-card main">No history yet</div>`; return; }
+
+    const fmtWhen = (iso) => {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        return d.toLocaleDateString([], { month:'short', day:'numeric' }) + ' ' +
+               d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      } catch (e) { return ''; }
+    };
+
+    container.innerHTML = data.map(it => {
+      const amt = Number(it.amount) || 0;
+      const pos = amt > 0;
+      const amtTxt = (pos ? '+' : '') + amt + ' ETB';
+      const amtCol = pos ? 'var(--teal)' : 'var(--red)';
+
+      let title, sub;
+      if (it.kind === 'game') {
+        const won = it.type === 'payout';
+        title = `Game ${it.game_id || ''}`.trim();
+        sub = won ? 'You won' : 'You played';
+      } else {
+        title = it.label || it.type;
+        sub = [it.method, it.status].filter(Boolean).join(' • ');
+      }
+
+      const statusPill = (it.status && it.status !== 'success')
+        ? `<span style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(255,189,20,.15);color:var(--gold);margin-left:6px;">${it.status}</span>`
+        : '';
+
+      return `
       <div class="real-list-item">
-        <div>
-          <div style="font-size:12px; font-weight:bold;">Match ${g.game_id || 'N/A'}</div>
-          <div style="font-size:10px; color:var(--nav-gray);">${g.purchased_cards || 1} card(s) bought</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:bold;">${title}${statusPill}</div>
+          <div style="font-size:10px;color:var(--nav-gray);">${sub}</div>
+          <div style="font-size:9px;color:var(--nav-gray);opacity:.8;">${fmtWhen(it.at)}</div>
         </div>
-        <span style="color:${g.is_winner ? 'var(--teal)' : 'var(--red)'}; font-weight:bold;">${g.is_winner ? 'WON' : 'DONE'}</span>
-      </div>
-    `).join('');
-  } catch(e) { container.innerHTML = `<div class="wallet-card main">Failed to load history</div>`; }
+        <div style="text-align:right;">
+          <div style="color:${amtCol};font-weight:bold;font-size:13px;">${amtTxt}</div>
+          ${it.balance_after != null ? `<div style="font-size:9px;color:var(--nav-gray);">bal ${it.balance_after}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('history failed', e);
+    container.innerHTML = `<div class="wallet-card main">Failed to load history</div>`;
+  }
 }
+
 
 async function loadWithdrawals() {
   const container = document.getElementById('withdrawals-list-container');
@@ -2253,6 +2319,5 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a24e2b496dfa8c19',t:'MTc4NTY4NTEwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

@@ -1025,6 +1025,7 @@ let winnerPopupInterval = null;
 let isProcessingBonus = false;
 let socketConnected = false;
 let lastTickAt = 0;
+let stuckTicks = 0;
 let tickWatchdog = null;
 
 // If no room_tick arrives for 5s the socket is dead -> tell the user + retry.
@@ -1086,6 +1087,14 @@ function verifyWinningPattern(cardNum, markedSet) {
 //  - phone number comes from the real contact shared with the bot
 // ============================================================
 let TG_INIT_DATA = '';
+let SERVER_CONFIG = null;
+
+async function loadServerConfig() {
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/config`);
+    if (r.ok) SERVER_CONFIG = await r.json();
+  } catch (e) {}
+}
 let phonePollTimer = null;
 
 function initApp() {
@@ -1126,9 +1135,12 @@ function initApp() {
   if (!TG_INIT_DATA) {
     let tok = '';
     try {
-      tok = new URLSearchParams(location.search).get('tgauth')
-         || new URLSearchParams((location.hash || '').replace(/^#/, '')).get('tgauth')
-         || localStorage.getItem('fastbingo_tgauth') || '';
+      // A token in the URL is always fresher than the cached one - prefer it,
+      // and overwrite the cache so a rotated token can't get stuck.
+      const urlTok = new URLSearchParams(location.search).get('tgauth')
+         || new URLSearchParams((location.hash || '').replace(/^#/, '')).get('tgauth') || '';
+      if (urlTok) localStorage.setItem('fastbingo_tgauth', urlTok);
+      tok = urlTok || localStorage.getItem('fastbingo_tgauth') || '';
     } catch (e) {}
     if (tok) {
       try { localStorage.setItem('fastbingo_tgauth', tok); } catch (e) {}
@@ -1155,6 +1167,8 @@ function initApp() {
     document.getElementById('telegram-only-overlay').style.display = 'flex';
     return;
   }
+
+  loadServerConfig();
 
   // Socket connects immediately so the lobby countdown runs even before login.
   setupSocketEngine();
@@ -1461,6 +1475,32 @@ function setupSocketEngine() {
     globalGameStateServer = data.state;
     if (typeof data.minPlayersToStart === 'number') minPlayersToStart = data.minPlayersToStart;
 
+    // STUCK-ROOM RECOVERY. The new_round event can be missed (reconnect, popup
+    // error, backgrounded webview). The tick is the reliable signal: if the
+    // server is in 'waiting' and we're still on the game board with no popup,
+    // the round is over and we must leave.
+    try {
+      const gameScreen = document.getElementById('sc-game');
+      const onGame = !!(gameScreen && gameScreen.classList.contains('active'));
+      const popupOpen = !!(document.getElementById('winner-popup') &&
+        document.getElementById('winner-popup').classList.contains('active'));
+      if (onGame && !popupOpen && data.state === 'waiting') {
+        stuckTicks++;
+        if (stuckTicks >= 3) {
+          console.warn("\u26a0\ufe0f left behind in game room - returning to cartelas");
+          stuckTicks = 0;
+          isCurrentlyInGameRound = false;
+          userJoinedActiveRound = false;
+          called = [];
+          marked1 = new Set(); marked2 = new Set();
+          clearPendingRound();
+          closeWinnerModal();
+        }
+      } else {
+        stuckTicks = 0;
+      }
+    } catch (e) {}
+
     // Live Players / Derash / Bet on the in-game stats row.
     const gpEl = document.getElementById('gp');
     const gdEl = document.getElementById('gd');
@@ -1520,6 +1560,9 @@ function setupSocketEngine() {
 
   socket.on('new_round', () => {
     bingoClaimed = false;
+    // Wipe last round's marks so a stale card can never linger.
+    called = [];
+    marked1 = new Set(); marked2 = new Set();
     // Safety net: if the round rolled over while we're still sitting on the
     // game board (missed/failed popup), get the player back to the cartelas.
     const gameScreen = document.getElementById('sc-game');
@@ -1621,11 +1664,12 @@ function updateLocalWallets() {
 
   if (currentSupabaseUser && currentSupabaseUser.player_id) {
     const playerRefCode = currentSupabaseUser.player_id;
-    const webRefUrl = `${window.location.origin}/?ref=${playerRefCode}`;
-    const tgRefUrl = `https://t.me/fast_bingo_bot?start=ref_${playerRefCode}`;
+    // Must be a BOT deep link - a bare webapp URL can't register the referral,
+    // because the invitee has to talk to the bot to sign up.
+    const botName = (SERVER_CONFIG && SERVER_CONFIG.bot_username) || BOT_USERNAME;
     const refInput = document.getElementById('referral-link-input');
     if (refInput) {
-      refInput.value = (typeof tgApp !== 'undefined' && tgApp && tgApp.initDataUnsafe && tgApp.initDataUnsafe.user) ? tgRefUrl : webRefUrl;
+      refInput.value = `https://t.me/${botName}?start=ref_${playerRefCode}`;
     }
 
     const refCount = document.getElementById('ref-count-val');
@@ -2324,6 +2368,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25c662a8b6e989e',t:'MTc4NTgzNDMxMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>

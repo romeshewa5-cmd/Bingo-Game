@@ -1484,7 +1484,12 @@ function setupSocketEngine() {
       const onGame = !!(gameScreen && gameScreen.classList.contains('active'));
       const popupOpen = !!(document.getElementById('winner-popup') &&
         document.getElementById('winner-popup').classList.contains('active'));
-      if (onGame && !popupOpen && data.state === 'waiting') {
+      // CRITICAL: after joining you legitimately sit on the game board while
+      // the round is still 'waiting' (the 40s pre-game countdown). Only treat
+      // this as "stuck" when we are NOT a participant of the current round.
+      const joinedThisRound = userJoinedActiveRound &&
+        getPendingRound() === data.gameId;
+      if (onGame && !popupOpen && data.state === 'waiting' && !joinedThisRound) {
         stuckTicks++;
         if (stuckTicks >= 3) {
           console.warn("\u26a0\ufe0f left behind in game room - returning to cartelas");
@@ -1935,19 +1940,25 @@ async function joinGame(i) {
     return;
   }
   
-  const pendingRoundId = getPendingRound();
-  if (pendingRoundId) {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${pendingRoundId}`);
-      const status = await res.json();
-      if (pendingRoundId === currentActiveGameRoundId && status && status.registered) {
-        await reconnectToRound(pendingRoundId, status);
-        return;
-      }
-      clearPendingRound();
-    } catch (err) {
-      clearPendingRound();
+  // Always ask the server whether we're already in the CURRENT round. Relying
+  // on localStorage meant that once the pending record was cleared, a player
+  // who had paid could no longer get back in.
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/games/check-active/${currentSupabaseUser.player_id}/${currentActiveGameRoundId}`);
+    const status = await res.json();
+    if (status && status.registered) {
+      setPendingRound(currentActiveGameRoundId);
+      await reconnectToRound(currentActiveGameRoundId, status);
+      return;
     }
+  } catch (err) {
+    console.warn('check-active failed', err);
+  }
+  clearPendingRound();
+
+  if (globalGameStateServer === 'playing') {
+    toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
+    return;
   }
 
   document.getElementById('cpw').textContent = totalBalance;
@@ -2368,6 +2379,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25c662a8b6e989e',t:'MTc4NTgzNDMxMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25c8f5878a5f7f3',t:'MTc4NTgzNjAwMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>

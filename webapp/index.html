@@ -592,7 +592,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 <div id="telegram-only-overlay" class="auth-overlay" style="display: none;">
   <div class="auth-card">
     <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
-    <div style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">Please open inside Telegram</div>
+    <div id="tg-only-head" style="font-size: 18px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">Please open inside Telegram</div>
     <div style="font-size: 13px; color: var(--nav-gray);">Fast Bingo works inside Telegram to verify your account securely.</div>
     <div id="tg-diag" style="margin-top:12px;font-size:10px;color:#7a8;word-break:break-all;line-height:1.5;"></div>
   </div>
@@ -1170,8 +1170,13 @@ async function loginWithToken(token) {
     });
     if (!res.ok) {
       try { localStorage.removeItem('fastbingo_tgauth'); } catch (e) {}
+      // A stale token shouldn't dead-end the user. If Telegram gave us initData
+      // we can still log in normally; otherwise show how to recover.
+      if (TG_INIT_DATA) { authenticateWithTelegram(); return; }
       const box = document.getElementById('tg-diag');
-      if (box) box.textContent = 'token login failed (' + res.status + ') - send /start to the bot again';
+      if (box) box.textContent = 'Session expired. Open the bot and tap Play Game again.';
+      const head = document.getElementById('tg-only-head');
+      if (head) head.textContent = 'Session expired';
       document.getElementById('telegram-only-overlay').style.display = 'flex';
       return;
     }
@@ -2319,5 +2324,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>

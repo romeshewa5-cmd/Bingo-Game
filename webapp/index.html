@@ -738,6 +738,9 @@ input:checked + .slider:before { transform: translateX(18px); }
         💳 ገቢ ያድርጉ (Deposit)
       </button>
     </div>
+    <button id="lobby-refresh-btn" onclick="refreshLobby()" style="width:100%; margin-top:10px; background:rgba(255,255,255,0.06); color:#fff; font-weight:700; font-size:13px; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.12);">
+      🔄 አድስ (Refresh)
+    </button>
   </div>
 </div>
 
@@ -916,8 +919,9 @@ input:checked + .slider:before { transform: translateX(18px); }
         <div style="font-size:22px; font-weight:800; color:var(--gold);"><span id="cps">10</span> ETB</div>
       </div>
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button class="mini-start-btn" onclick="confirmJoin()">✅ Start Game</button>
+        <button class="mini-start-btn" id="confirm-join-btn" onclick="confirmJoin()">✅ Start Game</button>
         <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting...</div>
+        <button onclick="refreshCartelaGrid()" style="margin-left:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:6px 12px;font-size:11px;font-weight:700;">🔄</button>
       </div>
     </div>
   </div>
@@ -1042,6 +1046,34 @@ function startTickWatchdog() {
 }
 
 const PENDING_ROUND_KEY = 'fastbingo_pending_round';
+const GAME_STATE_KEY = 'fastbingo_game_state';
+
+// Persist in-round state so closing/reopening the app mid-round doesn't wipe
+// your marked numbers or turn AUTO off.
+function saveGameState() {
+  try {
+    if (!currentActiveGameRoundId) return;
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify({
+      gameId: currentActiveGameRoundId,
+      selCard1, selCard2,
+      marked1: Array.from(marked1),
+      marked2: Array.from(marked2),
+      auto: isAutoMode,
+      at: Date.now()
+    }));
+  } catch (e) {}
+}
+function loadGameState(gameId) {
+  try {
+    const raw = localStorage.getItem(GAME_STATE_KEY);
+    if (!raw) return null;
+    const st = JSON.parse(raw);
+    if (!st || st.gameId !== gameId) return null;
+    if (Date.now() - (st.at || 0) > 30 * 60 * 1000) return null;
+    return st;
+  } catch (e) { return null; }
+}
+function clearGameState() { try { localStorage.removeItem(GAME_STATE_KEY); } catch (e) {} }
 function setPendingRound(gameId){ if(gameId) localStorage.setItem(PENDING_ROUND_KEY, gameId); }
 function getPendingRound(){ return localStorage.getItem(PENDING_ROUND_KEY); }
 function clearPendingRound(){ localStorage.removeItem(PENDING_ROUND_KEY); }
@@ -1518,6 +1550,19 @@ function setupSocketEngine() {
 
     if (data.state === "waiting") {
       const secs = Math.max(0, Number(data.timeRemaining) || 0);
+
+      // Clear last round's balls and show the countdown in the big ball slot,
+      // so waiting players can see it without looking at the header pill.
+      const bigBall = document.getElementById('gcir');
+      if (bigBall) {
+        bigBall.textContent = secs + 's';
+        bigBall.style.color = 'var(--gold)';
+        bigBall.style.fontSize = '30px';
+      }
+      const hist = document.getElementById('ghist-pills');
+      if (hist) hist.innerHTML = '<div style="font-size:11px;color:var(--nav-gray);font-weight:700;">ቀጣዩ ዙር ይጀምራል (Next round starting)</div>';
+      const gclW = document.getElementById('gcl');
+      if (gclW) gclW.textContent = '0';
       const text = `Starting in ${secs}s`;
       if (lobbyPill) { lobbyPill.textContent = text; lobbyPill.className = "lobby-status-pill waiting"; }
       if (cartelaPill) { cartelaPill.textContent = text; }
@@ -1530,11 +1575,20 @@ function setupSocketEngine() {
         }
       }
     } else {
-      if (lobbyPill) { lobbyPill.textContent = "Playing"; lobbyPill.className = "lobby-status-pill playing"; }
+      if (lobbyPill) {
+        // Show the live prize so someone opening the app mid-round can see
+        // what's at stake before the next round.
+        const d = (typeof data.derash === 'number') ? ` • ${data.derash} ETB` : '';
+        lobbyPill.textContent = "Playing" + d;
+        lobbyPill.className = "lobby-status-pill playing";
+      }
       if (cartelaPill) { cartelaPill.textContent = "Game In Progress"; }
       if (gameTimerHeader) { gameTimerHeader.textContent = "ROUND LIVE"; }
       if (lobbyPlayersNote) lobbyPlayersNote.textContent = '';
       
+      const bb = document.getElementById('gcir');
+      if (bb) bb.style.fontSize = '';
+
       if (data.state === "playing" && data.drawnHistory && data.drawnHistory.length > 0) {
         called = data.drawnHistory;
         if (called.length > 0) {
@@ -1557,6 +1611,19 @@ function setupSocketEngine() {
     processIncomingBallCall(data.number, data.pool);
   });
 
+  socket.on('bingo_missed', (data) => {
+    bingoClaimed = false;
+    console.warn("\u23f0 missed bingo:", data);
+    toast("\u23f0 የቢንጎ ቁጥርዎ አልፏል! (You missed your bingo)");
+    const btn = document.getElementById('main-payout-btn');
+    if (btn) {
+      const old = btn.textContent;
+      btn.textContent = "\u23f0 Missed!";
+      btn.style.background = 'var(--red)';
+      setTimeout(() => { btn.textContent = old; btn.style.background = ''; }, 2500);
+    }
+  });
+
   socket.on('bingo_rejected', (data) => {
     console.warn("\u26d4 bingo rejected:", data && data.reason);
     bingoClaimed = false;
@@ -1565,6 +1632,7 @@ function setupSocketEngine() {
 
   socket.on('new_round', () => {
     bingoClaimed = false;
+    clearGameState();
     // Wipe last round's marks so a stale card can never linger.
     called = [];
     marked1 = new Set(); marked2 = new Set();
@@ -1719,6 +1787,7 @@ function autoMarkCardBackground(cardNumber, valCalled) {
     for (let r = 0; r < 5; r++) { if (card[c][r] === valCalled) marked.add(`${c}-${r}`); }
   }
   renderGameCard(cardNumber);
+  saveGameState();
   checkAutoBingoBackground(cardNumber);
 }
 
@@ -1762,7 +1831,7 @@ function markCell(cardNumber,key,c,r){
   const selCard = cardNumber === 1 ? selCard1 : selCard2;
   const marked = cardNumber === 1 ? marked1 : marked2;
   const v=genCard(selCard)[c][r]; if(v===0)return;
-  if(called.includes(v)){ marked.has(key)?marked.delete(key):marked.add(key); renderGameCard(cardNumber); }
+  if(called.includes(v)){ marked.has(key)?marked.delete(key):marked.add(key); renderGameCard(cardNumber); saveGameState(); }
 }
 
 let bingoClaimed = false;
@@ -1919,11 +1988,27 @@ async function reconnectToRound(gameId, status) {
     selCard2 = status.cards_list.length > 1 ? status.cards_list[1] : null;
   }
 
+  // Restore marks + AUTO from before the app was closed.
+  const saved = loadGameState(gameId);
+  if (saved) {
+    if (saved.selCard1) selCard1 = saved.selCard1;
+    selCard2 = saved.selCard2 || selCard2;
+    marked1 = new Set(saved.marked1 || []);
+    marked2 = new Set(saved.marked2 || []);
+    isAutoMode = !!saved.auto;
+    const t = document.getElementById('auto-toggle');
+    if (t) t.checked = isAutoMode;
+    console.log("\u267b\ufe0f restored game state:", marked1.size, "marks, auto:", isAutoMode);
+  }
+
   setPendingRound(gameId);
   document.getElementById('gg').textContent = currentActiveGameRoundId;
   syncActiveGameScreenStructure();
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
+
+  // Re-apply every ball drawn while we were away, so AUTO cards catch up.
+  await refreshLiveGameGrids();
   toast("Reconnected to your match!");
 }
 
@@ -2008,6 +2093,11 @@ function renderCardGrid(){
 
 function selectCard(n){
   if (takenCards.has(n) && n !== selCard1 && n !== selCard2) return;
+  // Cap is 2 cartelas per round; picking a 3rd replaces the oldest (and the
+  // server rejects anything over MAX_CARDS_PER_PLAYER as a backstop).
+  if (selCard1 && selCard2 && n !== selCard1 && n !== selCard2) {
+    toast("በአንድ ዙር እስከ 2 ካርቴላ ብቻ (max 2)");
+  }
   if (selCard1 === n) { selCard1 = selCard2; selCard2 = null; }
   else if (selCard2 === n) { selCard2 = null; }
   else {
@@ -2033,8 +2123,22 @@ function updateSelectionSummary() {
   document.getElementById('cart-rows').innerHTML = html;
 }
 
+let joinInFlight = false;
 async function confirmJoin(){
   console.log("🎯 confirmJoin called");
+  if (joinInFlight) { console.log("join already in flight - ignoring"); return; }
+  joinInFlight = true;
+  const joinBtn = document.getElementById('confirm-join-btn');
+  if (joinBtn) joinBtn.disabled = true;
+  try {
+    await doConfirmJoin();
+  } finally {
+    joinInFlight = false;
+    if (joinBtn) joinBtn.disabled = false;
+  }
+}
+
+async function doConfirmJoin(){
   
   if (globalGameStateServer === "playing") {
     toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
@@ -2353,9 +2457,80 @@ async function loadWithdrawals() {
   } catch (err) { container.innerHTML = ''; }
 }
 
-function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; }
+function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; saveGameState(); }
 async function refreshCardPickerGrid(){ selCard1 = 117; selCard2 = null; await loadTakenCards(); renderCardGrid(); }
-function refreshLiveGameGrids(){ renderGameCard(1); if(selCard2) renderGameCard(2); }
+// Pull authoritative state from the server: called balls, marks, stats.
+async function refreshLiveGameGrids(){
+  try {
+    if (socket && socket.connected) socket.emit('request_tick');
+    const r = await fetch(`${BACKEND_URL}/api/health`);
+    const h = await r.json();
+    if (Array.isArray(h.drawnHistory)) {
+      called = h.drawnHistory;
+    } else {
+      // /api/health doesn't carry the history; ask the socket and wait a beat.
+      await new Promise(res => setTimeout(res, 300));
+    }
+    // Re-apply AUTO marks for every ball we may have missed.
+    if (isAutoMode) {
+      [1, 2].forEach(n => {
+        const sc = n === 1 ? selCard1 : selCard2;
+        if (!sc) return;
+        const card = genCard(sc);
+        const mk = n === 1 ? marked1 : marked2;
+        for (let c = 0; c < 5; c++) for (let rr = 0; rr < 5; rr++) {
+          if (called.includes(card[c][rr])) mk.add(`${c}-${rr}`);
+        }
+      });
+      saveGameState();
+    }
+    renderMasterBoard();
+    renderCurrentBallStrip();
+  } catch (e) { console.warn('refresh failed', e); }
+  renderGameCard(1); if(selCard2) renderGameCard(2);
+  const gcl = document.getElementById('gcl');
+  if (gcl) gcl.textContent = called.length;
+}
+
+// Redraw the recent-ball strip + big ball from `called`.
+function renderCurrentBallStrip(){
+  try {
+    const holder = document.getElementById('ghist-pills');
+    if (holder) {
+      holder.innerHTML = '';
+      called.slice(-6, -1).forEach(b => {
+        const d = document.createElement('div');
+        d.className = 'historic-ball-pill'; d.textContent = b;
+        holder.appendChild(d);
+      });
+    }
+    const last = called[called.length - 1];
+    const big = document.getElementById('gcir');
+    if (big && last) {
+      const L = LETS[Math.floor((last - 1) / 15)];
+      big.textContent = L + '-' + last;
+      big.style.color = `var(--col-${L})`;
+    }
+  } catch (e) {}
+}
+
+async function refreshLobby(){
+  const btn = document.getElementById('lobby-refresh-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '🔄 በማደስ ላይ...'; }
+  try {
+    if (socket && socket.connected) socket.emit('request_tick'); else setupSocketEngine();
+    await syncUserDatabaseState();
+    toast("ተሻሽሏል (Refreshed)");
+  } catch (e) { toast("Refresh failed"); }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 አድስ (Refresh)'; }
+}
+
+async function refreshCartelaGrid(){
+  await loadTakenCards();
+  renderCardGrid();
+  document.getElementById('cpw').textContent = totalBalance;
+  toast("ካርቴላዎች ተሻሽለዋል");
+}
 
 function toast(msg){
   const el=document.getElementById('toast');
@@ -2379,6 +2554,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25c8f5878a5f7f3',t:'MTc4NTgzNjAwMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>

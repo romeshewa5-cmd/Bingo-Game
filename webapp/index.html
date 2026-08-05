@@ -788,6 +788,10 @@ input:checked + .slider:before { transform: translateX(18px); }
 <!-- LEADERBOARD SCREEN -->
 <div class="screen" id="sc-scores">
   <div class="nav"><div class="nav-title">Fast Bingo Leaderboard</div></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button id="lb-tab-daily" onclick="setLeaderboardPeriod('daily')" style="flex:1;padding:10px;border-radius:12px;border:none;background:var(--gold);color:#10151f;font-weight:800;font-size:12px;">ዛሬ (Today)</button>
+    <button id="lb-tab-weekly" onclick="setLeaderboardPeriod('weekly')" style="flex:1;padding:10px;border-radius:12px;border:none;background:rgba(255,255,255,0.06);color:#fff;font-weight:800;font-size:12px;">ሳምንታዊ (Weekly)</button>
+  </div>
   <div class="wallet-grid" id="scores-container-list">
     <div class="wallet-card main"><div style="font-size:14px; color:var(--nav-gray)">Loading high scores...</div></div>
   </div>
@@ -985,7 +989,8 @@ input:checked + .slider:before { transform: translateX(18px); }
   <div class="winner-card-body">
     <div style="font-size: 35px; margin-bottom: 8px;">👑</div>
     <div id="win-head" style="font-weight: 800; font-size: 18px; color: var(--gold); margin-bottom: 5px;">--</div>
-    <div id="win-sub" style="font-size: 13px; color: #fff; margin-bottom: 12px;">--</div>
+    <div id="win-sub" style="font-size: 13px; color: #fff; margin-bottom: 4px;">--</div>
+    <div id="win-winner-line" style="font-size: 20px; font-weight: 900; color: var(--gold); margin-bottom: 12px; text-shadow: 0 0 12px rgba(255,189,20,.5); line-height:1.3;"></div>
     <div id="win-grid" style="display: flex; flex-direction: column; gap: 4px; margin: 15px auto; width: fit-content; background: #090d16; padding: 10px; border-radius: 12px;"></div>
     <div id="win-timer" style="font-size: 12px; color: var(--teal); margin-top: 10px; font-weight: bold;">Next game starting in 7s...</div>
   </div>
@@ -1018,9 +1023,9 @@ let currentSupabaseUser = null;
 let userJoinedActiveRound = false;
 let isCurrentlyInGameRound = false;
 let globalGameStateServer = "waiting"; 
-let minPlayersToStart = 1;
+let minPlayersToStart = 2;
 let called = [];
-let selCard1 = null, selCard2 = null;
+let selCard1 = 117, selCard2 = null;
 let marked1 = new Set(), marked2 = new Set();
 let cardCache = {};
 let isAutoMode = false;
@@ -1911,11 +1916,16 @@ async function showWinnerPopup(winnerName, cardNum, winnerPlayerId, payoutAmount
     document.getElementById('win-head').textContent = "No Winner This Round";
     document.getElementById('win-sub').textContent = "All 75 numbers were called with no bingo.";
     document.getElementById('win-grid').innerHTML = '';
+    const lw = document.getElementById('win-winner-line');
+    if (lw) lw.textContent = '';
   } else {
     document.getElementById('win-head').textContent = isMe ? (isSplit ? "🏆 You Split the Win!" : "🏆 You Won!") : (isSplit ? "👑 Split Winners!" : "👑 Winner Declared!");
+    // Winner name + cartela get their own large bold line; details stay small.
+    const lineEl = document.getElementById('win-winner-line');
+    if (lineEl) lineEl.innerHTML = `${winnerName} &nbsp;\u2022&nbsp; Cartela #${cardNum}`;
     document.getElementById('win-sub').textContent = isMe
-      ? `You won ${payoutAmount ?? ''} ETB into your Main Wallet with Cartela #${cardNum}!`
-      : `${winnerName} (Cartela #${cardNum})`;
+      ? `You won ${payoutAmount ?? ''} ETB into your Main Wallet`
+      : `Payout ${payoutAmount ?? ''} ETB`;
     buildVisualWinnerMatrixGrid(cardNum, extra.winningCells || []);
   }
   
@@ -2320,6 +2330,17 @@ async function submitWithdrawalRequest() {
       document.getElementById('wdr-amount').value = '';
       toast("Withdrawal requested! An admin will review and process your transfer.");
       loadWithdrawals();
+    } else if (result && result.error === 'need_deposit') {
+      const L = result.limits || {};
+      alert(`\u1240\u1295\u12f0\u1265 \u121b\u12cd\u1323\u1275 \u12a0\u12ed\u127b\u120d\n\n` +
+        `\u12e8\u1266\u1290\u1235 \u1308\u1295\u12d8\u1265 \u1208\u121b\u12cd\u1323\u1275 \u1218\u1300\u1218\u122a\u12eb \u1262\u12eb\u1295\u1235 ${L.min_deposit} \u1265\u122d \u121b\u1235\u1308\u1263\u1275 \u12a0\u1208\u1265\u12ce\u1275\u1362\n\n` +
+        `\u12a5\u1235\u12ab\u1201\u1295 \u12eb\u1235\u1308\u1261\u1275: ${result.stats.deposited} \u1265\u122d\n` +
+        `\u12e8\u1240\u1228\u12cd: ${result.need} \u1265\u122d`);
+    } else if (result && result.error === 'need_games') {
+      const L = result.limits || {};
+      alert(`\u1240\u1295\u12f0\u1265 \u121b\u12cd\u1323\u1275 \u12a0\u12ed\u127b\u120d\n\n` +
+        `1. \u1262\u12eb\u1295\u1235 ${L.min_games} \u1329\u12cb\u1273 \u1218\u132b\u12c8\u1275 (\u12e8\u1270\u132b\u12c8\u1271: ${result.stats.games})\n` +
+        `2. \u12c8\u12ed\u121d \u12a8\u12c8\u132a \u1260\u128b\u120b \u1262\u12eb\u1295\u1235 ${L.keep_balance} \u1265\u122d \u121b\u1235\u1240\u1228\u1275`);
     } else {
       toast(result.message || result.error || "Withdrawal failed.");
     }
@@ -2554,5 +2575,5 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25e200e5e4a7e19',t:'MTc4NTg1MjQxMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2649f69cc4ee6b4',t:'MTc4NTkyMDU0NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

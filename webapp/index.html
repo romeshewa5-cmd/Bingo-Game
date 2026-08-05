@@ -925,7 +925,7 @@ input:checked + .slider:before { transform: translateX(18px); }
       <div style="display: flex; flex-direction: column; gap: 8px;">
         <button class="mini-start-btn" id="confirm-join-btn" onclick="confirmJoin()">✅ Start Game</button>
         <div id="cartela-countdown" class="mini-countdown-timer-pill">Waiting...</div>
-        <button onclick="refreshCartelaGrid()" style="margin-left:8px;background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:6px 12px;font-size:11px;font-weight:700;">🔄</button>
+        <button id="cartela-refresh-btn" onclick="refreshCartelaGrid()" style="background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.18);border-radius:12px;padding:8px 12px;font-size:11px;font-weight:700;white-space:nowrap;">🔄 ካርቴላ አድስ</button>
       </div>
     </div>
   </div>
@@ -940,6 +940,10 @@ input:checked + .slider:before { transform: translateX(18px); }
     <div id="game-countdown-header-pill" style="font-size:12px; font-weight:bold; color:var(--gold); background:rgba(255,189,20,0.1); padding:4px 8px; border-radius:6px;">Game On</div>
   </div>
   
+  <div id="spectator-banner" style="display:none;background:linear-gradient(90deg,rgba(255,189,20,.18),rgba(15,192,130,.18));border:1px solid rgba(255,189,20,.4);border-radius:12px;padding:10px 14px;margin:0 10px 8px;text-align:center;">
+    <div style="font-size:13px;font-weight:800;color:var(--gold);">👀 በመመልከት ላይ (Spectating)</div>
+    <div style="font-size:11px;color:#fff;opacity:.85;margin-top:2px;">ዙሩ ሲያልቅ በራስ-ሰር ይቀላቀላሉ (You'll join automatically when this round ends)</div>
+  </div>
   <div class="gstats-row-container">
     <div class="gstat-block"><span class="gstat-lbl">Game ID</span><span class="gstat-val" id="gg">--</span></div>
     <div class="gstat-block"><span class="gstat-lbl">Players</span><span class="gstat-val" id="gp">--</span></div>
@@ -1025,7 +1029,7 @@ let isCurrentlyInGameRound = false;
 let globalGameStateServer = "waiting"; 
 let minPlayersToStart = 2;
 let called = [];
-let selCard1 = null, selCard2 = null;
+let selCard1 = null, selCard2 = null;   // nothing selected until the player picks
 let marked1 = new Set(), marked2 = new Set();
 let cardCache = {};
 let isAutoMode = false;
@@ -1035,6 +1039,40 @@ let isProcessingBonus = false;
 let socketConnected = false;
 let lastTickAt = 0;
 let stuckTicks = 0;
+let isSpectating = false;
+
+// Watch the live round without a cartela. Auto-exits to the picker when the
+// round ends so the viewer can join the next one.
+function enterSpectatorMode() {
+  isSpectating = true;
+  isCurrentlyInGameRound = false;
+  userJoinedActiveRound = false;
+  selCard1 = null; selCard2 = null;
+  marked1 = new Set(); marked2 = new Set();
+
+  syncActiveGameScreenStructure();
+  document.getElementById('global-nav-bar').style.display = 'flex';
+  document.getElementById('gg').textContent = currentActiveGameRoundId || '--';
+
+  // Hide the controls a spectator can't use.
+  const dock = document.querySelector('.game-bottom-control-dock');
+  if (dock) dock.style.display = 'none';
+  const banner = document.getElementById('spectator-banner');
+  if (banner) banner.style.display = 'block';
+
+  goTo('game');
+  refreshLiveGameGrids();
+  toast("👀 ጨዋታውን በመመልከት ላይ (Watching live)");
+}
+
+function exitSpectatorMode() {
+  if (!isSpectating) return;
+  isSpectating = false;
+  const dock = document.querySelector('.game-bottom-control-dock');
+  if (dock) dock.style.display = '';
+  const banner = document.getElementById('spectator-banner');
+  if (banner) banner.style.display = 'none';
+}
 let tickWatchdog = null;
 
 // If no room_tick arrives for 5s the socket is dead -> tell the user + retry.
@@ -1212,9 +1250,30 @@ function initApp() {
   authenticateWithTelegram();
 }
 
+// fetch with timeout + retries. Render can take a few seconds to wake, and a
+// single failed request was showing "please open inside Telegram" to players
+// who were, in fact, inside Telegram.
+async function fetchRetry(url, opts = {}, tries = 3, timeoutMs = 12000) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeoutMs);
+      const r = await fetch(url, { ...opts, signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.status >= 500 && i < tries - 1) { await new Promise(z => setTimeout(z, 800 * (i + 1))); continue; }
+      return r;
+    } catch (e) {
+      lastErr = e;
+      if (i < tries - 1) await new Promise(z => setTimeout(z, 800 * (i + 1)));
+    }
+  }
+  throw lastErr || new Error('request failed');
+}
+
 async function loginWithToken(token) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/auth/token`, {
+    const res = await fetchRetry(`${BACKEND_URL}/api/auth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })
@@ -1241,7 +1300,7 @@ async function loginWithToken(token) {
 
 async function authenticateWithTelegram() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
+    const res = await fetchRetry(`${BACKEND_URL}/api/auth/telegram`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1267,8 +1326,17 @@ async function authenticateWithTelegram() {
     document.getElementById('auth-overlay').style.display = 'flex';
   } catch (err) {
     console.error("❌ auth failed:", err);
-    toast("Can't reach the server. Check your connection.");
-    document.getElementById('auth-overlay').style.display = 'flex';
+    // Network problem - NOT a Telegram problem. Show a retry, not the
+    // misleading "open inside Telegram" screen.
+    const box = document.getElementById('tg-diag');
+    if (box) box.textContent = 'Server unreachable. Tap to retry.';
+    const head = document.getElementById('tg-only-head');
+    if (head) head.textContent = 'Connection problem';
+    const ov = document.getElementById('telegram-only-overlay');
+    if (ov) {
+      ov.style.display = 'flex';
+      ov.onclick = () => { ov.style.display = 'none'; initApp(); };
+    }
   }
 }
 
@@ -1477,6 +1545,11 @@ function setupSocketEngine() {
     updateConnectionStatus();
     socket.emit('request_tick');
     startTickWatchdog();
+    // The wallet can render 0 if the first balance fetch lost the race with
+    // the socket. Re-pull it whenever the socket (re)connects.
+    if (currentSupabaseUser && currentSupabaseUser.player_id) {
+      syncUserDatabaseState().catch(() => {});
+    }
   });
 
   socket.on('disconnect', () => {
@@ -1526,7 +1599,20 @@ function setupSocketEngine() {
       // this as "stuck" when we are NOT a participant of the current round.
       const joinedThisRound = userJoinedActiveRound &&
         getPendingRound() === data.gameId;
-      if (onGame && !popupOpen && data.state === 'waiting' && !joinedThisRound) {
+      const popupCounting = !!winnerPopupInterval;
+
+      // A spectator watching a finished round should be taken to the picker
+      // so they can actually join the next one.
+      if (isSpectating && data.state === 'waiting' && !popupOpen && !popupCounting) {
+        exitSpectatorMode();
+        called = [];
+        loadTakenCards().then(() => { renderCardGrid(); goTo('cards'); }).catch(() => goTo('lobby'));
+        toast("ዙሩ አልቋል — አሁን ይቀላቀሉ!");
+        stuckTicks = 0;
+        return;
+      }
+
+      if (onGame && !popupOpen && !popupCounting && !isSpectating && data.state === 'waiting' && !joinedThisRound) {
         stuckTicks++;
         if (stuckTicks >= 3) {
           console.warn("\u26a0\ufe0f left behind in game room - returning to cartelas");
@@ -1612,7 +1698,7 @@ function setupSocketEngine() {
   });
 
   socket.on('ball_drawn', (data) => {
-    if (!isCurrentlyInGameRound) return;
+    if (!isCurrentlyInGameRound && !isSpectating) return;
     processIncomingBallCall(data.number, data.pool);
   });
 
@@ -1686,7 +1772,7 @@ async function syncUserDatabaseState() {
   console.log("🔄 Syncing user from server:", currentSupabaseUser.player_id);
   
   try {
-    const response = await fetch(`${BACKEND_URL}/api/player/${currentSupabaseUser.player_id}`);
+    const response = await fetchRetry(`${BACKEND_URL}/api/player/${currentSupabaseUser.player_id}`, {}, 3, 10000);
     console.log("📡 Sync response status:", response.status);
     
     if (response.status === 404) {
@@ -1778,6 +1864,7 @@ function processIncomingBallCall(n, fullNumbersHistoryArray){
   }
 
   renderMasterBoard();
+  if (isSpectating) return;            // spectator has no cartela to mark
   if (isAutoMode) {
     autoMarkCardBackground(1, n); if(selCard2) autoMarkCardBackground(2, n);
   } else {
@@ -1946,7 +2033,7 @@ async function showWinnerPopup(winnerName, cardNum, winnerPlayerId, payoutAmount
   } catch (e) {}
   syncUserDatabaseState().catch(e => console.warn('sync failed', e));
 
-  selCard1 = 117; selCard2 = null;
+  selCard1 = null; selCard2 = null;
   marked1 = new Set(); marked2 = new Set();
   // NOTE: `called` is intentionally NOT cleared here - buildVisualWinnerMatrixGrid
   // reads it to shade the marked numbers. It resets on the next round tick.
@@ -1971,22 +2058,29 @@ async function closeWinnerModal() {
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false;
   bingoClaimed = false;
+  clearPendingRound();
+  clearGameState();
 
-  // Players want to keep playing: drop them straight on the cartela picker for
-  // the next round rather than the lobby.
+  // Clear the finished round's board so it can't linger behind the next screen.
+  called = [];
+  marked1 = new Set(); marked2 = new Set();
+  selCard1 = null; selCard2 = null;
+
   const nav = document.getElementById('global-nav-bar');
   if (nav) nav.style.display = 'flex';
 
-  if (currentSupabaseUser && currentActiveGameRoundId && globalGameStateServer === 'waiting') {
-    try {
-      document.getElementById('cpw').textContent = totalBalance;
-      await loadTakenCards();
-      renderCardGrid();
-      goTo('cards');
-      return;
-    } catch (e) { console.warn('could not open cartela screen', e); }
+  // ALWAYS leave the game screen. The old version only moved when the server
+  // already said 'waiting'; if the new round hadn't started yet the player was
+  // left staring at the finished board.
+  try {
+    document.getElementById('cpw').textContent = totalBalance;
+    await loadTakenCards();
+    renderCardGrid();
+    goTo('cards');
+  } catch (e) {
+    console.warn('cartela screen failed, falling back to lobby', e);
+    goTo('lobby');
   }
-  goTo('lobby');
 }
 
 async function reconnectToRound(gameId, status) {
@@ -2052,7 +2146,9 @@ async function joinGame(i) {
   clearPendingRound();
 
   if (globalGameStateServer === 'playing') {
-    toast("ጨዋታ ተጀምሯል! እባክዎ ቀጣዩን ዙር ይጠብቁ።");
+    // Don't turn a new player away - let them WATCH. Being told "come back
+    // later" is the main reason first-timers leave and never return.
+    enterSpectatorMode();
     return;
   }
 
@@ -2119,6 +2215,17 @@ function selectCard(n){
 }
 
 function updateSelectionSummary() {
+  const startBtn = document.getElementById('confirm-join-btn');
+  if (!selCard1 && !selCard2) {
+    document.getElementById('cac').textContent = 0;
+    document.getElementById('cps').textContent = 0;
+    document.getElementById('cart-lbl').textContent = 'ካርቴላ ይምረጡ (Pick a cartela)';
+    document.getElementById('cart-rows').innerHTML =
+      '<div style="padding:24px;text-align:center;color:var(--nav-gray);font-size:12px;">👆 ከላይ ካርቴላ ይምረጡ</div>';
+    if (startBtn) { startBtn.disabled = true; startBtn.style.opacity = '0.45'; }
+    return;
+  }
+  if (startBtn) { startBtn.disabled = false; startBtn.style.opacity = '1'; }
   let count = selCard2 ? 2 : 1;
   document.getElementById('cac').textContent = count;
   document.getElementById('cps').textContent = selGame.bet * count;
@@ -2160,6 +2267,7 @@ async function doConfirmJoin(){
     return;
   }
 
+  if (!selCard1 && !selCard2) { toast("እባክዎ መጀመሪያ ካርቴላ ይምረጡ"); return; }
   let count = selCard2 ? 2 : 1;
   const gameCost = selGame.bet * count;
   if (totalBalance < gameCost) { toast("የሂሳብ መጠንዎ በቂ አይደለም!"); return; }
@@ -2176,7 +2284,7 @@ async function doConfirmJoin(){
         player_id: currentSupabaseUser.player_id, 
         game_id: currentActiveGameRoundId, 
         cards_bought: count,
-        cards_list: selCard2 ? [selCard1, selCard2] : [selCard1]
+        cards_list: [selCard1, selCard2].filter(Boolean)
       })
     });
     httpStatus = createRes.status;
@@ -2226,6 +2334,7 @@ function cancelRegistrationAndRefund() {
 }
 
 function navigateBackToLobbySafely() {
+  exitSpectatorMode();
   isCurrentlyInGameRound = false;
   userJoinedActiveRound = false;
   const globalNav = document.getElementById('global-nav-bar');
@@ -2479,7 +2588,7 @@ async function loadWithdrawals() {
 }
 
 function toggleAutoMode() { isAutoMode = document.getElementById('auto-toggle').checked; saveGameState(); }
-async function refreshCardPickerGrid(){ selCard1 = 117; selCard2 = null; await loadTakenCards(); renderCardGrid(); }
+async function refreshCardPickerGrid(){ selCard1 = null; selCard2 = null; await loadTakenCards(); renderCardGrid(); }
 // Pull authoritative state from the server: called balls, marks, stats.
 async function refreshLiveGameGrids(){
   try {
@@ -2547,10 +2656,18 @@ async function refreshLobby(){
 }
 
 async function refreshCartelaGrid(){
-  await loadTakenCards();
-  renderCardGrid();
-  document.getElementById('cpw').textContent = totalBalance;
-  toast("ካርቴላዎች ተሻሽለዋል");
+  const btn = document.getElementById('cartela-refresh-btn');
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ በማደስ ላይ...'; }
+  try {
+    await loadTakenCards();
+    renderCardGrid();
+    document.getElementById('cpw').textContent = totalBalance;
+    toast("✅ ካርቴላዎች ተሻሽለዋል (Cartelas refreshed)");
+  } catch (e) {
+    toast("Refresh failed - check your connection");
+  }
+  if (btn) { btn.disabled = false; btn.textContent = label || '🔄 ካርቴላ አድስ'; }
 }
 
 function toast(msg){
@@ -2575,5 +2692,5 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2649f69cc4ee6b4',t:'MTc4NTkyMDU0NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a268358b0c06e6b4',t:'MTc4NTk1ODE1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

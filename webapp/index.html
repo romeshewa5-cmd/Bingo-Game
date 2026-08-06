@@ -1254,6 +1254,18 @@ function initApp() {
 // fetch with timeout + retries. Render can take a few seconds to wake, and a
 // single failed request was showing "please open inside Telegram" to players
 // who were, in fact, inside Telegram.
+// Every wallet/game request must carry proof of identity. player_id alone is
+// not a credential - the server now rejects requests without this.
+function authBody(extra) {
+  const body = { ...(extra || {}) };
+  if (TG_INIT_DATA) body.initData = TG_INIT_DATA;
+  try {
+    const tok = localStorage.getItem('fastbingo_tgauth');
+    if (tok) body.tgauth = tok;
+  } catch (e) {}
+  return JSON.stringify(body);
+}
+
 async function fetchRetry(url, opts = {}, tries = 3, timeoutMs = 12000) {
   let lastErr;
   for (let i = 0; i < tries; i++) {
@@ -1466,7 +1478,7 @@ async function verifyAndClaimTgBonus() {
     const response = await fetch(`${BACKEND_URL}/api/claim-telegram-bonus`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
+      body: authBody({ 
         player_id: currentSupabaseUser.player_id,
         claimed_tg_group: shouldCreditTGGroupBonus
       })
@@ -2320,7 +2332,7 @@ async function doConfirmJoin(){
     const createRes = await fetchRetry(`${BACKEND_URL}/api/games/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
+      body: authBody({ 
         player_id: currentSupabaseUser.player_id, 
         game_id: currentActiveGameRoundId, 
         cards_bought: count,
@@ -2427,7 +2439,7 @@ async function submitDepositRequest() {
     const res = await fetch(`${BACKEND_URL}/api/wallet/deposit-request`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id: currentSupabaseUser.player_id, method, amount, reference_id })
+      body: authBody({ player_id: currentSupabaseUser.player_id, method, amount, reference_id })
     });
     const data = await res.json();
     if (data && data.success) {
@@ -2467,7 +2479,7 @@ async function submitWithdrawalRequest() {
     const res = await fetch(`${BACKEND_URL}/api/wallet/withdraw-request`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: authBody({
         player_id: currentSupabaseUser.player_id,
         method, account_number, account_name, amount
       })
@@ -2513,7 +2525,7 @@ async function redeemCoupon() {
     const res = await fetch(`${BACKEND_URL}/api/wallet/redeem-coupon`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ player_id: currentSupabaseUser.player_id, coupon_code: code })
+      body: authBody({ player_id: currentSupabaseUser.player_id, coupon_code: code })
     });
     const data = await res.json();
     if (data && data.success) {
@@ -2735,6 +2747,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26e9ffebf787e19',t:'MTc4NjAyNTQyNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a270586a9df67e19',t:'MTc4NjA0MzQ2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+</body>
 </html>

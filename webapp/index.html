@@ -1066,10 +1066,11 @@ function enterSpectatorMode() {
 }
 
 function exitSpectatorMode() {
-  if (!isSpectating) return;
+  // Always restore the UI, even if the flag was already false - a leaked
+  // display:none on the dock is what made Bingo/Refresh/Leave vanish.
   isSpectating = false;
   const dock = document.querySelector('.game-bottom-control-dock');
-  if (dock) dock.style.display = '';
+  if (dock) dock.style.display = 'flex';
   const banner = document.getElementById('spectator-banner');
   if (banner) banner.style.display = 'none';
 }
@@ -1629,6 +1630,13 @@ function setupSocketEngine() {
       }
     } catch (e) {}
 
+    // SAFETY NET: holding a cartela means we are a real participant. If the
+    // spectator flag somehow survived, clear it so the controls come back.
+    if (isSpectating && (selCard1 || selCard2 || userJoinedActiveRound)) {
+      console.warn('spectator flag stuck while holding cards - clearing');
+      exitSpectatorMode();
+    }
+
     // Live Players / Derash / Bet on the in-game stats row.
     const gpEl = document.getElementById('gp');
     const gdEl = document.getElementById('gd');
@@ -1787,7 +1795,10 @@ async function syncUserDatabaseState() {
     console.log("📥 Sync data received:", data);
     
     if (data && data.player_id && !data.error) { 
-      currentSupabaseUser = data; 
+      // Merge rather than replace: a partial response must never blank out a
+      // username/phone we already have.
+      currentSupabaseUser = { ...currentSupabaseUser, ...data };
+      data = currentSupabaseUser; 
       mainBalance = Number(data.main_balance ?? data.balance ?? 0);
       playBalance = Number(data.play_balance ?? 0);
       totalBalance = mainBalance + playBalance;
@@ -1823,8 +1834,13 @@ function updateLocalWallets() {
   document.getElementById('wall-play-val').textContent = playBalance + ' ETB';
   document.getElementById('prof-main-val').textContent = mainBalance + ' ETB';
   document.getElementById('prof-play-val').textContent = playBalance + ' ETB';
-  document.getElementById('prof-name-val').textContent = currentSupabaseUser?.username || '--';
-  document.getElementById('prof-phone-val').textContent = currentSupabaseUser?.phone_number || '--';
+  // Fall back to the cached profile so a failed refresh can't blank these.
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem('supabase_bingo_player') || 'null'); } catch (e) {}
+  const uname = currentSupabaseUser?.username || cached?.username || '--';
+  const uphone = currentSupabaseUser?.phone_number || cached?.phone_number || '--';
+  document.getElementById('prof-name-val').textContent = uname;
+  document.getElementById('prof-phone-val').textContent = uphone;
 
   if (currentSupabaseUser && currentSupabaseUser.player_id) {
     const playerRefCode = currentSupabaseUser.player_id;
@@ -1864,7 +1880,8 @@ function processIncomingBallCall(n, fullNumbersHistoryArray){
   }
 
   renderMasterBoard();
-  if (isSpectating) return;            // spectator has no cartela to mark
+  // Only skip marking for a TRUE spectator (no cartela of their own).
+  if (isSpectating && !selCard1 && !selCard2) return;
   if (isAutoMode) {
     autoMarkCardBackground(1, n); if(selCard2) autoMarkCardBackground(2, n);
   } else {
@@ -2084,6 +2101,7 @@ async function closeWinnerModal() {
 }
 
 async function reconnectToRound(gameId, status) {
+  exitSpectatorMode();            // a paying player is never a spectator
   userJoinedActiveRound = true;
   isCurrentlyInGameRound = true;
 
@@ -2146,11 +2164,14 @@ async function joinGame(i) {
   clearPendingRound();
 
   if (globalGameStateServer === 'playing') {
-    // Don't turn a new player away - let them WATCH. Being told "come back
-    // later" is the main reason first-timers leave and never return.
+    // Only spectate if we are genuinely NOT in this round. A player who paid
+    // must never be dropped into spectator mode (it hides Bingo/Leave and
+    // disables auto-marking).
     enterSpectatorMode();
     return;
   }
+  // Server says waiting -> make sure no stale spectator state survives.
+  exitSpectatorMode();
 
   document.getElementById('cpw').textContent = totalBalance;
   await loadTakenCards();
@@ -2241,17 +2262,36 @@ function updateSelectionSummary() {
 }
 
 let joinInFlight = false;
+let joinFlightTimer = null;
 async function confirmJoin(){
   console.log("🎯 confirmJoin called");
-  if (joinInFlight) { console.log("join already in flight - ignoring"); return; }
+  if (joinInFlight) { toast("እባክዎ ይጠብቁ..."); return; }
   joinInFlight = true;
   const joinBtn = document.getElementById('confirm-join-btn');
-  if (joinBtn) joinBtn.disabled = true;
+  const label = joinBtn ? joinBtn.textContent : '';
+  if (joinBtn) { joinBtn.disabled = true; joinBtn.textContent = '⏳ በመቀላቀል ላይ...'; }
+
+  // Hard release. If a request ever hangs, the flag used to stay true forever
+  // and Start Game became permanently dead for that player.
+  if (joinFlightTimer) clearTimeout(joinFlightTimer);
+  joinFlightTimer = setTimeout(() => {
+    if (joinInFlight) {
+      console.warn('join timed out - releasing button');
+      joinInFlight = false;
+      if (joinBtn) { joinBtn.disabled = false; joinBtn.textContent = label || '✅ Start Game'; }
+      toast("ጊዜው አልፏል፣ እባክዎ እንደገና ይሞክሩ");
+    }
+  }, 15000);
+
   try {
     await doConfirmJoin();
+  } catch (e) {
+    console.error('join failed', e);
+    toast("መቀላቀል አልተቻለም፣ እንደገና ይሞክሩ");
   } finally {
+    if (joinFlightTimer) { clearTimeout(joinFlightTimer); joinFlightTimer = null; }
     joinInFlight = false;
-    if (joinBtn) joinBtn.disabled = false;
+    if (joinBtn) { joinBtn.disabled = false; joinBtn.textContent = label || '✅ Start Game'; }
   }
 }
 
@@ -2277,7 +2317,7 @@ async function doConfirmJoin(){
   let createResult = null;
   let httpStatus = 0;
   try {
-    const createRes = await fetch(`${BACKEND_URL}/api/games/create`, {
+    const createRes = await fetchRetry(`${BACKEND_URL}/api/games/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 
@@ -2286,7 +2326,7 @@ async function doConfirmJoin(){
         cards_bought: count,
         cards_list: [selCard1, selCard2].filter(Boolean)
       })
-    });
+    }, 2, 12000);
     httpStatus = createRes.status;
     createResult = await createRes.json();
     console.log("📥 Game create result:", httpStatus, createResult);
@@ -2321,9 +2361,12 @@ async function doConfirmJoin(){
   totalBalance = createResult.balance;
   updateLocalWallets();
   userJoinedActiveRound = true;
+  exitSpectatorMode();            // clear any leftover spectator UI
   setPendingRound(currentActiveGameRoundId);
 
   syncActiveGameScreenStructure();
+  const at = document.getElementById('auto-toggle');
+  if (at) at.checked = isAutoMode;
   document.getElementById('global-nav-bar').style.display = 'none';
   goTo('game');
 }
@@ -2692,5 +2735,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a268358b0c06e6b4',t:'MTc4NTk1ODE1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26e9ffebf787e19',t:'MTc4NjAyNTQyNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

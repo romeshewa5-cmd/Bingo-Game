@@ -72,6 +72,9 @@ tr:last-child td { border-bottom: none; }
 
   <div class="grid" id="overview-grid"></div>
 
+  <h2 style="margin-top:22px;">💰 House Earnings</h2>
+  <div class="grid" id="earnings-grid"></div>
+
   <!-- DEPOSIT APPROVALS -->
   <section>
     <h2>Pending Deposit Requests</h2>
@@ -179,6 +182,33 @@ function refreshAll() {
   loadTransactions();
 }
 
+async function refreshEarnings() {
+  try {
+    const e = await api('/api/admin/earnings');
+    const box = (title, d, highlight) => {
+      if (!d) return '';
+      const good = d.house_cut >= 0;
+      return `
+      <div class="stat-card" style="${highlight ? 'border:1px solid rgba(255,189,20,.5);' : ''}">
+        <div class="stat-lbl">${title}</div>
+        <div class="stat-val" style="color:${good ? 'var(--teal)' : 'var(--red)'};">
+          ${good ? '+' : ''}${Math.round(d.house_cut).toLocaleString()} ETB
+        </div>
+        <div style="font-size:10px;color:#888;margin-top:6px;line-height:1.6;">
+          ${d.cards.toLocaleString()} cards &bull; ${d.games.toLocaleString()} entries<br>
+          in ${Math.round(d.collected).toLocaleString()} / out ${Math.round(d.paid_out).toLocaleString()}<br>
+          payout ratio <b style="color:${d.payout_ratio > 0.85 ? 'var(--red)' : 'var(--teal)'};">${d.payout_ratio}</b>
+          ${d.payout_ratio > 0.85 ? ' ⚠️' : ''}<br>
+          cash: dep ${Math.round(d.deposits).toLocaleString()} / wd ${Math.round(d.withdrawals).toLocaleString()}
+          &rarr; <b style="color:${d.net_cash >= 0 ? 'var(--teal)' : 'var(--red)'};">${d.net_cash >= 0 ? '+' : ''}${Math.round(d.net_cash).toLocaleString()}</b>
+        </div>
+      </div>`;
+    };
+    document.getElementById('earnings-grid').innerHTML =
+      box('TODAY', e.today, true) + box('LAST 7 DAYS', e.last7days) + box('ALL TIME', e.allTime);
+  } catch (err) { console.error('earnings', err); }
+}
+
 async function refreshOverview() {
   try {
     const o = await api('/api/admin/overview');
@@ -188,9 +218,15 @@ async function refreshOverview() {
       <div class="stat-card"><div class="stat-lbl">Round ID</div><div class="stat-val">${o.game_id}</div></div>
       <div class="stat-card"><div class="stat-lbl">Timer</div><div class="stat-val">${o.timeRemaining}s</div></div>
       <div class="stat-card"><div class="stat-lbl">Players Joined</div><div class="stat-val">${o.participantCount} / min ${o.minPlayersToStart}</div></div>
-      <div class="stat-card"><div class="stat-lbl">Pot</div><div class="stat-val">${o.pot} ETB</div></div>
-      <div class="stat-card"><div class="stat-lbl">Payout (80%)</div><div class="stat-val" style="color:var(--gold);">${o.potentialPayout} ETB</div></div>
+      <div class="stat-card"><div class="stat-lbl">Cards Sold</div><div class="stat-val">${o.realCards ?? o.totalCards ?? 0}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Collected</div><div class="stat-val">${o.collected ?? 0} ETB</div></div>
+      <div class="stat-card"><div class="stat-lbl">Derash (to winner)</div><div class="stat-val" style="color:var(--gold);">${o.pot} ETB</div></div>
+      <div class="stat-card" style="border:1px solid rgba(15,192,130,.5);">
+        <div class="stat-lbl">HOUSE CUT (this round)</div>
+        <div class="stat-val" style="color:var(--teal);">${o.houseCut ?? 0} ETB</div>
+      </div>
     `;
+    refreshEarnings();
   } catch (err) { console.error(err); }
 }
 
@@ -382,6 +418,5 @@ window.adminLogout = function () {
   location.reload();
 };
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a25d06296d684b73',t:'MTc4NTg0MDg2Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a27578c26b4f7893',t:'MTc4NjA5NzIxOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

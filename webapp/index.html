@@ -605,24 +605,24 @@ input:checked + .slider:before { transform: translateX(18px); }
     <!-- Bonus Amount Display -->
     <div class="bonus-popup-highlight">
       <div style="font-size: 14px; color: #fff; margin-bottom: 8px;">🎁 Your Sign Up Bonus</div>
-      <div class="bonus-amount" id="current-bonus-display">10 ETB</div>
+      <div class="bonus-amount" id="current-bonus-display">--</div>
       <div class="bonus-label">already credited to your wallet!</div>
     </div>
     
     <!-- Extra Bonus Section -->
     <div id="extra-bonus-section" style="margin: 16px 0;">
       <div style="font-size: 16px; font-weight: 900; color: var(--gold); margin-bottom: 8px;">
-        ⭐ Get EXTRA 10 ETB Bonus!
+        ⭐ Get EXTRA <span id="grp-bonus-a">--</span> ETB Bonus!
       </div>
       <div style="font-size: 12px; color: #fff; line-height: 1.5; background: rgba(15, 192, 130, 0.1); padding: 10px; border-radius: 10px; border: 1px solid rgba(15, 192, 130, 0.3);">
-        Join our Telegram group and verify to unlock your <b style="color: var(--gold);">+10 ETB bonus!</b><br>
-        <span style="color: var(--teal);">Total potential: <b>20 ETB</b> free play money!</span>
+        Join our Telegram group and verify to unlock your <b style="color: var(--gold);">+<span id="grp-bonus-b">--</span> ETB bonus!</b><br>
+        <span style="color: var(--teal);">Total potential: <b><span id="total-bonus-a">--</span> ETB</b> free play money!</span>
       </div>
     </div>
 
     <!-- BUTTON TO JOIN TELEGRAM GROUP -->
     <button id="tg-group-join-btn" class="join-group-btn" onclick="handleTgGroupClick()">
-      ✈️ Join Telegram Group for +10 ETB
+      ✈️ Join Telegram Group for +<span id="grp-bonus-c">--</span> ETB
     </button>
 
     <!-- VERIFY & CLAIM BUTTON -->
@@ -632,7 +632,7 @@ input:checked + .slider:before { transform: translateX(18px); }
 
     <!-- SKIP BUTTON -->
     <div class="skip-link" onclick="skipTgBonusAndEnter()">
-      Skip this offer, proceed with 10 ETB only
+      Skip this offer, proceed with <span id="signup-bonus-a">--</span> ETB only
     </div>
   </div>
 </div>
@@ -1165,10 +1165,24 @@ function verifyWinningPattern(cardNum, markedSet) {
 let TG_INIT_DATA = '';
 let SERVER_CONFIG = null;
 
+// Paint the real bonus figures from the server into the UI.
+function applyBonusLabels() {
+  if (!SERVER_CONFIG) return;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const sg = SERVER_CONFIG.signup_bonus, gp = SERVER_CONFIG.group_bonus,
+        tot = SERVER_CONFIG.total_welcome_bonus;
+  if (sg != null) set('signup-bonus-a', sg);
+  if (gp != null) { set('grp-bonus-a', gp); set('grp-bonus-b', gp); set('grp-bonus-c', gp); }
+  if (tot != null) set('total-bonus-a', tot);
+}
+
 async function loadServerConfig() {
   try {
     const r = await fetch(`${BACKEND_URL}/api/config`);
-    if (r.ok) SERVER_CONFIG = await r.json();
+    if (r.ok) {
+      SERVER_CONFIG = await r.json();
+      applyBonusLabels();
+    }
   } catch (e) {}
 }
 let phonePollTimer = null;
@@ -1430,7 +1444,7 @@ function updateBonusDisplay(isNewUser) {
   const extraSection = document.getElementById('extra-bonus-section');
   
   if (isNewUser) {
-    bonusDisplay.textContent = '10 ETB';
+    bonusDisplay.textContent = ((SERVER_CONFIG && SERVER_CONFIG.signup_bonus) ?? 5) + ' ETB';
     extraSection.style.display = 'block';
   } else {
     bonusDisplay.textContent = '0 ETB';
@@ -1498,7 +1512,7 @@ async function verifyAndClaimTgBonus() {
       updateLocalWallets();
       
       if (shouldCreditTGGroupBonus) {
-        toast("🎉 +10 ETB Telegram Group Bonus! Total: " + totalBalance + " ETB");
+        toast("🎉 +" + ((SERVER_CONFIG && SERVER_CONFIG.group_bonus) ?? 5) + " ETB Telegram Group Bonus! Total: " + totalBalance + " ETB");
       } else {
         toast("✅ Verified! Your bonus: " + totalBalance + " ETB");
       }
@@ -1514,7 +1528,7 @@ async function verifyAndClaimTgBonus() {
         currentSupabaseUser.balance = totalBalance;
         currentSupabaseUser.tg_bonus_claimed = true;
         
-        toast("🎉 +10 ETB Telegram Group Bonus! Total: " + totalBalance + " ETB");
+        toast("🎉 +" + ((SERVER_CONFIG && SERVER_CONFIG.group_bonus) ?? 5) + " ETB Telegram Group Bonus! Total: " + totalBalance + " ETB");
       } else {
         toast("✅ Verified! Your bonus: " + totalBalance + " ETB");
       }
@@ -1557,6 +1571,13 @@ function setupSocketEngine() {
     socketConnected = true;
     updateConnectionStatus();
     socket.emit('request_tick');
+    // Bind this socket to our identity so the server can reject spoofed claims.
+    try {
+      socket.emit('identify', {
+        initData: TG_INIT_DATA || undefined,
+        tgauth: localStorage.getItem('fastbingo_tgauth') || undefined
+      });
+    } catch (e) {}
     startTickWatchdog();
     // The wallet can render 0 if the first balance fetch lost the race with
     // the socket. Re-pull it whenever the socket (re)connects.
@@ -2494,6 +2515,10 @@ async function submitWithdrawalRequest() {
       document.getElementById('wdr-amount').value = '';
       toast("Withdrawal requested! An admin will review and process your transfer.");
       loadWithdrawals();
+    } else if (result && result.error === 'below_reserve') {
+      alert(`\u1240\u1295\u12f0\u1265 \u121b\u12cd\u1323\u1275 \u12a0\u12ed\u127b\u120d\n\n` +
+        `\u1260\u1202\u1233\u1265\u12ce \u12cd\u1235\u1325 \u1201\u120d\u130a\u12dc \u1262\u12eb\u1295\u1235 ${result.reserve} \u1265\u122d \u1218\u1246\u12e8\u1275 \u12a0\u1208\u1260\u1275\u1362\n\n` +
+        `\u121b\u12cd\u1323\u1275 \u12e8\u121a\u127d\u1209\u1275: ${result.max_withdrawable} \u1265\u122d`);
     } else if (result && result.error === 'need_deposit') {
       const L = result.limits || {};
       alert(`\u1240\u1295\u12f0\u1265 \u121b\u12cd\u1323\u1275 \u12a0\u12ed\u127b\u120d\n\n` +
@@ -2747,6 +2772,6 @@ function goTo(n){
 // Initialize the app
 initApp();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a270586a9df67e19',t:'MTc4NjA0MzQ2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a271c640485af285',t:'MTc4NjA1ODQ0OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f"}' crossorigin="anonymous"></script>
 </body>
 </html>
